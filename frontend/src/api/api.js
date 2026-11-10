@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Production API URL: connects directly to live Render backend 'https://quick-cart-qnz6.onrender.com/api'
-const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://quick-cart-qnz6.onrender.com/api' : 'http://localhost:5000/api');
+const API_URL = import.meta.env.VITE_API_URL || 'https://quick-cart-qnz6.onrender.com/api';
 
 const api = axios.create({ baseURL: API_URL });
 // Add token to requests
