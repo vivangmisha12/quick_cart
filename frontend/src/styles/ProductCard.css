@@ -1,0 +1,334 @@
+/* Authentic Blinkit Product Card Styling */
+
+.blinkit-product-card {
+  background: #ffffff;
+  border: 1px solid #edf0f4;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  position: relative;
+  width: 195px;
+  min-width: 195px;
+  flex-shrink: 0;
+}
+
+.blinkit-product-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  border-color: #dbe2ea;
+}
+
+/* Image Box */
+.card-image-box {
+  width: 100%;
+  height: 150px;
+  background: #fbfcfd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 12px;
+  text-decoration: none;
+  overflow: hidden;
+}
+
+.product-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+}
+
+.blinkit-product-card:hover .product-image {
+  transform: scale(1.05);
+}
+
+.product-img-fallback {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: #eef1f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 800;
+  color: #8892a0;
+}
+
+/* 10 Min Delivery Tag */
+.card-delivery-tag {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(243, 244, 246, 0.95);
+  color: #374151;
+  font-size: 9.5px;
+  font-weight: 800;
+  padding: 3px 7px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 3.5px;
+  letter-spacing: 0.4px;
+  z-index: 2;
+  border: 1px solid #e5e7eb;
+}
+
+/* Wishlist Button */
+.card-wishlist-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #edf0f4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2;
+  transition: all 0.2s ease;
+}
+
+.card-wishlist-btn:hover {
+  background: #ffffff;
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card-wishlist-btn.is-active {
+  background: #fff3f4;
+  border-color: #ffd2d5;
+}
+
+/* Discount Badge */
+.card-discount-badge {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: #0c831f;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2.5px 7px;
+  border-radius: 5px;
+  letter-spacing: 0.3px;
+  box-shadow: 0 1px 4px rgba(12, 131, 31, 0.3);
+}
+
+/* Info Box */
+.card-info-box {
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.product-title-link {
+  text-decoration: none;
+}
+
+.product-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.35;
+  margin: 0 0 3px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  height: 36px;
+  letter-spacing: -0.01em;
+}
+
+.product-unit {
+  font-size: 11.5px;
+  color: #6b7280;
+  font-weight: 500;
+  margin-bottom: 10px;
+  display: block;
+}
+
+/* Bottom Row: Price & Add Button */
+.card-bottom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+}
+
+.product-pricing {
+  display: flex;
+  flex-direction: column;
+}
+
+.current-price {
+  font-size: 14.5px;
+  font-weight: 800;
+  color: #111827;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.mrp-price {
+  font-size: 11px;
+  color: #9ca3af;
+  text-decoration: line-through;
+  margin-top: 1px;
+  font-weight: 500;
+}
+
+/* Blinkit ADD Button */
+.blinkit-add-card-btn {
+  background: #f7fff9;
+  color: #0c831f;
+  border: 1.5px solid #0c831f;
+  border-radius: 7px;
+  padding: 6px 18px;
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.blinkit-add-card-btn:hover {
+  background: #0c831f;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(12, 131, 31, 0.3);
+}
+
+/* Blinkit Stepper Pill */
+.blinkit-stepper-pill {
+  background: #0c831f;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(12, 131, 31, 0.25);
+}
+
+.stepper-action-btn {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  width: 24px;
+  height: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.stepper-action-btn:hover {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.stepper-qty-num {
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 0 4px;
+  min-width: 16px;
+  text-align: center;
+}
+
+.out-of-stock-label {
+  font-size: 11px;
+  color: #e23744;
+  font-weight: 700;
+}
+
+/* Skeleton Card */
+.skeleton-card {
+  pointer-events: none;
+}
+
+.skeleton-line {
+  border-radius: 4px;
+}
+
+.line-title {
+  width: 80%;
+  height: 14px;
+  margin-bottom: 6px;
+}
+
+.line-unit {
+  width: 45%;
+  height: 10px;
+  margin-bottom: 12px;
+}
+
+.line-price {
+  width: 40px;
+  height: 16px;
+}
+
+.line-btn {
+  width: 55px;
+  height: 28px;
+  border-radius: 6px;
+}
+
+/* --- Mobile Responsiveness for Product Cards --- */
+@media (max-width: 600px) {
+  .blinkit-product-card {
+    width: 146px;
+    min-width: 146px;
+    border-radius: 10px;
+  }
+
+  .card-image-box {
+    height: 110px;
+    padding: 8px;
+  }
+
+  .card-details-box {
+    padding: 8px 10px 10px;
+  }
+
+  .product-name-link {
+    font-size: 12px;
+    height: 30px;
+    line-height: 1.25;
+  }
+
+  .product-unit-text {
+    font-size: 11px;
+    margin-bottom: 8px;
+  }
+
+  .card-price-current {
+    font-size: 13px;
+  }
+
+  .card-price-original {
+    font-size: 10px;
+  }
+
+  .blinkit-add-card-btn {
+    padding: 4px 10px;
+    font-size: 11.5px;
+    height: 28px;
+  }
+
+  .stepper-action-btn {
+    width: 22px;
+    height: 26px;
+  }
+
+  .stepper-qty-num {
+    font-size: 11.5px;
+    min-width: 14px;
+  }
+}
+
+

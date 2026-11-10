@@ -1,0 +1,335 @@
+/* ==========================================================================
+   Blinkit Separate Admin Login Styling
+   Theme: Professional Operations Command Center (Dark Navy, Emerald, Gold)
+   ========================================================================== */
+
+.admin-login-page {
+  min-height: 100vh;
+  background: #0b1320;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  position: relative;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #f1f5f9;
+}
+
+/* Background Ambient Glows */
+.ambient-glow {
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+.glow-1 {
+  background: #0c831f;
+  top: -100px;
+  left: -100px;
+}
+
+.glow-2 {
+  background: #f8cb46;
+  bottom: -150px;
+  right: -100px;
+}
+
+.admin-login-wrapper {
+  width: 100%;
+  max-width: 440px;
+  position: relative;
+  z-index: 10;
+}
+
+.back-storefront-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  transition: color 0.2s ease;
+}
+
+.back-storefront-link:hover {
+  color: #f8cb46;
+}
+
+/* Admin Card Container */
+.admin-card {
+  background: #111c2e;
+  border: 1px solid #1e293b;
+  border-radius: 20px;
+  padding: 36px 32px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+/* Header */
+.admin-card-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 26px;
+}
+
+.admin-brand-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  background: rgba(12, 131, 31, 0.15);
+  border: 1px solid rgba(12, 131, 31, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.shield-svg {
+  color: #22c55e;
+}
+
+.admin-brand-text {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.admin-login-logo-wrap {
+  background: #ffffff;
+  padding: 4px 12px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.admin-login-logo-img {
+  height: 36px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.brand-logo {
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: -1px;
+}
+
+.brand-logo .logo-blink {
+  color: #f8cb46;
+}
+
+.brand-logo .logo-it {
+  color: #0c831f;
+}
+
+.admin-hub-badge {
+  background: #1e293b;
+  color: #38bdf8;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.admin-header-subtitle {
+  font-size: 13px;
+  color: #94a3b8;
+  line-height: 1.5;
+  margin: 0;
+  max-width: 320px;
+}
+
+/* Alert Banner */
+.admin-alert-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.admin-alert-banner.error {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+.admin-alert-banner.success {
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  color: #86efac;
+}
+
+.alert-icon {
+  flex-shrink: 0;
+}
+
+/* Form */
+.admin-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.admin-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-input-group label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 14px;
+  color: #64748b;
+  pointer-events: none;
+}
+
+.input-with-icon input {
+  width: 100%;
+  padding: 12px 14px 12px 42px;
+  background: #0a111e;
+  border: 1.5px solid #1e293b;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #ffffff;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.input-with-icon input:focus {
+  border-color: #0c831f;
+  box-shadow: 0 0 0 3px rgba(12, 131, 31, 0.2);
+  background: #0e1726;
+}
+
+.input-with-icon input::placeholder {
+  color: #475569;
+}
+
+.admin-creds-hint {
+  background: rgba(248, 203, 70, 0.08);
+  border: 1px dashed rgba(248, 203, 70, 0.25);
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #fde047;
+  text-align: center;
+}
+
+.admin-creds-hint strong {
+  color: #ffffff;
+}
+
+.admin-login-submit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #0c831f;
+  color: #ffffff;
+  border: none;
+  padding: 14px;
+  border-radius: 10px;
+  font-size: 14.5px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 16px rgba(12, 131, 31, 0.35);
+  margin-top: 4px;
+}
+
+.admin-login-submit-btn:hover:not(:disabled) {
+  background: #0a6f1a;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(12, 131, 31, 0.45);
+}
+
+.admin-login-submit-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Footer */
+.admin-card-footer {
+  margin-top: 26px;
+  padding-top: 20px;
+  border-top: 1px solid #1e293b;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.footer-links-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 12.5px;
+}
+
+.footer-partner-link {
+  color: #38bdf8;
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: color 0.15s ease;
+}
+
+.footer-partner-link:hover {
+  color: #7dd3fc;
+  text-decoration: underline;
+}
+
+.dot-sep {
+  color: #475569;
+}
+
+.admin-security-note {
+  font-size: 11px;
+  color: #64748b;
+  margin: 0;
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .admin-card {
+    padding: 24px 20px;
+    border-radius: 16px;
+  }
+
+  .brand-logo {
+    font-size: 24px;
+  }
+}
+

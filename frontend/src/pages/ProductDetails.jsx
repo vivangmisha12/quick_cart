@@ -1,20 +1,35 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { 
+  Heart, 
+  Clock, 
+  ShieldCheck, 
+  Truck, 
+  RotateCcw, 
+  ChevronRight, 
+  Plus, 
+  Minus,
+  Sparkles,
+  ShoppingBag
+} from 'lucide-react';
 import { productsAPI } from '../api/api';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { useWishlist } from '../context/WishlistContext';
+import '../styles/ProductDetails.css';
 
 const ProductDetails = () => {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
-  const [quantity, setQuantity] = useState(1);
-  const [loading, setLoading] = useState(false);
-  const { addToCart } = useCart();
+  const [loading, setLoading] = useState(true);
+  const { addToCart, getProductQuantity, updateCartItem, removeFromCart, openCartDrawer } = useCart();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchProduct();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [id]);
 
   const fetchProduct = async () => {
@@ -23,65 +38,238 @@ const ProductDetails = () => {
       const res = await productsAPI.getById(id);
       setProduct(res.data);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error fetching product:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  const qty = product ? getProductQuantity(product._id) : 0;
+  const isWish = product ? isInWishlist(product._id) : false;
 
   const handleAddToCart = async () => {
     if (!user) {
       navigate('/login');
       return;
     }
-    const ok = await addToCart(product._id, quantity);
-    if (ok) alert('Added to cart!');
+    await addToCart(product._id, 1);
   };
 
-  if (loading) return <p>Loading...</p>;
-  if (!product) return <p>Product not found</p>;
+  const handleIncrement = async () => {
+    await addToCart(product._id, 1);
+  };
+
+  const handleDecrement = async () => {
+    if (qty > 1) {
+      await updateCartItem(product._id, qty - 1);
+    } else if (qty === 1) {
+      await removeFromCart(product._id);
+    }
+  };
+
+  const handleWishlistToggle = () => {
+    if (isWish) {
+      removeFromWishlist(product._id);
+    } else {
+      addToWishlist(product);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="pd-page">
+        <div className="pd-skeleton-layout">
+          <div className="pd-img-skeleton skeleton-shimmer" />
+          <div className="pd-info-skeleton">
+            <div className="skeleton-line skeleton-shimmer" style={{ width: '70%', height: '32px' }} />
+            <div className="skeleton-line skeleton-shimmer" style={{ width: '40%', height: '18px', marginTop: '12px' }} />
+            <div className="skeleton-line skeleton-shimmer" style={{ width: '30%', height: '40px', marginTop: '24px' }} />
+            <div className="skeleton-line skeleton-shimmer" style={{ width: '100%', height: '120px', marginTop: '24px' }} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="pd-page">
+        <div className="pd-not-found-card">
+          <ShoppingBag size={48} color="#8892a0" />
+          <h2>Product Not Found</h2>
+          <p>The product you are looking for does not exist or has been removed.</p>
+          <Link to="/products" className="pd-back-home-btn">
+            Back to Products
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const mrp = product.discount > 0 
+    ? Math.round(product.price / (1 - product.discount / 100)) 
+    : (product.originalPrice || null);
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
-        <div>
-          <img src={product.image} alt={product.name} style={{ width: '100%', borderRadius: '8px' }} />
-        </div>
-        <div>
-          <h1>{product.name}</h1>
-          <p>{product.description}</p>
-          <h2 style={{ color: '#1e90ff', fontSize: '24px' }}>₹{product.price}</h2>
-          <p>📦 {product.deliveryTime} min delivery</p>
-          <p style={{ color: product.stock > 0 ? 'green' : 'red' }}>
-            {product.stock > 0 ? `In Stock (${product.stock})` : 'Out of Stock'}
-          </p>
-          <div style={{ margin: '20px 0' }}>
-            <label>Quantity: </label>
-            <input
-              type="number"
-              min="1"
-              max={product.stock}
-              value={quantity}
-              onChange={(e) => setQuantity(parseInt(e.target.value))}
-              style={{ width: '60px', padding: '5px', marginLeft: '10px' }}
-            />
+    <div className="pd-page">
+      {/* Breadcrumb Navigation */}
+      <nav className="pd-breadcrumb" aria-label="Breadcrumb">
+        <Link to="/">Home</Link>
+        <ChevronRight size={14} className="breadcrumb-arrow" />
+        <Link to="/products">Products</Link>
+        <ChevronRight size={14} className="breadcrumb-arrow" />
+        <span className="breadcrumb-current">{product.name}</span>
+      </nav>
+
+      <div className="pd-grid-container">
+        {/* Left Side: Product Showcase */}
+        <div className="pd-image-section">
+          <div className="pd-image-wrapper">
+            {product.discount > 0 && (
+              <span className="pd-floating-discount-tag">{product.discount}% OFF</span>
+            )}
+            <button
+              type="button"
+              className={`pd-wishlist-toggle ${isWish ? 'is-active' : ''}`}
+              onClick={handleWishlistToggle}
+              aria-label={isWish ? 'Remove from wishlist' : 'Add to wishlist'}
+            >
+              <Heart size={20} fill={isWish ? '#e23744' : 'none'} color={isWish ? '#e23744' : '#666'} />
+            </button>
+            {product.image ? (
+              <img src={product.image} alt={product.name} className="pd-main-img" />
+            ) : (
+              <div className="pd-img-fallback-circle">
+                <span>{product.name?.charAt(0)?.toUpperCase() || 'P'}</span>
+              </div>
+            )}
           </div>
-          <button
-            onClick={handleAddToCart}
-            disabled={product.stock === 0}
-            style={{
-              width: '100%',
-              padding: '12px',
-              background: '#1e90ff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontWeight: '600',
-            }}
-          >
-            Add to Cart
-          </button>
+
+          {/* Quick Assurance Badges */}
+          <div className="pd-trust-highlights">
+            <div className="trust-highlight-row">
+              <Truck size={18} color="#0c831f" />
+              <div className="trust-highlight-text">
+                <strong>Superfast 10 Mins Delivery</strong>
+                <span>Get it delivered at lightning speed from nearby dark store</span>
+              </div>
+            </div>
+            <div className="trust-highlight-row">
+              <ShieldCheck size={18} color="#0c831f" />
+              <div className="trust-highlight-text">
+                <strong>100% Quality Guarantee</strong>
+                <span>Handpicked & safely packed under strict hygiene</span>
+              </div>
+            </div>
+            <div className="trust-highlight-row">
+              <RotateCcw size={18} color="#0c831f" />
+              <div className="trust-highlight-text">
+                <strong>Easy Instant Returns</strong>
+                <span>Instant return at doorstep if not satisfied</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side: Product Details */}
+        <div className="pd-info-section">
+          <div className="pd-eta-pill">
+            <Clock size={14} color="#0c831f" />
+            <span>Delivery in 10 minutes</span>
+          </div>
+
+          <h1 className="pd-title">{product.name}</h1>
+          <span className="pd-unit-badge">{product.unit || '1 unit'}</span>
+
+          {/* Pricing Box */}
+          <div className="pd-pricing-card">
+            <div className="pd-prices-group">
+              <span className="pd-current-price">₹{product.price}</span>
+              {mrp && mrp > product.price && (
+                <span className="pd-mrp-price">MRP ₹{mrp}</span>
+              )}
+              {product.discount > 0 && (
+                <span className="pd-savings-pill">{product.discount}% OFF</span>
+              )}
+            </div>
+            <p className="pd-tax-note">(Inclusive of all taxes)</p>
+
+            {/* Action Buttons */}
+            <div className="pd-action-row">
+              {product.stock === 0 ? (
+                <div className="pd-out-of-stock-box">Currently Out of Stock</div>
+              ) : qty > 0 ? (
+                <div className="pd-stepper-control">
+                  <button type="button" className="pd-stepper-btn" onClick={handleDecrement}>
+                    <Minus size={16} strokeWidth={3} />
+                  </button>
+                  <span className="pd-stepper-num">{qty} in Cart</span>
+                  <button type="button" className="pd-stepper-btn" onClick={handleIncrement}>
+                    <Plus size={16} strokeWidth={3} />
+                  </button>
+                </div>
+              ) : (
+                <button type="button" className="pd-add-to-cart-btn" onClick={handleAddToCart}>
+                  Add to Cart
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Product Specifications & Details Card */}
+          <div className="pd-details-card">
+            <h3 className="pd-details-heading">Product Details</h3>
+
+            <div className="pd-spec-row">
+              <span className="pd-spec-key">Unit</span>
+              <span className="pd-spec-val">{product.unit || '1 unit'}</span>
+            </div>
+
+            {product.description && (
+              <div className="pd-spec-row pd-desc-row">
+                <span className="pd-spec-key">Description</span>
+                <p className="pd-spec-val pd-desc-text">{product.description}</p>
+              </div>
+            )}
+
+            <div className="pd-spec-row">
+              <span className="pd-spec-key">Shelf Life</span>
+              <span className="pd-spec-val">Check packaging for expiry details</span>
+            </div>
+
+            <div className="pd-spec-row">
+              <span className="pd-spec-key">Country of Origin</span>
+              <span className="pd-spec-val">India</span>
+            </div>
+          </div>
+
+          {/* Why Shop From Us */}
+          <div className="pd-why-shop-box">
+            <h4>Why shop from Progicart?</h4>
+            <div className="why-features-grid">
+              <div className="why-feature-item">
+                <div className="why-icon-circle">⚡</div>
+                <div className="why-text-col">
+                  <strong>Superfast Delivery</strong>
+                  <p>Get your order delivered to your doorstep in minutes.</p>
+                </div>
+              </div>
+              <div className="why-feature-item">
+                <div className="why-icon-circle">💰</div>
+                <div className="why-text-col">
+                  <strong>Best Prices & Offers</strong>
+                  <p>Direct from brands with incredible deals daily.</p>
+                </div>
+              </div>
+              <div className="why-feature-item">
+                <div className="why-icon-circle">🛍️</div>
+                <div className="why-text-col">
+                  <strong>Wide Assortment</strong>
+                  <p>Choose from 5,000+ authentic items across all categories.</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

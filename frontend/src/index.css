@@ -5,14 +5,44 @@
 }
 
 :root {
-  --primary: #1e90ff;
-  --primary-dark: #1070cc;
-  --danger: #ff6b6b;
-  --success: #51cf66;
-  --bg: #f5f5f5;
+  --primary: #0c831f;
+  --primary-dark: #096f1a;
+  --primary-light: #f0fbf2;
+  --yellow: #f8cb46;
+  --yellow-hover: #ebbe38;
+  --yellow-light: #fff9e6;
+  --danger: #e23744;
+  --success: #0c831f;
+  --bg: #f4f6fb;
+  --card-bg: #ffffff;
   --white: #ffffff;
-  --text: #333333;
-  --border: #e0e0e0;
+  --text: #1c1c1c;
+  --text-muted: #666666;
+  --text-light: #999999;
+  --border: #e8ecef;
+  --border-light: #f1f4f7;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 24px rgba(0, 0, 0, 0.1);
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-full: 9999px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #f0f2f5 25%, #e6e8ec 37%, #f0f2f5 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
 }
 
 html, body, #root {
@@ -26,13 +56,35 @@ html {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
   background-color: var(--bg);
   color: var(--text);
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  letter-spacing: -0.025em;
+  font-weight: 800;
+  color: #111827;
+}
+
+p, span, a, label {
+  letter-spacing: -0.01em;
+}
+
+button {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  letter-spacing: -0.01em;
+}
+
+input, select, textarea {
+  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  letter-spacing: -0.01em;
 }
 
 code {

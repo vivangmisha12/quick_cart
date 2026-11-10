@@ -28,13 +28,26 @@ const orderSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ['cod', 'upi', 'card', 'wallet', 'credit_card', 'debit_card'],
+    enum: ['cod', 'upi', 'card', 'wallet', 'credit_card', 'debit_card', 'razorpay'],
     default: 'cod',
+  },
+  paymentId: String,
+  razorpayOrderId: String,
+  deliveryTip: {
+    type: Number,
+    default: 0,
+  },
+  deliveryInstructions: [String],
+  deliveryPartner: {
+    id: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    name: { type: String, default: 'Rider Assigned' },
+    phone: { type: String, default: '9876543210' },
+    vehicleNumber: { type: String, default: 'UP-32-BK-1001' },
   },
   status: {
     type: String,
-    enum: ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'],
-    default: 'pending',
+    enum: ['pending', 'confirmed', 'packing', 'assigned', 'picked_up', 'out_for_delivery', 'shipped', 'delivered', 'cancelled'],
+    default: 'confirmed',
   },
   createdAt: {
     type: Date,

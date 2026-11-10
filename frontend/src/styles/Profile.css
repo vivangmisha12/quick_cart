@@ -691,7 +691,36 @@
 /* Responsive */
 @media (max-width: 768px) {
   .profile-container {
-    padding: 14px;
+    padding: 14px 14px 70px;
+  }
+
+  .profile-hero {
+    flex-direction: column;
+    text-align: center;
+    padding: 28px 16px;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .profile-hero-content h1 {
+    font-size: 24px;
+  }
+
+  .profile-hero-buttons {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .edit-profile-btn, .logout-btn {
+    flex: 1;
+    padding: 10px 16px;
+    font-size: 13.5px;
+  }
+
+  .quick-stats {
+    grid-template-columns: repeat(2, 1fr);
+    margin: 0 0 24px 0;
+    gap: 10px;
   }
 
   .profile-header {
@@ -706,6 +735,10 @@
 
   .profile-tabs {
     gap: 8px;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 6px;
   }
 
   .tab-btn {

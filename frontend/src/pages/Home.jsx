@@ -1,53 +1,36 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { categoriesAPI, productsAPI } from '../api/api';
-import { useCart } from '../context/CartContext';
-import { useWishlist } from '../context/WishlistContext';
-import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  Sparkles, 
+  Zap, 
+  ShieldCheck, 
+  Clock, 
+  ArrowRight,
+  Lock,
+  X
+} from 'lucide-react';
+import { categoriesAPI, productsAPI, bannersAPI } from '../api/api';
+import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import ProductCard from '../components/ProductCard';
+import ProductSkeleton from '../components/ProductSkeleton';
 import '../styles/Home.css';
-
-
-
-const promoData = [
-  {
-    id: 1,
-    title: 'Pharmacy at your doorstep!',
-    subtitle: 'Cough syrups, pain relief sprays & more',
-    cta: 'Order Now',
-    bg: '#18b8b3',
-    search: 'pharmacy',
-    categoryName: 'Pharma & Wellness',
-  },
-  {
-    id: 2,
-    title: 'Pet care supplies at your door',
-    subtitle: 'Food, treats, toys & more',
-    cta: 'Order Now',
-    bg: '#f2cf35',
-    search: 'pet',
-    categoryName: 'Pet Care',
-  },
-  {
-    id: 3,
-    title: 'No time for a diaper run?',
-    subtitle: 'Get baby care essentials',
-    cta: 'Order Now',
-    bg: '#dfe6ef',
-    search: 'baby',
-    categoryName: 'Baby Care',
-  },
-];
 
 const Home = () => {
   const [categories, setCategories] = useState([]);
   const [homeSections, setHomeSections] = useState([]);
+  const [activeBanners, setActiveBanners] = useState([]);
+  const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
+
   const sliderRefs = useRef([]);
-  const scrollTimerRef = useRef(null);
-  const firstScrollStarted = useRef(false);
-  const { addToCart, getProductQuantity, updateCartItem, removeFromCart } = useCart();
-  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+
+  const { addToCart } = useCart();
   const { user, login } = useAuth();
   const navigate = useNavigate();
+
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [pendingProductId, setPendingProductId] = useState(null);
   const [loginEmail, setLoginEmail] = useState('');
@@ -59,82 +42,65 @@ const Home = () => {
     fetchData();
   }, []);
 
+  const heroBanners = activeBanners.filter(b => b.type === 'hero');
+  const promoBanners = activeBanners.filter(b => b.type === 'promo');
+
   useEffect(() => {
-    const handleScrollStart = () => {
-      if (user || firstScrollStarted.current) return;
-      firstScrollStarted.current = true;
-      scrollTimerRef.current = setTimeout(() => {
-        setShowLoginModal(true);
-      }, 4000);
-    };
-
-    if (!user) {
-      window.addEventListener('scroll', handleScrollStart, { passive: true });
+    if (heroBanners.length > 1) {
+      const timer = setInterval(() => {
+        setCurrentHeroIndex((prev) => (prev + 1) % heroBanners.length);
+      }, 6000);
+      return () => clearInterval(timer);
     }
+  }, [heroBanners.length]);
 
-    return () => {
-      window.removeEventListener('scroll', handleScrollStart);
-      clearTimeout(scrollTimerRef.current);
-      scrollTimerRef.current = null;
-      firstScrollStarted.current = false;
-    };
-  }, [user]);
+  const nextHero = () => {
+    setCurrentHeroIndex((prev) => (prev + 1) % heroBanners.length);
+  };
+
+  const prevHero = () => {
+    setCurrentHeroIndex((prev) => (prev === 0 ? heroBanners.length - 1 : prev - 1));
+  };
 
   const fetchData = async () => {
+    setLoading(true);
     try {
-      const catRes = await categoriesAPI.getAll();
-      setCategories(catRes.data);
+      const [catRes, bannersRes] = await Promise.all([
+        categoriesAPI.getAll(),
+        bannersAPI.getActive()
+      ]);
+      setCategories(catRes.data || []);
+      setActiveBanners(bannersRes.data || []);
 
-      // Build home sections based on categories flagged for home
-      const flagged = catRes.data.filter((c) => c.showOnHome);
+      const flagged = (catRes.data || []).filter((c) => c.showOnHome);
       const sectionsWithProducts = await Promise.all(
         flagged.map(async (cat) => {
           try {
             const res = await productsAPI.getAll(cat._id);
             return {
               category: cat,
-              products: res.data,
+              products: res.data || [],
             };
           } catch (err) {
-            console.error('Error fetching products for category', cat._id, err);
             return { category: cat, products: [] };
           }
         })
       );
       setHomeSections(sectionsWithProducts);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error fetching home data:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getPromoLink = (promo) => {
-    const category = categories.find((cat) => cat.name === promo.categoryName);
-    if (category?._id) {
-      return `/products?category=${category._id}`;
-    }
-    return `/products?search=${encodeURIComponent(promo.search)}`;
-  };
-
-  const handleAddToCart = async (productId) => {
+  const requireLoginHandler = (productId) => {
     if (!user) {
       setPendingProductId(productId);
       setShowLoginModal(true);
-      return;
+      return false;
     }
-    await addToCart(productId, 1);
-  };
-
-  const handleIncrement = async (productId) => {
-    await addToCart(productId, 1);
-  };
-
-  const handleDecrement = async (productId) => {
-    const qty = getProductQuantity(productId);
-    if (qty > 1) {
-      await updateCartItem(productId, qty - 1);
-    } else if (qty === 1) {
-      await removeFromCart(productId);
-    }
+    return true;
   };
 
   const closeLoginModal = () => {
@@ -142,7 +108,6 @@ const Home = () => {
     setShowLoginModal(false);
     setPendingProductId(null);
     setLoginError('');
-    clearTimeout(scrollTimerRef.current);
   };
 
   const handleLoginSubmit = async (e) => {
@@ -152,14 +117,11 @@ const Home = () => {
 
     try {
       await login(loginEmail, loginPassword);
-
       if (pendingProductId) {
         await addToCart(pendingProductId, 1);
       }
-
       setShowLoginModal(false);
       setPendingProductId(null);
-      clearTimeout(scrollTimerRef.current);
     } catch (err) {
       setLoginError(err.message || 'Login failed. Please try again.');
     } finally {
@@ -167,222 +129,331 @@ const Home = () => {
     }
   };
 
+  const getCategoryImageUrl = (cat) => {
+    if (cat.image) {
+      if (cat.image.startsWith('http://') || cat.image.startsWith('https://')) return cat.image;
+      if (cat.image.startsWith('/uploads/') || cat.image.startsWith('uploads/')) {
+        return `http://localhost:5000${cat.image.startsWith('/') ? '' : '/'}${cat.image}`;
+      }
+      return cat.image.startsWith('/') ? cat.image : `/${cat.image}`;
+    }
+    const slug = cat.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    return `/category-images/${slug}.jpg`;
+  };
+
   const scrollSection = (index, direction = 1) => {
     const el = sliderRefs.current[index];
     if (el) {
-      el.scrollBy({ left: direction * 260, behavior: 'smooth' });
+      el.scrollBy({ left: direction * 400, behavior: 'smooth' });
     }
   };
 
   return (
-    <>
-    <div className={`home ${showLoginModal ? 'home-blur' : ''}`}>
-      <div className="hero">
-        <h1>🚀 Quick Cart</h1>
-        <p>20 minute delivery - Fresh products at your doorstep</p>
-      </div>
-
-      <div className="promo-strip">
-        {promoData.map((promo) => (
-          <div
-            key={promo.id}
-            className="promo-card"
-            style={{ backgroundColor: promo.bg }}
+    <div className={`home-page-wrapper ${showLoginModal ? 'modal-blur-active' : ''}`}>
+      {/* Hero Carousel Section */}
+      <section className="hero-carousel-section">
+        {heroBanners.length > 0 ? (
+          <div 
+            className="hero-slider-card"
+            style={{ 
+              background: heroBanners[currentHeroIndex].bg || '#0c831f',
+              backgroundImage: heroBanners[currentHeroIndex].image ? `url(http://localhost:5000${heroBanners[currentHeroIndex].image})` : 'none',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
           >
-            <div className="promo-content">
-              <h3 className="promo-title">{promo.title}</h3>
-              <p className="promo-subtitle">{promo.subtitle}</p>
-              <Link
-                to={getPromoLink(promo)}
-                className="promo-btn"
-              >
-                {promo.cta}
-              </Link>
-            </div>
-          </div>
-        ))}
-      </div>
+            {heroBanners.length > 1 && (
+              <button className="hero-nav-arrow arrow-left" onClick={prevHero} aria-label="Previous banner">
+                <ChevronLeft size={24} />
+              </button>
+            )}
 
-      {/* Categories */}
-      <div className="section">
-        <h2>Categories</h2>
-        <div className="categories-grid">
-          {categories.map((cat) => (
-            <Link
-              key={cat._id}
-              to={`/products?category=${cat._id}`}
-              className="category-card"
-            >
-              {cat.image ? (
-                <img src={cat.image} alt={cat.name} className="category-image" />
-              ) : (
-                <div className="category-icon">{cat.icon || '📦'}</div>
-              )}
-              <p>{cat.name}</p>
-            </Link>
-          ))}
-        </div>
-      </div>
-
-      {/* Admin-configured category sections */}
-      {homeSections.map(({ category, products }, idx) => (
-        <div className="section home-section" key={category._id}>
-          <div className="section-header">
-            <h2>{category.homeTitle || category.name}</h2>
-            <Link to={`/products?category=${category._id}`} className="see-all-link">See all</Link>
-          </div>
-          {products.length === 0 ? (
-            <p className="loading">No products yet.</p>
-          ) : (
-            <div className="product-slider">
-              <div
-                className="product-scroll"
-                ref={(el) => { sliderRefs.current[idx] = el; }}
-              >
-              {products.map((product, index) => {
-                const qty = getProductQuantity(product._id);
-                return (
-                <div key={product._id || index} className="product-card">
-                  <Link
-                    to={`/products/${product._id}`}
-                    className="product-color-box"
-                    style={{ backgroundColor: '#f8fafc' }}
-                  >
-                    {product.image ? (
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-                    ) : (
-                      <span className="product-color-initial">
-                        {product.name?.charAt(0)?.toUpperCase() || 'P'}
-                      </span>
-                    )}
-                  </Link>
-                  <div className="product-info">
-                    <div className="product-header">
-                      <h3>{product.name}</h3>
-                      <button
-                        className={`wishlist-btn ${isInWishlist(product._id) ? 'wishlisted' : ''}`}
-                        onClick={() => {
-                          if (isInWishlist(product._id)) {
-                            removeFromWishlist(product._id);
-                          } else {
-                            addToWishlist(product);
-                          }
-                        }}
-                        title={isInWishlist(product._id) ? 'Remove from wishlist' : 'Add to wishlist'}
-                      >
-                        {isInWishlist(product._id) ? '❤️' : '🤍'}
-                      </button>
-                    </div>
-                    <p className="unit">{product.unit}</p>
-                    <p className="price">₹{product.price}</p>
-                    <p className="delivery">⏱️ {product.deliveryTime || '10'} min</p>
-                    {product.stock === 0 ? (
-                      <p className="stock-out">Out of Stock</p>
-                    ) : qty > 0 ? (
-                      <div className="card-actions card-actions-stack">
-                        <div className="qty-controls pill-controls">
-                          <button
-                            className="qty-btn qty-btn-light"
-                            onClick={() => handleDecrement(product._id)}
-                          >
-                            −
-                          </button>
-                          <span className="qty-value">{qty}</span>
-                          <button
-                            className="qty-btn qty-btn-light"
-                            onClick={() => handleIncrement(product._id)}
-                          >
-                            +
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => handleAddToCart(product._id)}
-                        className="add-btn add-btn-compact add-btn-green pill-add"
-                      >
-                        Add
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );})}
+            <div className="hero-slider-content">
+              <div className="hero-speed-tag">
+                <Zap size={14} fill="#f8cb46" color="#f8cb46" />
+                <span>INSTANT 10 MINS DELIVERY</span>
               </div>
-              {products.length > 5 && (
-                <button
-                  type="button"
-                  aria-label="Scroll right"
-                  className="slider-btn slider-btn-right"
-                  onClick={() => scrollSection(idx, 1)}
-                >
-                  ›
-                </button>
-              )}
+              <h1 
+                className="hero-headline"
+                dangerouslySetInnerHTML={{ __html: heroBanners[currentHeroIndex].title }}
+              />
+              <p className="hero-subline">{heroBanners[currentHeroIndex].subtitle}</p>
+              <div className="hero-cta-group">
+                <Link to={heroBanners[currentHeroIndex].link || '/products'} className="hero-shop-btn">
+                  {heroBanners[currentHeroIndex].cta || 'Shop Now'} <ArrowRight size={16} />
+                </Link>
+                <div className="hero-delivery-badge">
+                  <Clock size={16} color="#0c831f" />
+                  <span>Free delivery on ₹499+</span>
+                </div>
+              </div>
             </div>
-          )}
-        </div>
-      ))}
 
-    </div>
-    
+            {heroBanners.length > 1 && (
+              <div className="hero-slider-dots">
+                {heroBanners.map((_, i) => (
+                  <button 
+                    key={i} 
+                    type="button"
+                    className={`slider-dot ${i === currentHeroIndex ? 'is-active' : ''}`}
+                    onClick={() => setCurrentHeroIndex(i)}
+                    aria-label={`Go to slide ${i + 1}`}
+                  />
+                ))}
+              </div>
+            )}
 
-    {showLoginModal && (
-      <div className="login-modal-backdrop" role="dialog" aria-modal="true">
-        <div className="login-modal">
-          <button className="modal-close" onClick={closeLoginModal} aria-label="Close login form">
-            ×
-          </button>
-          <div className="login-modal-header">
-            <div className="login-badge">🔒 Secure checkout</div>
-            <h2>Welcome back</h2>
-            <p>Sign in to keep shopping seamlessly.</p>
+            {heroBanners.length > 1 && (
+              <button className="hero-nav-arrow arrow-right" onClick={nextHero} aria-label="Next banner">
+                <ChevronRight size={24} />
+              </button>
+            )}
           </div>
-          {loginError && <div className="error-msg">{loginError}</div>}
-          <form onSubmit={handleLoginSubmit} className="login-modal-form">
-            <div className="form-group">
-              <label>Email</label>
-              <input
-                type="email"
-                value={loginEmail}
-                onChange={(e) => setLoginEmail(e.target.value)}
-                placeholder="you@example.com"
-                required
-              />
+        ) : (
+          <div className="hero-slider-card default-hero">
+            <div className="hero-slider-content">
+              <div className="hero-speed-tag">
+                <Zap size={14} fill="#f8cb46" color="#f8cb46" />
+                <span>INSTANT 10 MINS DELIVERY</span>
+              </div>
+              <h1 className="hero-headline">
+                Groceries & Essentials at Your Door in <span className="text-yellow">10 Minutes ⚡</span>
+              </h1>
+              <p className="hero-subline">
+                Farm-fresh fruits, dairy, snacks & household essentials delivered superfast.
+              </p>
+              <div className="hero-cta-group">
+                <Link to="/products" className="hero-shop-btn">
+                  Shop Now <ArrowRight size={16} />
+                </Link>
+                <div className="hero-delivery-badge">
+                  <ShieldCheck size={16} color="#0c831f" />
+                  <span>Best Quality Guaranteed</span>
+                </div>
+              </div>
             </div>
-            <div className="form-group">
-              <label>Password</label>
-              <input
-                type="password"
-                value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-              />
-            </div>
-            <button type="submit" disabled={loginLoading}>
-              {loginLoading ? 'Logging in…' : 'Login & continue'}
-            </button>
-          </form>
-          <p className="auth-link">
-            Don't have an account?{' '}
-            <span
-              className="auth-link-inline"
-              onClick={() => {
-                closeLoginModal();
-                navigate('/register');
+          </div>
+        )}
+      </section>
+
+      {/* Promo Banners Grid */}
+      {promoBanners.length > 0 && (
+        <section className="promo-cards-strip">
+          {promoBanners.map((promo) => (
+            <div 
+              key={promo._id} 
+              className="promo-feature-card"
+              style={{ 
+                background: promo.bg || '#f4f6fb',
+                backgroundImage: promo.image ? `url(http://localhost:5000${promo.image})` : 'none',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
               }}
             >
-              Register here
-            </span>
-          </p>
+              <div className="promo-feature-content">
+                <h3 
+                  className="promo-feature-title" 
+                  style={{ color: promo.textColor || '#1c1c1c' }}
+                  dangerouslySetInnerHTML={{ __html: promo.title }}
+                />
+                <p 
+                  className="promo-feature-sub"
+                  style={{ color: promo.textColor || '#555555' }}
+                >
+                  {promo.subtitle}
+                </p>
+                <Link 
+                  to={promo.link || '/products'} 
+                  className="promo-feature-btn"
+                >
+                  {promo.cta || 'Order Now'}
+                </Link>
+              </div>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {/* Category Icons Grid */}
+      <section className="categories-showcase-section">
+        <div className="section-title-row">
+          <div className="title-left">
+            <h2>Explore Categories</h2>
+            <span className="title-sub">Select a category to browse freshest picks</span>
+          </div>
+          <Link to="/products" className="see-all-action">
+            All Categories <ChevronRight size={16} />
+          </Link>
         </div>
-      </div>
-    )}
-  </>
+
+        <div className="category-pills-grid">
+          {loading ? (
+            Array.from({ length: 10 }).map((_, i) => (
+              <div key={i} className="category-card-blinkit skeleton-card">
+                <div className="category-card-img-wrap skeleton-shimmer" />
+                <div className="skeleton-line skeleton-shimmer" style={{ width: '70%', height: '10px', margin: '8px auto 4px' }} />
+              </div>
+            ))
+          ) : (
+            categories.map((cat) => (
+              <Link
+                key={cat._id}
+                to={`/products?category=${cat._id}`}
+                className="category-card-blinkit"
+              >
+                <div className="category-card-img-wrap">
+                  {cat.image || cat.name ? (
+                    <img 
+                      src={getCategoryImageUrl(cat)} 
+                      alt={cat.name} 
+                      loading="lazy" 
+                      onError={(e) => {
+                        const slug = cat.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+                        const fallbackPath = `/category-images/${slug}.jpg`;
+                        if (!e.target.src.endsWith(fallbackPath)) {
+                          e.target.src = fallbackPath;
+                        }
+                      }}
+                    />
+                  ) : (
+                    <span className="cat-icon-fallback">{cat.icon || '📦'}</span>
+                  )}
+                </div>
+                <span className="category-card-label" title={cat.name}>{cat.name}</span>
+              </Link>
+            ))
+          )}
+        </div>
+      </section>
+
+      {/* Admin Curated Home Sections */}
+      {loading ? (
+        <section className="home-product-shelf">
+          <div className="section-title-row">
+            <h2>Popular Products</h2>
+          </div>
+          <div className="shelf-products-row">
+            <ProductSkeleton count={6} />
+          </div>
+        </section>
+      ) : (
+        homeSections.map(({ category, products }, idx) => (
+          <section className="home-product-shelf" key={category._id}>
+            <div className="section-title-row">
+              <div className="title-left">
+                <h2>{category.homeTitle || category.name}</h2>
+                <span className="title-sub">Freshly stocked in your neighborhood</span>
+              </div>
+              <Link to={`/products?category=${category._id}`} className="see-all-action">
+                See all <ChevronRight size={16} />
+              </Link>
+            </div>
+
+            {products.length === 0 ? (
+              <div className="empty-shelf-notice">
+                <p>No products available right now in this category.</p>
+              </div>
+            ) : (
+              <div className="shelf-slider-container">
+                <button
+                  type="button"
+                  className="shelf-nav-btn shelf-btn-left"
+                  onClick={() => scrollSection(idx, -1)}
+                  aria-label="Scroll left"
+                >
+                  <ChevronLeft size={20} />
+                </button>
+
+                <div 
+                  className="shelf-products-row"
+                  ref={(el) => { sliderRefs.current[idx] = el; }}
+                >
+                  {products.map((prod) => (
+                    <ProductCard 
+                      key={prod._id}
+                      product={prod}
+                      onRequireLogin={requireLoginHandler}
+                    />
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  className="shelf-nav-btn shelf-btn-right"
+                  onClick={() => scrollSection(idx, 1)}
+                  aria-label="Scroll right"
+                >
+                  <ChevronRight size={20} />
+                </button>
+              </div>
+            )}
+          </section>
+        ))
+      )}
+
+      {/* Auth Modal Triggered on Action */}
+      {showLoginModal && (
+        <div className="login-modal-backdrop" role="dialog" aria-modal="true">
+          <div className="login-modal-card">
+            <button className="login-modal-close" onClick={closeLoginModal} aria-label="Close">
+              <X size={20} />
+            </button>
+            <div className="login-modal-top">
+              <div className="login-secure-chip">
+                <Lock size={12} />
+                <span>100% Secure Checkout</span>
+              </div>
+              <h3>Welcome to Progicart</h3>
+              <p>Sign in to add items to your cart & get lightning delivery.</p>
+            </div>
+
+            {loginError && <div className="login-err-banner">{loginError}</div>}
+
+            <form onSubmit={handleLoginSubmit} className="login-form-box">
+              <div className="input-group">
+                <label>Email Address</label>
+                <input
+                  type="email"
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
+                  placeholder="name@example.com"
+                  required
+                />
+              </div>
+
+              <div className="input-group">
+                <label>Password</label>
+                <input
+                  type="password"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
+
+              <button type="submit" className="login-submit-btn" disabled={loginLoading}>
+                {loginLoading ? 'Signing in…' : 'Login & Continue'}
+              </button>
+            </form>
+
+            <div className="login-bottom-link">
+              <span>Don't have an account?</span>
+              <button 
+                type="button"
+                className="link-btn"
+                onClick={() => {
+                  closeLoginModal();
+                  navigate('/register');
+                }}
+              >
+                Register here
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 

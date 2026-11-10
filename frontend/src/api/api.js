@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Dynamically detect API URL: Vercel production default is '/api' (same domain), local dev is 'http://localhost:5000/api'
+const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:5000/api');
 
 const api = axios.create({ baseURL: API_URL });
 // Add token to requests
@@ -50,14 +51,31 @@ export const cartAPI = {
 
 // Orders APIs
 export const ordersAPI = {
-  createOrder: (shippingAddress, paymentMethod) =>
-    api.post('/orders', { shippingAddress, paymentMethod }),
+  createOrder: (orderData, paymentMethod) => {
+    if (typeof orderData === 'object' && orderData.shippingAddress) {
+      return api.post('/orders', orderData);
+    }
+    return api.post('/orders', { shippingAddress: orderData, paymentMethod });
+  },
   getUserOrders: () => api.get('/orders'),
+  createRazorpayOrder: (amount) =>
+    api.post('/orders/razorpay/create-order', { amount }),
+  verifyRazorpayPayment: (paymentData) =>
+    api.post('/orders/razorpay/verify-payment', paymentData),
 };
 
 // Admin Orders APIs
 export const adminOrdersAPI = {
   getAll: () => api.get('/orders/admin/all'),
+  updateStatus: (id, status, deliveryPartner) =>
+    api.put(`/orders/${id}/status`, { status, deliveryPartner }),
+};
+
+// Delivery Partner APIs
+export const deliveryAPI = {
+  getActiveOrders: () => api.get('/orders/delivery/active'),
+  updateOrderStatus: (id, status, partnerInfo = {}) =>
+    api.put(`/orders/delivery/${id}/status`, { status, ...partnerInfo }),
 };
 
 // Admin Users APIs
@@ -98,6 +116,27 @@ export const adminProductsAPI = {
   delete: (id) => api.delete(`/products/${id}`),
   getAll: () => api.get('/products'),
   getByCategory: (categoryId) => api.get(`/products/category/${categoryId}`),
+};
+
+export const bannersAPI = {
+  getActive: () => api.get('/banners/active'),
+  getAll: () => api.get('/banners'),
+};
+
+export const adminBannersAPI = {
+  create: (data) => api.post('/banners', data, {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+    },
+  }),
+  update: (id, data) => api.put(`/banners/${id}`, data, {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
+    },
+  }),
+  delete: (id) => api.delete(`/banners/${id}`, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` },
+  }),
 };
 
 export default api;

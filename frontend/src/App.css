@@ -28,6 +28,11 @@ html, body, #root {
   padding: 20px 0;
 }
 
+.app-main-standalone {
+  flex: 1;
+  padding: 0;
+}
+
 a {
   text-decoration: none;
   color: inherit;

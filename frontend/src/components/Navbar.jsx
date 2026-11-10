@@ -1,256 +1,459 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { 
+  Heart, 
+  ShoppingCart, 
+  User, 
+  MapPin, 
+  Search, 
+  ChevronDown, 
+  Crosshair, 
+  X, 
+  Check, 
+  Sparkles,
+  ClipboardList,
+  LogOut,
+  ShieldAlert,
+  Navigation
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { useLocationContext } from '../context/LocationContext';
 import '../styles/Navbar.css';
+
+const TRENDING_SEARCHES = ['Milk', 'Curd', 'Bread', 'Potato Chips', 'Cold Drinks', 'Chocolate', 'Onion'];
 
 const Navbar = () => {
   const { token, logout, user } = useAuth();
-  const { totalItems } = useCart();
+  const { totalItems, cart, openCartDrawer } = useCart();
+  const { location, setLocation, detectLocation, locating, error: locationError } = useLocationContext();
   const navigate = useNavigate();
-  const [search, setSearch] = useState('');
-  const [location, setLocation] = useState('Husainabad, Lucknow');
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [savedAddresses, setSavedAddresses] = useState([]);
-  const dropdownRef = useRef(null);
 
-  // Load saved addresses on mount and when user changes
+  const [search, setSearch] = useState('');
+  const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [showPromo, setShowPromo] = useState(true);
+  const [savedAddresses, setSavedAddresses] = useState([]);
+
+  const profileRef = useRef(null);
+  const searchRef = useRef(null);
+
+  // Load user saved addresses
   useEffect(() => {
-    // Clear addresses if no user is logged in
     if (!user?.id) {
       setSavedAddresses([]);
       return;
     }
-    
     const saved = localStorage.getItem(`savedAddresses_${user.id}`);
     if (saved) {
       try {
         setSavedAddresses(JSON.parse(saved));
-      } catch (error) {
-        console.error('Error loading addresses:', error);
+      } catch (err) {
         setSavedAddresses([]);
       }
-    } else {
-      setSavedAddresses([]);
     }
   }, [user?.id]);
 
-  // Listen for address updates (real-time)
+  // Listen for real-time address updates
   useEffect(() => {
-    // Listen for storage changes (when addresses are updated in another tab)
     const handleStorageChange = (e) => {
       if (user?.id && e.key === `savedAddresses_${user.id}`) {
-        const updated = JSON.parse(e.newValue || '[]');
-        setSavedAddresses(updated);
+        setSavedAddresses(JSON.parse(e.newValue || '[]'));
       }
     };
-
-    // Listen for custom event when addresses are updated in same tab
     const handleAddressesUpdated = (e) => {
       setSavedAddresses(e.detail || []);
     };
-
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('addressesUpdated', handleAddressesUpdated);
-
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('addressesUpdated', handleAddressesUpdated);
     };
   }, [user?.id]);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-    setShowDropdown(false);
-  };
-
-  // Close dropdown when clicking outside
+  // Handle outside click for profile dropdown & search suggestions
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setShowDropdown(false);
+    const handleClickOutside = (e) => {
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setShowProfileDropdown(false);
+      }
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setShowSearchSuggestions(false);
       }
     };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
-    if (showDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showDropdown]);
-
-  const handleSearch = (e) => {
+  const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (search.trim()) {
-      navigate(`/products?search=${search}`);
-      setSearch('');
+      navigate(`/products?search=${encodeURIComponent(search.trim())}`);
+      setShowSearchSuggestions(false);
     }
   };
 
-  const cartCount = totalItems || 0;
+  const handleQuickSearch = (term) => {
+    setSearch(term);
+    navigate(`/products?search=${encodeURIComponent(term)}`);
+    setShowSearchSuggestions(false);
+  };
+
+  // Instant 1-Click GPS Geolocation Detection: detects, updates context, closes modal, and returns to Homepage!
+  const handleDetectGPS = async () => {
+    try {
+      const res = await detectLocation();
+      const detectedAddress = res?.display || location || 'Husainabad, Lucknow';
+      setLocation(detectedAddress);
+
+      // Auto-save address to user's saved addresses if logged in
+      if (token && user?.id && res?.lat && res?.lng) {
+        const newAddr = {
+          id: Date.now().toString(),
+          label: 'Current Location',
+          street: detectedAddress,
+          city: res.city || 'Lucknow',
+          latitude: Number(res.lat).toFixed(6),
+          longitude: Number(res.lng).toFixed(6),
+          isDefault: true,
+        };
+        const currentSaved = JSON.parse(localStorage.getItem(`savedAddresses_${user.id}`) || '[]');
+        const updated = [newAddr, ...currentSaved.filter(a => a.street !== detectedAddress)];
+        localStorage.setItem(`savedAddresses_${user.id}`, JSON.stringify(updated));
+        setSavedAddresses(updated);
+        window.dispatchEvent(new CustomEvent('addressesUpdated', { detail: updated }));
+      }
+
+      // Close modal and navigate immediately to home page
+      setShowLocationModal(false);
+      navigate('/');
+    } catch (err) {
+      console.warn('GPS detection error:', err);
+    }
+  };
+
+  // 1-Click Saved Address Selector
+  const handleSelectLocation = (loc) => {
+    setLocation(loc);
+    setShowLocationModal(false);
+    navigate('/');
+  };
+
+  const handleLogout = () => {
+    logout();
+    setShowProfileDropdown(false);
+    navigate('/');
+  };
+
+  const cartTotal = cart?.totalPrice || 0;
 
   return (
-    <nav className="navbar">
-      <div className="navbar-container">
-        {/* Logo Section */}
-        <Link to="/" className="navbar-logo">
-          🛒 <span className="quick-text">Quick</span> <span className="cart-text">Cart</span>
-        </Link>
-
-        {/* Location & Delivery Section */}
-        <div className="location-section">
-          <span className="delivery-text">🚚 Delivery in 17 minutes</span>
-          <div className="location-picker">
-            <select className="location-select" value={location} onChange={(e) => setLocation(e.target.value)}>
-              <optgroup label="Default Locations">
-                <option>Husainabad, Lucknow</option>
-                <option>Gomti Nagar, Lucknow</option>
-                <option>Aliganj, Lucknow</option>
-                <option>Hazratganj, Lucknow</option>
-                <option>Mohanlalganj, Lucknow</option>
-              </optgroup>
-              {savedAddresses.length > 0 && (
-                <optgroup label="My Addresses">
-                  {savedAddresses.map(addr => (
-                    <option key={addr.id} value={`${addr.street}, ${addr.city}`}>
-                      {addr.street}, {addr.city}
-                    </option>
-                  ))}
-                </optgroup>
-              )}
-            </select>
+    <header className="site-header-wrapper">
+      {/* Top Promo Banner */}
+      {showPromo && (
+        <div className="top-promo-banner">
+          <div className="top-promo-content">
+            <span className="promo-pill">⚡ 10 MINS DELIVERY</span>
+            <span className="promo-text">Get fresh groceries delivered at your doorstep in minutes!</span>
+            <span className="promo-divider">•</span>
+            <span className="promo-highlight">FREE delivery on orders above ₹499 🎉</span>
           </div>
-        </div>
-
-        {/* Search Bar */}
-        <form className="search-form" onSubmit={handleSearch}>
-          <input
-            type="text"
-            placeholder="Search 'chocolate'"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="search-input"
-          />
-          <button type="submit" className="search-btn">🔍</button>
-        </form>
-
-        {/* Navigation Links */}
-        <div className="nav-links">
-          <Link
-            to={token ? '/cart' : '/login'}
-            className="mobile-user-link"
-            aria-label={token ? 'Open cart' : 'Open account'}
+          <button 
+            className="close-promo" 
+            onClick={() => setShowPromo(false)} 
+            aria-label="Dismiss banner"
           >
-            {token ? '🛒' : '👤'}
-            {token && cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
+            ✕
+          </button>
+        </div>
+      )}
+
+      {/* Main Navbar */}
+      <nav className="navbar">
+        <div className="navbar-container">
+          {/* Progicart Logo */}
+          <Link to="/" className="progicart-brand-logo" aria-label="Progicart Home">
+            <img src="/logo.png" alt="Progicart" className="brand-logo-img" />
           </Link>
 
-          <div className="desktop-nav-links">
-          {token ? (
-            <>
-              <Link to="/cart" className="cart-link">
-                🛒 <span className={cartCount > 0 ? 'cart-link-active' : ''}>Cart</span>
-                {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
-              </Link>
-              
-              {/* User Dropdown Menu */}
-              <div className="profile-dropdown-wrapper" ref={dropdownRef}>
+          {/* Delivery Location Trigger Button */}
+          <button 
+            type="button"
+            className="location-trigger-btn"
+            onClick={() => setShowLocationModal(true)}
+            aria-label="Select delivery address"
+          >
+            <div className="location-pin-wrap">
+              <MapPin size={20} className="pin-icon" />
+            </div>
+            <div className="location-text-col">
+              <span className="delivery-time-badge">Delivery in 10 minutes</span>
+              <div className="selected-address-row">
+                <span className="selected-address-text">{location || 'Husainabad, Lucknow'}</span>
+                <ChevronDown size={14} className="caret-icon" />
+              </div>
+            </div>
+          </button>
+
+          {/* Search Bar */}
+          <div className="search-bar-container" ref={searchRef}>
+            <form className="search-form" onSubmit={handleSearchSubmit}>
+              <Search size={18} className="search-icon-left" />
+              <input
+                type="text"
+                placeholder='Search "milk", "bread", "chips", "butter"...'
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onFocus={() => setShowSearchSuggestions(true)}
+                className="search-input"
+              />
+              {search && (
                 <button 
-                  className="profile-link" 
-                  onClick={() => setShowDropdown(!showDropdown)}
-                  title={user?.name || 'Profile'}
+                  type="button" 
+                  className="search-clear-btn"
+                  onClick={() => setSearch('')}
+                  aria-label="Clear search"
                 >
-                  <span className="user-icon-circle">👤</span>
+                  <X size={16} />
                 </button>
-                
-                {showDropdown && (
-                  <div className="dropdown-menu">
-                    <div className="dropdown-header">
-                      <p className="user-name">{user?.name || 'User'}</p>
-                      <p className="user-email">{user?.email}</p>
+              )}
+            </form>
+
+            {/* Quick Suggestions Popup */}
+            {showSearchSuggestions && (
+              <div className="search-suggestions-dropdown">
+                <div className="suggestion-section-title">
+                  <Sparkles size={14} color="#f8cb46" />
+                  <span>Trending Searches</span>
+                </div>
+                <div className="trending-tags-grid">
+                  {TRENDING_SEARCHES.map((item) => (
+                    <button
+                      key={item}
+                      type="button"
+                      className="trending-tag-pill"
+                      onClick={() => handleQuickSearch(item)}
+                    >
+                      <Search size={12} />
+                      {item}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right Action Icons */}
+          <div className="nav-actions-group">
+            <Link to="/wishlist" className="nav-action-link" title="My Wishlist">
+              <div className="nav-icon-circle">
+                <Heart size={20} />
+              </div>
+              <span className="nav-action-label">Wishlist</span>
+            </Link>
+
+            {/* Auth / Profile */}
+            {token ? (
+              <div className="profile-dropdown-wrapper" ref={profileRef}>
+                <button
+                  type="button"
+                  className="nav-action-link profile-trigger"
+                  onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                  aria-label="User menu"
+                >
+                  <div className="nav-icon-circle profile-circle">
+                    <User size={20} />
+                  </div>
+                  <span className="nav-action-label">{user?.name ? user.name.split(' ')[0] : 'Profile'}</span>
+                </button>
+
+                {showProfileDropdown && (
+                  <div className="profile-popover">
+                    <div className="profile-popover-header">
+                      <p className="user-fullname">{user?.name || 'Customer'}</p>
+                      <p className="user-email-text">{user?.email}</p>
+                      {user?.isAdmin && (
+                        <span className="admin-chip">Admin Access</span>
+                      )}
                     </div>
-                    <div className="dropdown-divider"></div>
+                    <div className="popover-divider" />
+                    {user?.isAdmin && (
+                      <Link 
+                        to="/admin" 
+                        className="popover-menu-item"
+                        onClick={() => setShowProfileDropdown(false)}
+                      >
+                        <ShieldAlert size={16} color="#0c831f" />
+                        <span>Admin Panel</span>
+                      </Link>
+                    )}
                     <Link 
                       to="/orders" 
-                      className="dropdown-item"
-                      onClick={() => setShowDropdown(false)}
+                      className="popover-menu-item"
+                      onClick={() => setShowProfileDropdown(false)}
                     >
-                      📋 My Orders
+                      <ClipboardList size={16} />
+                      <span>My Orders</span>
                     </Link>
                     <Link 
                       to="/addresses" 
-                      className="dropdown-item"
-                      onClick={() => setShowDropdown(false)}
+                      className="popover-menu-item"
+                      onClick={() => setShowProfileDropdown(false)}
                     >
-                      📍 Saved Addresses
-                    </Link>
-                    <Link 
-                      to="/wishlist" 
-                      className="dropdown-item"
-                      onClick={() => setShowDropdown(false)}
-                    >
-                      ❤️ My Wishlist
+                      <MapPin size={16} />
+                      <span>Saved Addresses</span>
                     </Link>
                     <Link 
                       to="/profile" 
-                      className="dropdown-item"
-                      onClick={() => setShowDropdown(false)}
+                      className="popover-menu-item"
+                      onClick={() => setShowProfileDropdown(false)}
                     >
-                      👤 My Profile
+                      <User size={16} />
+                      <span>Account Settings</span>
                     </Link>
-                    <div className="dropdown-divider"></div>
-                    <Link 
-                      to="" 
-                      className="dropdown-item"
-                      onClick={() => setShowDropdown(false)}
-                    >
-                      💊 My Prescriptions
-                    </Link>
-                    <Link 
-                      to="" 
-                      className="dropdown-item"
-                      onClick={() => setShowDropdown(false)}
-                    >
-                      🎁 E-Gift Cards
-                    </Link>
-                    <Link 
-                      to="" 
-                      className="dropdown-item"
-                      onClick={() => setShowDropdown(false)}
-                    >
-                      ❓ FAQ's
-                    </Link>
-                    <Link 
-                      to="" 
-                      className="dropdown-item"
-                      onClick={() => setShowDropdown(false)}
-                    >
-                      🔒 Account Privacy
-                    </Link>
-                    <div className="dropdown-divider"></div>
+                    <div className="popover-divider" />
                     <button 
+                      type="button"
                       onClick={handleLogout} 
-                      className="dropdown-item logout-item"
+                      className="popover-menu-item logout-action"
                     >
-                      🚪 Log Out
+                      <LogOut size={16} />
+                      <span>Log Out</span>
                     </button>
                   </div>
                 )}
               </div>
-            </>
-          ) : (
-            <>
-              <Link to="/login" className="login-link">Login</Link>
-              <Link to="/register" className="register-link">Register</Link>
-            </>
-          )}
+            ) : (
+              <Link to="/login" className="blinkit-login-btn">
+                Login
+              </Link>
+            )}
+
+            {/* Iconic Blinkit Green Cart Pill Button */}
+            <button
+              type="button"
+              className={`blinkit-cart-pill-btn ${totalItems > 0 ? 'has-items' : ''}`}
+              onClick={openCartDrawer}
+              aria-label="Open Cart"
+            >
+              <ShoppingCart size={19} className="cart-pill-icon" />
+              <div className="cart-pill-text">
+                {totalItems > 0 ? (
+                  <>
+                    <span className="cart-pill-count">{totalItems} {totalItems === 1 ? 'item' : 'items'}</span>
+                    <span className="cart-pill-price">₹{cartTotal.toFixed(0)}</span>
+                  </>
+                ) : (
+                  <span className="cart-pill-empty-label">My Cart</span>
+                )}
+              </div>
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Modern Ticker Announcement */}
+      <div className="announcement-ticker-bar">
+        <div className="ticker-track">
+          <div className="ticker-content">
+            <span>⚡ <strong>SUPERFAST 10 MIN DELIVERY</strong> in your area</span>
+            <span className="ticker-dot">•</span>
+            <span>🎁 Flat 15% OFF on first 3 orders • Code: <strong>WELCOME15</strong></span>
+            <span className="ticker-dot">•</span>
+            <span>🥑 Fresh Farm Fruits & Vegetables handpicked daily</span>
+            <span className="ticker-dot">•</span>
+            <span>⚡ <strong>SUPERFAST 10 MIN DELIVERY</strong> in your area</span>
+            <span className="ticker-dot">•</span>
+            <span>🎁 Flat 15% OFF on first 3 orders • Code: <strong>WELCOME15</strong></span>
           </div>
         </div>
       </div>
-    </nav>
+
+      {/* Instant 1-Click Location Modal */}
+      {showLocationModal && (
+        <div className="modal-backdrop" onClick={() => setShowLocationModal(false)}>
+          <div className="location-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="location-modal-header">
+              <h3>Select Delivery Location</h3>
+              <button 
+                type="button" 
+                className="modal-close-icon"
+                onClick={() => setShowLocationModal(false)}
+                aria-label="Close"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="location-modal-body">
+              {/* 1-Click GPS Detect Button: Pure GPS tracking */}
+              <button 
+                type="button"
+                className="detect-location-btn"
+                onClick={handleDetectGPS}
+                disabled={locating}
+              >
+                <Crosshair size={22} className={locating ? 'spin-icon' : ''} />
+                <div className="detect-text-col">
+                  <strong>{locating ? 'Detecting your real-time GPS location…' : 'Use Current Location (GPS)'}</strong>
+                  <span>Auto-detect exact coordinates & return to shopping</span>
+                </div>
+              </button>
+
+              {locationError && (
+                <p className="location-err-text">{locationError}</p>
+              )}
+
+              {/* Saved Addresses if logged in */}
+              {savedAddresses.filter(a => 
+                !a.street?.toLowerCase().includes('jalandhar') && 
+                !a.street?.toLowerCase().includes('punjab') &&
+                !a.street?.toLowerCase().includes('jandu singha')
+              ).length > 0 && (
+                <div className="modal-locations-group">
+                  <h4>My Saved Addresses</h4>
+                  <div className="address-pills-list">
+                    {savedAddresses
+                      .filter(a => 
+                        !a.street?.toLowerCase().includes('jalandhar') && 
+                        !a.street?.toLowerCase().includes('punjab') &&
+                        !a.street?.toLowerCase().includes('jandu singha')
+                      )
+                      .map((addr) => {
+                        const full = addr.street?.includes(addr.city) ? addr.street : `${addr.street}, ${addr.city}`;
+                        const isSelected = location === full;
+                        return (
+                          <div 
+                            key={addr.id}
+                            className={`address-select-row ${isSelected ? 'active' : ''}`}
+                            onClick={() => handleSelectLocation(full)}
+                          >
+                            <MapPin size={16} />
+                            <div className="addr-info">
+                              <div className="addr-tag-row">
+                                <span className="addr-tag">{addr.label || 'Home'}</span>
+                                {(addr.latitude || addr.longitude) && (
+                                  <span className="addr-gps-pill">
+                                    GPS Verified
+                                  </span>
+                                )}
+                              </div>
+                              <span className="addr-str">{full}</span>
+                            </div>
+                            {isSelected && <Check size={16} className="check-icon" />}
+                          </div>
+                        );
+                      })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </header>
   );
 };
 

@@ -100,6 +100,25 @@
   text-decoration: underline;
 }
 
+@media (max-width: 480px) {
+  .auth-container {
+    padding: 24px 14px 70px;
+    min-height: auto;
+  }
+
+  .auth-box {
+    padding: 24px 18px;
+    border-radius: 14px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  }
+
+  .auth-box h1 {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+}
+
+
 @media (max-width: 768px) {
   .auth-container {
     padding: 16px 12px;

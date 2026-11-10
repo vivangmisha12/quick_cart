@@ -1,13 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { 
+  ShoppingBag, 
+  Trash2, 
+  Plus, 
+  Minus, 
+  ArrowRight, 
+  ShieldCheck, 
+  Clock, 
+  ChevronRight 
+} from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import '../styles/Cart.css';
 
 const Cart = () => {
-  const { cart, fetchCart, removeFromCart, updateCartItem } = useCart();
+  const { cart, fetchCart, removeFromCart, updateCartItem, totalItems } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
+
   useEffect(() => {
     if (user) {
       fetchCart();
@@ -18,24 +29,24 @@ const Cart = () => {
   const total = cart.totalPrice || 0;
   
   // Free delivery threshold
-  const deliveryThreshold = 500;
+  const deliveryThreshold = 499;
   const isFreeDelivery = total >= deliveryThreshold;
-  const amountNeededForFreeDelivery = Math.max(0, deliveryThreshold - total);
-
-  const handleQuantityChange = (productId, newQuantity) => {
-    if (newQuantity > 0) {
-      updateCartItem(productId, newQuantity);
-    }
-  };
+  const amountNeeded = Math.max(0, deliveryThreshold - total);
+  const deliveryFee = isFreeDelivery || total === 0 ? 0 : 35;
+  const handlingFee = total > 0 ? 4 : 0;
+  const grandTotal = total + deliveryFee + handlingFee;
 
   if (items.length === 0) {
     return (
-      <div className="cart-container">
-        <div className="empty-cart">
+      <div className="cart-page-wrapper">
+        <div className="empty-cart-card">
+          <div className="empty-icon-circle">
+            <ShoppingBag size={56} color="#0c831f" strokeWidth={1.5} />
+          </div>
           <h2>Your cart is empty</h2>
-          <p>Add some products to get started!</p>
-          <Link to="/products" className="continue-shopping">
-            Continue Shopping
+          <p>Explore thousands of fresh groceries & everyday essentials delivered in 10 minutes.</p>
+          <Link to="/products" className="start-shopping-action">
+            Browse Products <ArrowRight size={16} />
           </Link>
         </div>
       </div>
@@ -43,68 +54,139 @@ const Cart = () => {
   }
 
   return (
-    <div className="cart-container">
-      <h1>Shopping Cart</h1>
-      <div className="cart-content">
-        <div className="cart-items">
-          {items.map((item) => (
-            <div key={item.productId?._id || item.productId} className="cart-item">
-              <img
-                src={item.productId?.image || 'https://via.placeholder.com/100'}
-                alt={item.productId?.name}
+    <div className="cart-page-wrapper">
+      <div className="cart-page-header">
+        <h1>Shopping Cart ({totalItems} {totalItems === 1 ? 'item' : 'items'})</h1>
+        <div className="cart-delivery-eta-pill">
+          <Clock size={15} />
+          <span>Delivery in 10-15 mins</span>
+        </div>
+      </div>
+
+      <div className="cart-grid-layout">
+        {/* Items List */}
+        <div className="cart-items-container">
+          {/* Free Delivery Bar */}
+          <div className="cart-free-delivery-banner">
+            {isFreeDelivery ? (
+              <span className="free-text eligible">🎉 You unlocked <strong>FREE delivery</strong>!</span>
+            ) : (
+              <span className="free-text">
+                Add <strong>₹{amountNeeded.toFixed(0)}</strong> more to get <strong>FREE delivery</strong>
+              </span>
+            )}
+            <div className="progress-track">
+              <div 
+                className="progress-fill" 
+                style={{ width: `${Math.min(100, Math.round((total / deliveryThreshold) * 100))}%` }} 
               />
-              <div className="item-details">
-                <h3>{item.productId?.name}</h3>
-                <p>₹{item.price}</p>
-              </div>
-              <div className="quantity-control">
-                <button onClick={() => handleQuantityChange(item.productId._id, item.quantity - 1)}>-</button>
-                <input type="number" value={item.quantity} readOnly />
-                <button onClick={() => handleQuantityChange(item.productId._id, item.quantity + 1)}>+</button>
-              </div>
-              <div className="item-total">
-                ₹{(item.price * item.quantity).toFixed(2)}
-              </div>
-              <button
-                className="remove-btn"
-                onClick={() => removeFromCart(item.productId._id)}
-              >
-                🗑️
-              </button>
             </div>
-          ))}
+          </div>
+
+          <div className="cart-items-list-card">
+            {items.map((item) => {
+              const prod = item.productId || {};
+              const id = prod._id || item.productId;
+              return (
+                <div key={id} className="cart-item-row">
+                  <div className="cart-item-thumb">
+                    {prod.image ? (
+                      <img src={prod.image} alt={prod.name} />
+                    ) : (
+                      <div className="thumb-placeholder">{prod.name?.charAt(0) || 'P'}</div>
+                    )}
+                  </div>
+
+                  <div className="cart-item-info">
+                    <h3>{prod.name}</h3>
+                    <span className="item-unit">{prod.unit || '1 unit'}</span>
+                    <span className="item-price">₹{item.price}</span>
+                  </div>
+
+                  {/* Quantity Stepper */}
+                  <div className="cart-stepper-pill">
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        if (item.quantity > 1) {
+                          updateCartItem(id, item.quantity - 1);
+                        } else {
+                          removeFromCart(id);
+                        }
+                      }}
+                    >
+                      <Minus size={13} strokeWidth={3} />
+                    </button>
+                    <span className="stepper-val">{item.quantity}</span>
+                    <button 
+                      type="button" 
+                      onClick={() => updateCartItem(id, item.quantity + 1)}
+                    >
+                      <Plus size={13} strokeWidth={3} />
+                    </button>
+                  </div>
+
+                  <div className="cart-item-total">
+                    ₹{(item.price * item.quantity).toFixed(2)}
+                  </div>
+
+                  <button
+                    type="button"
+                    className="cart-remove-icon-btn"
+                    onClick={() => removeFromCart(id)}
+                    aria-label="Remove item"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
-        <div className="cart-summary">
-          <h2>Order Summary</h2>
+        {/* Order Summary Column */}
+        <div className="cart-summary-col">
+          <div className="cart-summary-card">
+            <h2>Bill Details</h2>
 
-          {/* Free Delivery Banner */}
-          <div className={`free-delivery-banner ${isFreeDelivery ? 'eligible' : 'ineligible'}`}>
-            {isFreeDelivery ? (
-              <span>✅ Free Delivery Eligible!</span>
-            ) : (
-              <span>Add ₹{amountNeededForFreeDelivery.toFixed(0)} more for FREE delivery</span>
-            )}
+            <div className="bill-summary-row">
+              <span>Items Total</span>
+              <span>₹{total.toFixed(2)}</span>
+            </div>
+
+            <div className="bill-summary-row">
+              <span>Delivery Charge</span>
+              <span className={isFreeDelivery ? 'text-green' : ''}>
+                {isFreeDelivery ? 'FREE' : `₹${deliveryFee}`}
+              </span>
+            </div>
+
+            <div className="bill-summary-row">
+              <span>Handling Charge</span>
+              <span>₹{handlingFee}</span>
+            </div>
+
+            <div className="bill-summary-divider" />
+
+            <div className="bill-summary-row grand-total-row">
+              <strong>Grand Total</strong>
+              <strong>₹{grandTotal.toFixed(2)}</strong>
+            </div>
+
+            <button
+              type="button"
+              className="proceed-checkout-btn"
+              onClick={() => navigate('/checkout')}
+            >
+              <span>Proceed to Checkout</span>
+              <ArrowRight size={18} />
+            </button>
           </div>
 
-          <div className="summary-row">
-            <span>Subtotal:</span>
-            <span>₹{total.toFixed(2)}</span>
+          <div className="checkout-trust-badge">
+            <ShieldCheck size={20} color="#0c831f" />
+            <p>100% Safe Payments • Instant Doorstep Delivery</p>
           </div>
-          <div className="summary-row">
-            <span>Delivery:</span>
-            <span>{isFreeDelivery ? 'Free' : '₹40'}</span>
-          </div>
-          <div className="summary-row total">
-            <span>Total:</span>
-            <span>₹{(total + (isFreeDelivery ? 0 : 40)).toFixed(2)}</span>
-          </div>
-          <button
-            className="checkout-btn"
-            onClick={() => navigate('/checkout')}
-          >
-            Proceed to Checkout
-          </button>
         </div>
       </div>
     </div>

@@ -8,6 +8,10 @@ export const CartProvider = ({ children }) => {
   const { token } = useAuth();
   const [cart, setCart] = useState({ items: [], totalPrice: 0 });
   const [loading, setLoading] = useState(false);
+  const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
+
+  const openCartDrawer = () => setIsCartDrawerOpen(true);
+  const closeCartDrawer = () => setIsCartDrawerOpen(false);
 
   const fetchCart = async () => {
     if (!token) {
@@ -84,7 +88,20 @@ export const CartProvider = ({ children }) => {
   const totalItems = (cart.items || []).reduce((sum, item) => sum + (item.quantity || 0), 0);
 
   return (
-    <CartContext.Provider value={{ cart, totalItems, loading, fetchCart, addToCart, removeFromCart, updateCartItem, clearCart, getProductQuantity }}>
+    <CartContext.Provider value={{ 
+      cart, 
+      totalItems, 
+      loading, 
+      fetchCart, 
+      addToCart, 
+      removeFromCart, 
+      updateCartItem, 
+      clearCart, 
+      getProductQuantity,
+      isCartDrawerOpen,
+      openCartDrawer,
+      closeCartDrawer
+    }}>
       {children}
     </CartContext.Provider>
   );

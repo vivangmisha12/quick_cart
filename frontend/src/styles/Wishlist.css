@@ -174,7 +174,7 @@
 
 @media (max-width: 768px) {
   .wishlist-container {
-    padding: 20px 15px;
+    padding: 20px 14px 70px;
   }
 
   .wishlist-container h1 {
@@ -183,7 +183,38 @@
   }
 
   .wishlist-grid {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 15px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .wishlist-image-container {
+    height: 130px;
+  }
+
+  .product-name {
+    font-size: 13px;
+  }
+
+  .price {
+    font-size: 15px;
+  }
+
+  .view-product-btn {
+    padding: 8px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .wishlist-container {
+    padding: 14px 10px 70px;
+  }
+
+  .wishlist-grid {
+    gap: 8px;
+  }
+
+  .wishlist-image-container {
+    height: 110px;
   }
 }

@@ -1,0 +1,10 @@
+# Vercel Ignore file
+node_modules
+mongo-backup
+backend/uploads
+backend/node_modules
+frontend/node_modules
+.git
+.env
+.env.local
+

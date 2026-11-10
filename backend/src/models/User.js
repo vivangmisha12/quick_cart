@@ -20,6 +20,9 @@ const userSchema = new mongoose.Schema({
   ],
   
   isAdmin: { type: Boolean, default: false },
+  isDeliveryPartner: { type: Boolean, default: false },
+  role: { type: String, enum: ['customer', 'admin', 'delivery_partner'], default: 'customer' },
+  vehicleNumber: { type: String, default: '' },
   createdAt: { type: Date, default: Date.now },
 });
 

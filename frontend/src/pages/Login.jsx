@@ -32,7 +32,12 @@ const Login = () => {
   return (
     <div className="auth-container">
       <div className="auth-box">
-        <h1>Login</h1>
+        <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+          <Link to="/">
+            <img src="/logo.png" alt="Progicart" style={{ height: '46px', width: 'auto', objectFit: 'contain' }} />
+          </Link>
+        </div>
+        <h1>Login to Progicart</h1>
         {error && <div className="error-msg">{error}</div>}
 
         <form onSubmit={handleSubmit}>

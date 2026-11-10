@@ -11,7 +11,7 @@ const productSchema = new mongoose.Schema({
   imagePublicId: { type: String },
   images: [String], // Multiple images
   stock: { type: Number, required: true, default: 0 },
-  deliveryTime: Number, // In minutes (17 for Blinkit)
+  deliveryTime: Number, // In minutes (10-15 for Progicart)
   unit: { type: String, default: 'piece' }, // piece, kg, liter, etc.
   discount: { type: Number, default: 0 }, // 0-100%
   isTrending: { type: Boolean, default: false },

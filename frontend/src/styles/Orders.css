@@ -244,16 +244,21 @@
 
 @media (max-width: 768px) {
   .orders-container {
-    padding: 20px 15px;
+    padding: 20px 14px 70px;
   }
 
   .orders-header h1 {
     font-size: 24px;
   }
 
+  .order-card {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
   .order-header {
     flex-direction: column;
-    gap: 16px;
+    gap: 10px;
   }
 
   .order-amount {
@@ -262,5 +267,13 @@
 
   .order-actions {
     flex-direction: column;
+    gap: 8px;
+  }
+
+  .item-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 8px 0;
   }
 }
