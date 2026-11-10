@@ -63,7 +63,8 @@ const AppContent = () => {
       {showSplash && (
         <SplashScreen 
           onFinish={() => setShowSplash(false)} 
-          duration={1900}
+          minDuration={1800}
+          maxTimeout={5500}
         />
       )}
       {!isStandalonePortal && <Navbar />}
