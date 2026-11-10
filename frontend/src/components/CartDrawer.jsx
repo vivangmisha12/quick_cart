@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { X, ShoppingBag, ArrowRight, ShieldCheck, Clock, Trash2, Heart } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import LazyImage from './LazyImage';
 import '../styles/CartDrawer.css';
 
 const CartDrawer = () => {
@@ -111,7 +112,7 @@ const CartDrawer = () => {
                       <div key={id} className="drawer-item-card">
                         <div className="drawer-item-img-box">
                           {product.image ? (
-                            <img src={product.image} alt={product.name} />
+                            <LazyImage src={product.image} alt={product.name} width={64} height={64} />
                           ) : (
                             <div className="drawer-img-placeholder">
                               {product.name?.charAt(0) || 'P'}

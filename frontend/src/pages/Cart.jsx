@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import LazyImage from '../components/LazyImage';
 import '../styles/Cart.css';
 
 const Cart = () => {
@@ -91,7 +92,7 @@ const Cart = () => {
                 <div key={id} className="cart-item-row">
                   <div className="cart-item-thumb">
                     {prod.image ? (
-                      <img src={prod.image} alt={prod.name} />
+                      <LazyImage src={prod.image} alt={prod.name} width={70} height={70} />
                     ) : (
                       <div className="thumb-placeholder">{prod.name?.charAt(0) || 'P'}</div>
                     )}

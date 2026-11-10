@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useWishlist } from '../context/WishlistContext';
+import LazyImage from '../components/LazyImage';
 import '../styles/Wishlist.css';
 
 const Wishlist = () => {
@@ -28,10 +29,12 @@ const Wishlist = () => {
         {wishlist.map((product) => (
           <div key={product._id} className="wishlist-card">
             <div className="wishlist-image-container">
-              <img
+              <LazyImage
                 src={product.image || 'https://via.placeholder.com/200x200?text=No+Image'}
                 alt={product.name}
                 className="wishlist-image"
+                width={200}
+                height={200}
               />
               <button
                 className="remove-btn"

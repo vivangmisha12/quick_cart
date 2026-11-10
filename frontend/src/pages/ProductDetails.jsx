@@ -16,6 +16,7 @@ import { productsAPI } from '../api/api';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useWishlist } from '../context/WishlistContext';
+import LazyImage from '../components/LazyImage';
 import '../styles/ProductDetails.css';
 
 const ProductDetails = () => {
@@ -137,7 +138,7 @@ const ProductDetails = () => {
               <Heart size={20} fill={isWish ? '#e23744' : 'none'} color={isWish ? '#e23744' : '#666'} />
             </button>
             {product.image ? (
-              <img src={product.image} alt={product.name} className="pd-main-img" />
+              <LazyImage src={product.image} alt={product.name} className="pd-main-img" priority={true} width={450} height={400} />
             ) : (
               <div className="pd-img-fallback-circle">
                 <span>{product.name?.charAt(0)?.toUpperCase() || 'P'}</span>

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Heart, Clock, Plus, Minus } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
+import LazyImage from './LazyImage';
 import '../styles/ProductCard.css';
 
 const ProductCard = ({ product, onRequireLogin }) => {
@@ -74,9 +75,14 @@ const ProductCard = ({ product, onRequireLogin }) => {
           <Heart size={16} fill={isWish ? '#e23744' : 'none'} color={isWish ? '#e23744' : '#666'} />
         </button>
 
-        {/* Product Image */}
+        {/* Product Image with Lazy Loading & Auto WebP/AVIF */}
         {product.image ? (
-          <img src={product.image} alt={product.name} className="product-image" loading="lazy" />
+          <LazyImage 
+            src={product.image} 
+            alt={product.name} 
+            className="product-image" 
+            width={260}
+          />
         ) : (
           <div className="product-img-fallback">
             <span>{product.name?.charAt(0)?.toUpperCase() || 'P'}</span>

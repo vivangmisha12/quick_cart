@@ -45,3 +45,13 @@ button {
 input, select, textarea {
   font-family: inherit;
 }
+
+/* Global Lazy Image Shimmer Keyframes */
+@keyframes lazyShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}

@@ -16,6 +16,7 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import ProductCard from '../components/ProductCard';
 import ProductSkeleton from '../components/ProductSkeleton';
+import LazyImage from '../components/LazyImage';
 import '../styles/Home.css';
 
 const Home = () => {
@@ -311,17 +312,12 @@ const Home = () => {
               >
                 <div className="category-card-img-wrap">
                   {cat.image || cat.name ? (
-                    <img 
+                    <LazyImage 
                       src={getCategoryImageUrl(cat)} 
                       alt={cat.name} 
-                      loading="lazy" 
-                      onError={(e) => {
-                        const slug = cat.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-                        const fallbackPath = `/category-images/${slug}.jpg`;
-                        if (!e.target.src.endsWith(fallbackPath)) {
-                          e.target.src = fallbackPath;
-                        }
-                      }}
+                      width={100}
+                      height={100}
+                      fallbackSrc={`/category-images/${cat.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}.jpg`}
                     />
                   ) : (
                     <span className="cat-icon-fallback">{cat.icon || '📦'}</span>

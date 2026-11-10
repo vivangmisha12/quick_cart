@@ -14,6 +14,7 @@ import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import ProductCard from '../components/ProductCard';
 import ProductSkeleton from '../components/ProductSkeleton';
+import LazyImage from '../components/LazyImage';
 import '../styles/Products.css';
 
 const Products = () => {
@@ -197,17 +198,14 @@ const Products = () => {
                 onClick={() => handleCategoryClick(cat._id)}
               >
                 {cat.image || cat.name ? (
-                  <img 
+                  <LazyImage 
                     src={cat.image?.startsWith('http') ? cat.image : (cat.image ? (cat.image.startsWith('/') ? cat.image : `/${cat.image}`) : `/category-images/${cat.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}.jpg`)} 
                     alt={cat.name} 
                     className="cat-item-thumb" 
-                    onError={(e) => {
-                      const slug = cat.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-                      const fallback = `/category-images/${slug}.jpg`;
-                      if (!e.target.src.endsWith(fallback)) {
-                        e.target.src = fallback;
-                      }
-                    }}
+                    width={32}
+                    height={32}
+                    containerStyle={{ width: '32px', height: '32px', borderRadius: '6px', flexShrink: 0 }}
+                    fallbackSrc={`/category-images/${cat.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}.jpg`}
                   />
                 ) : (
                   <span className="cat-item-icon">{cat.icon || '📦'}</span>

@@ -835,7 +835,7 @@ export default function Checkout() {
                   <div key={id} className="item-row-compact">
                     <div className="item-img-box">
                       {product.image ? (
-                        <img src={product.image} alt={product.name} />
+                        <img src={product.image} alt={product.name} loading="lazy" decoding="async" />
                       ) : (
                         <div className="img-placeholder">{product.name?.charAt(0) || 'P'}</div>
                       )}
