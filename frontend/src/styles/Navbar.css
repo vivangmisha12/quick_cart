@@ -946,51 +946,98 @@
 }
 
 @media (max-width: 768px) {
-  .navbar-container {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    padding: 8px 12px 10px;
-    gap: 8px 10px;
+  .navbar {
+    padding: 6px 0 8px 0;
   }
 
+  .navbar-container {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "logo location actions"
+      "search search search";
+    align-items: center;
+    padding: 4px 12px 6px;
+    gap: 8px 10px;
+    max-width: 100%;
+  }
+
+  .progicart-brand-logo,
   .blinkit-brand-logo {
-    order: 1;
-    font-size: 24px;
-    letter-spacing: -1px;
+    grid-area: logo;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+  }
+
+  .brand-logo-img {
+    height: 32px;
+    max-width: 90px;
+    width: auto;
+    object-fit: contain;
   }
 
   .location-trigger-btn {
-    order: 2;
+    grid-area: location;
     display: flex !important;
-    max-width: 175px;
-    padding: 4px 8px;
+    align-items: center;
     gap: 6px;
-    margin-right: auto;
+    padding: 3px 6px;
+    min-width: 0;
+    max-width: 100%;
+    margin: 0;
+    text-align: left;
   }
 
   .location-pin-wrap {
-    width: 28px;
-    height: 28px;
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
   }
 
   .location-pin-wrap .pin-icon {
-    width: 16px;
-    height: 16px;
+    width: 15px;
+    height: 15px;
+  }
+
+  .location-text-col {
+    min-width: 0;
+    overflow: hidden;
   }
 
   .delivery-time-badge {
     font-size: 10px;
+    font-weight: 800;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .selected-address-row {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    min-width: 0;
   }
 
   .selected-address-text {
-    font-size: 11.5px;
-    max-width: 110px;
+    font-size: 11px;
+    max-width: 95px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .caret-icon {
+    flex-shrink: 0;
   }
 
   .nav-actions-group {
-    order: 3;
-    gap: 8px;
+    grid-area: actions;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: flex-end;
   }
 
   /* Wishlist icon hidden on mobile header since it is in Bottom Nav */
@@ -1002,27 +1049,70 @@
     display: none;
   }
 
+  .blinkit-login-btn {
+    padding: 6px 10px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #0c831f;
+    background: #f0fbf2;
+    border-radius: 8px;
+    white-space: nowrap;
+  }
+
+  .nav-icon-circle.profile-circle {
+    width: 32px;
+    height: 32px;
+  }
+
   .blinkit-cart-pill-btn {
-    padding: 8px 12px;
-    gap: 6px;
+    padding: 6px 10px;
+    gap: 5px;
+    border-radius: 8px;
+    font-size: 12px;
+  }
+
+  .blinkit-cart-pill-btn .cart-pill-icon {
+    width: 15px;
+    height: 15px;
+  }
+
+  .cart-pill-empty-label {
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .cart-pill-count {
+    font-size: 11px;
+    font-weight: 800;
   }
 
   .cart-pill-price {
     display: none;
   }
 
+  /* Dedicated Row 2 for Search Bar */
   .search-bar-container {
-    order: 4;
-    width: 100%;
-    margin-top: 2px;
+    grid-area: search;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 2px 0 0 0;
   }
 
   .search-form {
-    height: 42px;
+    height: 40px;
+    width: 100%;
   }
 
   .search-input {
     font-size: 13.5px;
+    padding: 10px 36px 10px 38px;
+    border-radius: 10px;
+  }
+
+  .search-icon-left {
+    left: 12px;
+    width: 16px;
+    height: 16px;
   }
 
   .search-suggestions-dropdown {
@@ -1045,21 +1135,56 @@
 }
 
 @media (max-width: 480px) {
-  .location-trigger-btn {
-    max-width: 145px;
+  .navbar-container {
+    padding: 4px 10px 6px;
+    gap: 6px 8px;
+  }
+
+  .brand-logo-img {
+    height: 28px;
+    max-width: 75px;
   }
 
   .selected-address-text {
-    max-width: 85px;
+    max-width: 75px;
   }
 
   .blinkit-login-btn {
-    padding: 6px 14px;
-    font-size: 13px;
+    padding: 5px 8px;
+    font-size: 12px;
+  }
+
+  .blinkit-cart-pill-btn {
+    padding: 6px 8px;
+    gap: 4px;
+    font-size: 12px;
+  }
+
+  .cart-pill-empty-label {
+    font-size: 11.5px;
   }
 
   .profile-popover {
-    right: -10px;
+    right: -8px;
     width: 210px;
+  }
+}
+
+@media (max-width: 360px) {
+  .brand-logo-img {
+    height: 25px;
+    max-width: 65px;
+  }
+
+  .location-pin-wrap {
+    display: none;
+  }
+
+  .selected-address-text {
+    max-width: 60px;
+  }
+
+  .blinkit-cart-pill-btn .cart-pill-empty-label {
+    display: none;
   }
 }
