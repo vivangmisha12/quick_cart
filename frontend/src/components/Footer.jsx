@@ -165,7 +165,7 @@ const Footer = () => {
           <ul>
             <li><Link to="/products">Browse All Products</Link></li>
             <li><Link to="/orders">My Orders</Link></li>
-            <li><Link to="/delivery" style={{ color: '#0c831f', fontWeight: '700' }}>🏍️ Delivery Partner App</Link></li>
+            <li><Link to="/delivery/login" style={{ color: '#0c831f', fontWeight: '700' }}>🏍️ Delivery Partner App</Link></li>
             <li><Link to="/admin/login" style={{ color: '#0c831f', fontWeight: '700' }}>🔒 Admin Portal</Link></li>
             <li><Link to="/wishlist">My Wishlist</Link></li>
             <li><Link to="/addresses">Saved Addresses</Link></li>

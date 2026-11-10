@@ -36,25 +36,20 @@ const AdminLogin = () => {
 
     setLoading(true);
     try {
-      const res = await authAPI.login(email.trim(), password);
-      const { user } = res.data;
-
-      if (!user?.isAdmin) {
+      const res = await login(email.trim(), password, 'admin');
+      if (!res?.user?.isAdmin) {
         setError('Access Denied: This portal is strictly for authorized Progicart Administrators.');
-        localStorage.removeItem('token');
         setLoading(false);
         return;
       }
 
-      // Update state in AuthContext
-      await login(email.trim(), password);
       setSuccess('Admin verified. Redirecting to Command Center...');
       setTimeout(() => {
         navigate('/admin');
-      }, 700);
+      }, 500);
     } catch (err) {
       console.error('Admin login error:', err);
-      setError(err.response?.data?.message || 'Invalid email or password.');
+      setError(err.message || err.response?.data?.message || 'Invalid email or password.');
     } finally {
       setLoading(false);
     }
@@ -153,7 +148,7 @@ const AdminLogin = () => {
 
           <div className="admin-card-footer">
             <div className="footer-links-row">
-              <Link to="/delivery" className="footer-partner-link">
+              <Link to="/delivery/login" className="footer-partner-link">
                 <Store size={14} /> Delivery Partner Portal
               </Link>
               <span className="dot-sep">•</span>

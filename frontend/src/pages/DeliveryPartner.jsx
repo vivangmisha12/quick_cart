@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { 
   Truck, 
   MapPin, 
@@ -25,12 +26,15 @@ import {
   X,
   ArrowUpRight,
   Zap,
-  Radio
+  Radio,
+  LogOut
 } from 'lucide-react';
 import { deliveryAPI } from '../api/api';
 import '../styles/DeliveryPartner.css';
 
 const DeliveryPartner = () => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -48,11 +52,11 @@ const DeliveryPartner = () => {
   const knownOrderIdsRef = useRef(new Set());
   const initialLoadRef = useRef(true);
 
-  // Rider Profile Info
+  // Dynamic Rider Profile Info from logged in user
   const riderProfile = {
-    name: 'Suresh Kumar',
-    phone: '9876543210',
-    vehicleNumber: 'UP-32-BK-2024',
+    name: user?.name || 'Suresh Kumar',
+    phone: user?.phone || '9876543210',
+    vehicleNumber: user?.vehicleNumber || 'UP-32-BK-2024',
     darkStore: 'Progicart Dark Store #04 • Vibhuti Khand, Lucknow',
   };
 
@@ -344,6 +348,21 @@ const DeliveryPartner = () => {
               <span>Admin Hub</span>
               <ExternalLink size={13} />
             </Link>
+
+            {/* Rider Logout */}
+            <button 
+              type="button" 
+              className="rider-logout-btn"
+              onClick={() => {
+                logout();
+                navigate('/delivery/login');
+              }}
+              title="Logout Rider"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#ffebee', color: '#c62828', border: '1px solid #ffcdd2', padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}
+            >
+              <LogOut size={14} />
+              <span>Logout</span>
+            </button>
           </div>
         </div>
       </header>

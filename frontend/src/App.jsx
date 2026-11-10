@@ -30,6 +30,7 @@ import Orders from './pages/Orders';
 import Addresses from './pages/Addresses';
 import InfoPage from './pages/InfoPage';
 import AdminLogin from './pages/AdminLogin';
+import DeliveryLogin from './pages/DeliveryLogin';
 import DeliveryPartner from './pages/DeliveryPartner';
 
 import './App.css';
@@ -37,17 +38,21 @@ import './App.css';
 // Protected Route - For authenticated users only
 const ProtectedRoute = ({ children }) => {
   const { token } = useAuth();
-  return token ? children : <Navigate to="/login" />;
+  return token ? children : <Navigate to="/login" replace />;
 };
 
-
-
-// Admin Route - For admin users only
+// Admin Route - For admin users only (redirects to /admin/login)
 const AdminRoute = ({ children }) => {
   const { token, user } = useAuth();
-  return token && user?.isAdmin ? children : <Navigate to="/login" />;
+  return token && user?.isAdmin ? children : <Navigate to="/admin/login" replace />;
 };
 
+// Delivery Route - For delivery partners & admin only (redirects to /delivery/login)
+const DeliveryRoute = ({ children }) => {
+  const { token, user } = useAuth();
+  const isDelivery = token && (user?.isDeliveryPartner || user?.role === 'delivery_partner' || user?.isAdmin);
+  return isDelivery ? children : <Navigate to="/delivery/login" replace />;
+};
 
 const AppContent = () => {
   const { token, user } = useAuth();
@@ -56,7 +61,9 @@ const AppContent = () => {
 
   const isStandalonePortal = 
     location.pathname.startsWith('/admin') || 
-    location.pathname.startsWith('/delivery');
+    location.pathname.startsWith('/delivery') ||
+    location.pathname === '/admin-login' ||
+    location.pathname === '/delivery-login';
 
   return (
     <>
@@ -77,16 +84,34 @@ const AppContent = () => {
           <Route path="/products/:id" element={<ProductDetails />} />
           <Route path="/info/:slug" element={<InfoPage />} />
           
-          {/* Dedicated Delivery Partner Fleet Route */}
-          <Route path="/delivery" element={<DeliveryPartner />} />
-          <Route path="/delivery-partner" element={<DeliveryPartner />} />
+          {/* Dedicated Admin Portal Routes */}
+          <Route path="/admin/login" element={token && user?.isAdmin ? <Navigate to="/admin" replace /> : <AdminLogin />} />
+          <Route path="/admin-login" element={<Navigate to="/admin/login" replace />} />
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <Admin />
+              </AdminRoute>
+            }
+          />
 
-          {/* Dedicated Admin Login Route */}
-          <Route path="/admin/login" element={<AdminLogin />} />
+          {/* Dedicated Delivery Partner Fleet Routes */}
+          <Route path="/delivery/login" element={token && (user?.isDeliveryPartner || user?.role === 'delivery_partner') ? <Navigate to="/delivery" replace /> : <DeliveryLogin />} />
+          <Route path="/delivery-login" element={<Navigate to="/delivery/login" replace />} />
+          <Route
+            path="/delivery"
+            element={
+              <DeliveryRoute>
+                <DeliveryPartner />
+              </DeliveryRoute>
+            }
+          />
+          <Route path="/delivery-partner" element={<Navigate to="/delivery" replace />} />
 
-          {/* Customer Auth Routes */}
-          <Route path="/login" element={!token ? <Login /> : <Navigate to={user?.isAdmin ? '/admin' : '/'} />} />
-          <Route path="/register" element={!token ? <Register /> : <Navigate to={user?.isAdmin ? '/admin' : '/'} />} />
+          {/* Customer Auth Routes (Customers ONLY) */}
+          <Route path="/login" element={!token ? <Login /> : <Navigate to={user?.isAdmin ? '/admin' : (user?.isDeliveryPartner ? '/delivery' : '/')} replace />} />
+          <Route path="/register" element={!token ? <Register /> : <Navigate to="/" replace />} />
 
           {/* Protected Routes */}
           <Route
@@ -142,16 +167,6 @@ const AppContent = () => {
               <ProtectedRoute>
                 <Addresses />
               </ProtectedRoute>
-            }
-          />
-
-          {/* Admin Routes */}
-          <Route
-            path="/admin"
-            element={
-              <AdminRoute>
-                <Admin />
-              </AdminRoute>
             }
           />
 

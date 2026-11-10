@@ -14,7 +14,8 @@ import {
   ClipboardList,
   LogOut,
   ShieldAlert,
-  Navigation
+  Navigation,
+  Bike
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
@@ -277,6 +278,9 @@ const Navbar = () => {
                       {user?.isAdmin && (
                         <span className="admin-chip">Admin Access</span>
                       )}
+                      {(user?.isDeliveryPartner || user?.role === 'delivery_partner') && (
+                        <span className="admin-chip" style={{ background: '#fff3cd', color: '#856404' }}>Rider Fleet</span>
+                      )}
                     </div>
                     <div className="popover-divider" />
                     {user?.isAdmin && (
@@ -287,6 +291,16 @@ const Navbar = () => {
                       >
                         <ShieldAlert size={16} color="#0c831f" />
                         <span>Admin Panel</span>
+                      </Link>
+                    )}
+                    {(user?.isDeliveryPartner || user?.role === 'delivery_partner') && (
+                      <Link 
+                        to="/delivery" 
+                        className="popover-menu-item"
+                        onClick={() => setShowProfileDropdown(false)}
+                      >
+                        <Bike size={16} color="#0c831f" />
+                        <span>Rider Console</span>
                       </Link>
                     )}
                     <Link 

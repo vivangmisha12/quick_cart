@@ -22,7 +22,11 @@ export const AuthProvider = ({ children }) => {
           id: profile.id || profile._id,
           name: profile.name,
           email: profile.email,
+          phone: profile.phone,
           isAdmin: Boolean(profile.isAdmin),
+          isDeliveryPartner: Boolean(profile.isDeliveryPartner || profile.role === 'delivery_partner'),
+          role: profile.role || (profile.isAdmin ? 'admin' : (profile.isDeliveryPartner ? 'delivery_partner' : 'customer')),
+          vehicleNumber: profile.vehicleNumber || ''
         });
       } catch (error) {
         localStorage.removeItem('token');
@@ -50,10 +54,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (email, password) => {
+  const login = async (email, password, portal = '') => {
     setLoading(true);
     try {
-      const response = await authAPI.login(email, password);
+      const response = await authAPI.login(email, password, portal);
       const { token, user } = response.data;
       localStorage.setItem('token', token);
       setToken(token);
