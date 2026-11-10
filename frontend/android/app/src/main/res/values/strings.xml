@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Progicart</string>
+    <string name="title_activity_main">Progicart</string>
+    <string name="package_name">com.progicart.app</string>
+    <string name="custom_url_scheme">com.progicart.app</string>
+</resources>

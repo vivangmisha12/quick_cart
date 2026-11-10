@@ -18,6 +18,12 @@ frontend/dist/
 dist/
 build/
 coverage/
+*.apk
+*.aab
+frontend/android/.gradle/
+frontend/android/app/build/
+frontend/android/build/
+frontend/android/local.properties
 
 # Runtime uploads and logs
 backend/uploads/

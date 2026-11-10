@@ -1,0 +1,10 @@
+{
+  "appId": "com.progicart.app",
+  "appName": "Progicart",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true
+  }
+}
+
