@@ -16,8 +16,8 @@ import { useAuth } from '../context/AuthContext';
 import '../styles/DeliveryLogin.css';
 
 const DeliveryLogin = () => {
-  const [email, setEmail] = useState('delivery@gmail.com');
-  const [password, setPassword] = useState('delivery123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -107,10 +107,11 @@ const DeliveryLogin = () => {
                 <Mail size={18} className="input-svg-icon" />
                 <input
                   type="email"
-                  placeholder="rider@progicart.com"
+                  placeholder="Enter rider email or ID"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  autoFocus
                 />
               </div>
             </div>
@@ -121,16 +122,12 @@ const DeliveryLogin = () => {
                 <Lock size={18} className="input-svg-icon" />
                 <input
                   type="password"
-                  placeholder="••••••••"
+                  placeholder="Enter security password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
               </div>
-            </div>
-
-            <div className="delivery-creds-hint">
-              <span>⚡ Default Rider: <strong>delivery@gmail.com</strong> / <strong>delivery123</strong></span>
             </div>
 
             <button 
@@ -170,3 +167,4 @@ const DeliveryLogin = () => {
 };
 
 export default DeliveryLogin;
+

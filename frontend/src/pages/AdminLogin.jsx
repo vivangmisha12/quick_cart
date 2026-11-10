@@ -14,9 +14,10 @@ import { authAPI } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import '../styles/AdminLogin.css';
 
+
 const AdminLogin = () => {
-  const [email, setEmail] = useState('admin@gmail.com');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -103,7 +104,7 @@ const AdminLogin = () => {
                 <Mail size={18} className="input-icon" />
                 <input
                   type="email"
-                  placeholder="admin@gmail.com"
+                  placeholder="Enter administrator email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -118,16 +119,12 @@ const AdminLogin = () => {
                 <Lock size={18} className="input-icon" />
                 <input
                   type="password"
-                  placeholder="••••••••"
+                  placeholder="Enter security password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
               </div>
-            </div>
-
-            <div className="admin-creds-hint">
-              <span>💡 Default Admin: <strong>admin@gmail.com</strong> / <strong>admin123</strong></span>
             </div>
 
             <button 
