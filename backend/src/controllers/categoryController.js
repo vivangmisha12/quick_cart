@@ -57,7 +57,7 @@ const normalizeSubcategoryId = (id) => {
 // Get all categories
 exports.getAllCategories = async (req, res) => {
   try {
-    const categories = await Category.find().sort({ displayOrder: 1 });
+    const categories = await Category.find().sort({ displayOrder: 1 }).lean();
     res.json(categories);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
@@ -67,7 +67,7 @@ exports.getAllCategories = async (req, res) => {
 // Get category by ID
 exports.getCategoryById = async (req, res) => {
   try {
-    const category = await Category.findById(req.params.id);
+    const category = await Category.findById(req.params.id).lean();
     if (!category) {
       return res.status(404).json({ message: 'Category not found' });
     }

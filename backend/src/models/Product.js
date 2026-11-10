@@ -18,4 +18,10 @@ const productSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
+// Indexes for high-speed catalog querying & filtering
+productSchema.index({ categoryId: 1 });
+productSchema.index({ subcategoryId: 1 });
+productSchema.index({ isTrending: 1 });
+productSchema.index({ name: 'text', description: 'text' });
+
 module.exports = mongoose.model('Product', productSchema);

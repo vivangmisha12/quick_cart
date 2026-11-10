@@ -19,29 +19,29 @@ const ProductCard = ({ product, onRequireLogin }) => {
     ? Math.round(product.price / (1 - product.discount / 100)) 
     : (product.originalPrice || null);
 
-  const handleAdd = async (e) => {
+  const handleAdd = (e) => {
     e.preventDefault();
     e.stopPropagation();
     if (onRequireLogin) {
       const allowed = onRequireLogin(id);
       if (!allowed) return;
     }
-    await addToCart(id, 1);
+    addToCart(product, 1);
   };
 
-  const handleIncrement = async (e) => {
+  const handleIncrement = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    await addToCart(id, 1);
+    addToCart(product, 1);
   };
 
-  const handleDecrement = async (e) => {
+  const handleDecrement = (e) => {
     e.preventDefault();
     e.stopPropagation();
     if (qty > 1) {
-      await updateCartItem(id, qty - 1);
+      updateCartItem(id, qty - 1);
     } else {
-      await removeFromCart(id);
+      removeFromCart(id);
     }
   };
 

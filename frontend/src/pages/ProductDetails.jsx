@@ -48,23 +48,23 @@ const ProductDetails = () => {
   const qty = product ? getProductQuantity(product._id) : 0;
   const isWish = product ? isInWishlist(product._id) : false;
 
-  const handleAddToCart = async () => {
+  const handleAddToCart = () => {
     if (!user) {
       navigate('/login');
       return;
     }
-    await addToCart(product._id, 1);
+    addToCart(product, 1);
   };
 
-  const handleIncrement = async () => {
-    await addToCart(product._id, 1);
+  const handleIncrement = () => {
+    addToCart(product, 1);
   };
 
-  const handleDecrement = async () => {
+  const handleDecrement = () => {
     if (qty > 1) {
-      await updateCartItem(product._id, qty - 1);
+      updateCartItem(product._id, qty - 1);
     } else if (qty === 1) {
-      await removeFromCart(product._id);
+      removeFromCart(product._id);
     }
   };
 

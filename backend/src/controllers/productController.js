@@ -40,7 +40,8 @@ exports.getAllProducts = async (req, res) => {
     if (trending === 'true') query.isTrending = true;
 
     const products = await Product.find(query)
-      .populate('categoryId', 'name icon');
+      .populate('categoryId', 'name icon')
+      .lean();
     
     res.json(products);
   } catch (err) {
@@ -52,7 +53,8 @@ exports.getAllProducts = async (req, res) => {
 exports.getProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id)
-      .populate('categoryId', 'name icon');
+      .populate('categoryId', 'name icon')
+      .lean();
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
@@ -67,7 +69,8 @@ exports.getProductsByCategory = async (req, res) => {
   try {
     const { categoryId } = req.params;
     const products = await Product.find({ categoryId })
-      .populate('categoryId', 'name icon');
+      .populate('categoryId', 'name icon')
+      .lean();
     res.json(products);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
@@ -79,7 +82,8 @@ exports.getTrendingProducts = async (req, res) => {
   try {
     const products = await Product.find({ isTrending: true })
       .populate('categoryId', 'name icon')
-      .limit(10);
+      .limit(10)
+      .lean();
     res.json(products);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
