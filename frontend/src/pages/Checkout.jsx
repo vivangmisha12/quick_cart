@@ -980,6 +980,47 @@ export default function Checkout() {
         </div>
       </div>
 
+      {/* Mobile Floating Sticky Checkout Action Bar (Active on <= 768px Mobile & Tablets) */}
+      <div className="mobile-checkout-sticky-bar">
+        <div className="mobile-bar-inner">
+          <div 
+            className="mobile-bar-bill-info"
+            onClick={() => {
+              const billEl = document.querySelector('.bill-card');
+              if (billEl) {
+                billEl.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+            title="Tap to review bill breakdown"
+          >
+            <div className="mobile-bar-total-row">
+              <span className="mobile-bar-currency">₹</span>
+              <span className="mobile-bar-amount">{grandTotal.toFixed(0)}</span>
+              <span className="mobile-bar-arrow">▲</span>
+            </div>
+            <span className="mobile-bar-sub">
+              {items.length} {items.length === 1 ? 'item' : 'items'} • View Bill
+            </span>
+          </div>
+
+          <button
+            type="button"
+            className={`mobile-bar-pay-btn ${paymentMethod === 'razorpay' ? 'btn-razorpay' : 'btn-cod'}`}
+            disabled={loading}
+            onClick={paymentMethod === 'razorpay' ? handlePayWithRazorpay : handlePlaceOrderCOD}
+          >
+            {loading ? (
+              <span className="mobile-btn-spinner">Processing...</span>
+            ) : (
+              <>
+                <span>{paymentMethod === 'razorpay' ? `Pay ₹${grandTotal.toFixed(0)}` : 'Place COD Order'}</span>
+                <ChevronRight size={18} />
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
       {/* =========================================================================
           REAL RAZORPAY INTERACTIVE CHECKOUT MODAL (NEVER CUT OFF)
           Includes: UPI ID with Name Fetch, NetBanking, Cards, Wallets
