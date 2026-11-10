@@ -129,12 +129,16 @@ const Home = () => {
     }
   };
 
+  const getBannerImageUrl = (banner) => {
+    if (!banner || !banner.image) return null;
+    const img = banner.image;
+    if (img.startsWith('http://') || img.startsWith('https://')) return img;
+    return img.startsWith('/') ? img : `/${img}`;
+  };
+
   const getCategoryImageUrl = (cat) => {
     if (cat.image) {
       if (cat.image.startsWith('http://') || cat.image.startsWith('https://')) return cat.image;
-      if (cat.image.startsWith('/uploads/') || cat.image.startsWith('uploads/')) {
-        return `http://localhost:5000${cat.image.startsWith('/') ? '' : '/'}${cat.image}`;
-      }
       return cat.image.startsWith('/') ? cat.image : `/${cat.image}`;
     }
     const slug = cat.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -157,7 +161,9 @@ const Home = () => {
             className="hero-slider-card"
             style={{ 
               background: heroBanners[currentHeroIndex].bg || '#0c831f',
-              backgroundImage: heroBanners[currentHeroIndex].image ? `url(http://localhost:5000${heroBanners[currentHeroIndex].image})` : 'none',
+              backgroundImage: getBannerImageUrl(heroBanners[currentHeroIndex])
+                ? `url("${getBannerImageUrl(heroBanners[currentHeroIndex])}")`
+                : 'none',
               backgroundSize: 'cover',
               backgroundPosition: 'center',
             }}
@@ -245,7 +251,9 @@ const Home = () => {
               className="promo-feature-card"
               style={{ 
                 background: promo.bg || '#f4f6fb',
-                backgroundImage: promo.image ? `url(http://localhost:5000${promo.image})` : 'none',
+                backgroundImage: getBannerImageUrl(promo)
+                  ? `url("${getBannerImageUrl(promo)}")`
+                  : 'none',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
               }}

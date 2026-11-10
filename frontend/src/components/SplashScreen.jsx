@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Zap, CheckCircle2 } from 'lucide-react';
+import { Zap } from 'lucide-react';
 import { categoriesAPI, bannersAPI, productsAPI } from '../api/api';
 import '../styles/SplashScreen.css';
 
@@ -23,31 +23,16 @@ const STATIC_CATEGORY_IMAGES = [
   '/category-images/pharma-wellness.jpg',
 ];
 
-const getCategoryImageUrl = (cat) => {
-  if (cat?.image) {
-    if (cat.image.startsWith('http://') || cat.image.startsWith('https://')) return cat.image;
-    if (cat.image.startsWith('/uploads/') || cat.image.startsWith('uploads/')) {
-      const base = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/api$/, '') : 'http://localhost:5000';
-      return `${base}${cat.image.startsWith('/') ? '' : '/'}${cat.image}`;
-    }
-    return cat.image.startsWith('/') ? cat.image : `/${cat.image}`;
-  }
-  const slug = cat?.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  return `/category-images/${slug}.jpg`;
+const resolveAssetUrl = (urlPath) => {
+  if (!urlPath) return null;
+  if (urlPath.startsWith('http://') || urlPath.startsWith('https://')) return urlPath;
+  return urlPath.startsWith('/') ? urlPath : `/${urlPath}`;
 };
 
-const getBannerImageUrl = (banner) => {
-  if (!banner?.image) return null;
-  if (banner.image.startsWith('http://') || banner.image.startsWith('https://')) return banner.image;
-  const base = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/api$/, '') : 'http://localhost:5000';
-  return `${base}${banner.image.startsWith('/') ? '' : '/'}${banner.image}`;
-};
-
-export default function SplashScreen({ onFinish, minDuration = 1800, maxTimeout = 5000 }) {
-  const [progress, setProgress] = useState(10);
+export default function SplashScreen({ onFinish, minDuration = 1800, maxTimeout = 4500 }) {
+  const [progress, setProgress] = useState(15);
   const [exiting, setExiting] = useState(false);
   const [statusMessage, setStatusMessage] = useState('Connecting to Progicart Dark Store...');
-  const [loadedStats, setLoadedStats] = useState({ loaded: 0, total: 0 });
 
   const hasFinishedRef = useRef(false);
 
@@ -59,18 +44,18 @@ export default function SplashScreen({ onFinish, minDuration = 1800, maxTimeout 
       if (hasFinishedRef.current) return;
       hasFinishedRef.current = true;
       setProgress(100);
-      setStatusMessage('⚡ All items cached • Ready to deliver in 10 mins!');
-      
+      setStatusMessage('⚡ 10-Minute delivery ready in your area');
+
       setTimeout(() => {
         if (!isMounted) return;
         setExiting(true);
         setTimeout(() => {
           if (onFinish) onFinish();
-        }, 450); // match CSS fade-out transition
+        }, 450);
       }, 250);
     };
 
-    // Preload a single image into browser cache
+    // Preload an image into browser cache
     const preloadImage = (src) => {
       return new Promise((resolve) => {
         if (!src) return resolve();
@@ -80,7 +65,7 @@ export default function SplashScreen({ onFinish, minDuration = 1800, maxTimeout 
           resolve();
         } else {
           img.onload = () => resolve();
-          img.onerror = () => resolve(); // never block on failed single image
+          img.onerror = () => resolve();
         }
       });
     };
@@ -88,62 +73,58 @@ export default function SplashScreen({ onFinish, minDuration = 1800, maxTimeout 
     const loadAllHomeAssets = async () => {
       const urlsToLoad = new Set(STATIC_CATEGORY_IMAGES);
 
-      // Fetch dynamic homepage banners, categories, and products from API
       try {
         const [catRes, banRes, prodRes] = await Promise.allSettled([
           categoriesAPI.getAll(),
           bannersAPI.getActive(),
-          productsAPI.getAll('', '', '', true) // trending or initial products
+          productsAPI.getAll('', '', '', true)
         ]);
 
         if (catRes.status === 'fulfilled' && Array.isArray(catRes.value?.data)) {
           catRes.value.data.forEach((c) => {
-            const url = getCategoryImageUrl(c);
+            const url = resolveAssetUrl(c.image);
             if (url) urlsToLoad.add(url);
           });
         }
 
         if (banRes.status === 'fulfilled' && Array.isArray(banRes.value?.data)) {
           banRes.value.data.forEach((b) => {
-            const url = getBannerImageUrl(b);
+            const url = resolveAssetUrl(b.image);
             if (url) urlsToLoad.add(url);
           });
         }
 
         if (prodRes.status === 'fulfilled' && Array.isArray(prodRes.value?.data)) {
           prodRes.value.data.slice(0, 16).forEach((p) => {
-            if (p.image) urlsToLoad.add(p.image);
-            if (Array.isArray(p.images) && p.images[0]) urlsToLoad.add(p.images[0]);
+            if (p.image) urlsToLoad.add(resolveAssetUrl(p.image));
           });
         }
       } catch (e) {
-        console.warn('Splash asset fetch notice:', e.message);
+        // Silent fallback
       }
 
       const urlList = Array.from(urlsToLoad);
       const total = urlList.length;
       let loaded = 0;
 
-      if (!isMounted) return;
-      setLoadedStats({ loaded: 0, total });
-      setStatusMessage(`Preloading fresh products & aisles (0/${total})...`);
-
-      // Preload all images in parallel while updating progress
+      // Preload images silently in parallel
       const imagePromises = urlList.map((url) =>
         preloadImage(url).then(() => {
           if (!isMounted) return;
           loaded += 1;
-          const pct = Math.max(15, Math.round((loaded / total) * 95));
+          const pct = Math.min(95, Math.max(15, Math.round((loaded / total) * 95)));
           setProgress(pct);
-          setLoadedStats({ loaded, total });
-          setStatusMessage(`Preloading fresh products & aisles (${loaded}/${total})...`);
+
+          if (pct >= 50 && pct < 85) {
+            setStatusMessage('⚡ 10-Minute delivery ready in your area');
+          } else if (pct >= 85) {
+            setStatusMessage('Welcome to Progicart!');
+          }
         })
       );
 
-      // Wait until all images finish preloading
       await Promise.all(imagePromises);
 
-      // Enforce smooth minimum display time so animations aren't jarringly brief
       const elapsed = Date.now() - startTime;
       const remaining = Math.max(0, minDuration - elapsed);
 
@@ -153,10 +134,8 @@ export default function SplashScreen({ onFinish, minDuration = 1800, maxTimeout 
       }, remaining);
     };
 
-    // Run preload
     loadAllHomeAssets();
 
-    // Absolute safety timeout so splash never blocks user if internet stalls
     const safetyTimer = setTimeout(() => {
       if (!isMounted) return;
       finishSplash();
@@ -210,14 +189,10 @@ export default function SplashScreen({ onFinish, minDuration = 1800, maxTimeout 
         </div>
       </div>
 
-      {/* Bottom Loading Radar & Progress */}
+      {/* Bottom Loading Radar & Clean Progress (No technical counts) */}
       <div className="splash-bottom-bar">
         <div className="splash-status-text">
-          {progress >= 100 ? (
-            <CheckCircle2 size={16} color="#0c831f" />
-          ) : (
-            <span className="splash-spinner-dot"></span>
-          )}
+          <span className="splash-spinner-dot"></span>
           <span>{statusMessage}</span>
         </div>
 
@@ -228,16 +203,9 @@ export default function SplashScreen({ onFinish, minDuration = 1800, maxTimeout 
           ></div>
         </div>
 
-        <div className="splash-counter-row">
-          <span className="splash-footer-badge">
-            India's Fastest Instant Delivery • v2.4
-          </span>
-          {loadedStats.total > 0 && (
-            <span className="splash-cached-pill">
-              {progress >= 100 ? 'All Images Loaded' : `${loadedStats.loaded}/${loadedStats.total} images`}
-            </span>
-          )}
-        </div>
+        <span className="splash-footer-badge">
+          India's Fastest Instant Delivery • 100% Quality Guaranteed
+        </span>
       </div>
     </div>
   );

@@ -28,7 +28,8 @@ export const LocationProvider = ({ children }) => {
 
     // Tier 0: Direct Backend Geocoder Service
     try {
-      const backendUrl = `http://localhost:5000/api/location/reverse?lat=${lat}&lng=${lng}`;
+      const apiBase = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://quick-cart-qnz6.onrender.com/api' : 'http://localhost:5000/api');
+      const backendUrl = `${apiBase}/location/reverse?lat=${lat}&lng=${lng}`;
       const resp = await fetch(backendUrl);
       if (resp.ok) {
         const data = await resp.json();

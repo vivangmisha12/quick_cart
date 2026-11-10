@@ -23,6 +23,12 @@ const BannerManagement = () => {
 
   const [categories, setCategories] = useState([]);
 
+  const resolveBannerImage = (img) => {
+    if (!img) return '';
+    if (img.startsWith('http://') || img.startsWith('https://')) return img;
+    return img.startsWith('/') ? img : `/${img}`;
+  };
+
   useEffect(() => {
     fetchBanners();
     fetchCategories();
@@ -76,7 +82,7 @@ const BannerManagement = () => {
       type: banner.type || 'promo',
       isActive: banner.isActive ?? true,
     });
-    setImagePreview(banner.image ? `http://localhost:5000${banner.image}` : '');
+    setImagePreview(resolveBannerImage(banner.image));
     setImageFile(null);
     setShowForm(true);
   };
@@ -207,7 +213,7 @@ const BannerManagement = () => {
                 <tr key={b._id}>
                   <td>
                     {b.image ? (
-                      <img src={`http://localhost:5000${b.image}`} alt={b.title} width="60" style={{borderRadius: '4px'}} />
+                      <img src={resolveBannerImage(b.image)} alt={b.title} width="60" style={{borderRadius: '4px'}} />
                     ) : (
                       <div style={{width: 60, height: 40, background: b.bg, borderRadius: '4px'}}></div>
                     )}
