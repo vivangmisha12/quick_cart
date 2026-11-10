@@ -147,15 +147,6 @@ const DeliveryLogin = () => {
           </form>
 
           <div className="delivery-card-footer">
-            <div className="delivery-footer-links">
-              <Link to="/login" className="footer-role-link">
-                <ShoppingBag size={14} /> Customer Login
-              </Link>
-              <span className="footer-dot">•</span>
-              <Link to="/admin/login" className="footer-role-link">
-                <ShieldCheck size={14} /> Admin Portal
-              </Link>
-            </div>
             <p className="delivery-copyright">
               ⚡ Progicart Instant Delivery Network • Lucknow & National Hubs
             </p>

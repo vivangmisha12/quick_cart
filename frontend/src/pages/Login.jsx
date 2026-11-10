@@ -108,27 +108,6 @@ const Login = () => {
         <p className="auth-link">
           Don't have an account? <Link to="/register">Register here</Link>
         </p>
-
-        {/* Dedicated Separate Portal Switchers */}
-        <div style={{ marginTop: '24px', paddingTop: '18px', borderTop: '1px dashed #e0e0e0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: '#888', textAlign: 'center', fontWeight: '600' }}>
-            STAFF & PARTNER LOGINS
-          </p>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <Link 
-              to="/admin/login" 
-              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: '#f5f5f5', border: '1px solid #e0e0e0', padding: '8px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: '600', color: '#0c831f', textDecoration: 'none' }}
-            >
-              <ShieldCheck size={14} /> Admin Portal
-            </Link>
-            <Link 
-              to="/delivery/login" 
-              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', background: '#f5f5f5', border: '1px solid #e0e0e0', padding: '8px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: '600', color: '#b26b00', textDecoration: 'none' }}
-            >
-              <Bike size={14} /> Rider Login
-            </Link>
-          </div>
-        </div>
       </div>
     </div>
   );

@@ -144,15 +144,6 @@ const AdminLogin = () => {
           </form>
 
           <div className="admin-card-footer">
-            <div className="footer-links-row">
-              <Link to="/delivery/login" className="footer-partner-link">
-                <Store size={14} /> Delivery Partner Portal
-              </Link>
-              <span className="dot-sep">•</span>
-              <Link to="/login" className="footer-partner-link">
-                Customer Login
-              </Link>
-            </div>
             <p className="admin-security-note">
               🔒 256-bit AES Encrypted Session • Internal Progicart Systems Only
             </p>
