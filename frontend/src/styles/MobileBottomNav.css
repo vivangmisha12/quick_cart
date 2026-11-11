@@ -2,159 +2,200 @@
    Blinkit Mobile Bottom Navigation & Floating Cart Bar
    ========================================================================== */
 
-/* Hidden on Desktop */
+/* Hidden on Desktop Web */
 .mobile-bottom-nav-bar,
 .mobile-floating-cart-bar {
   display: none;
 }
 
+/* Fixed Bottom Nav Bar */
+.mobile-bottom-nav-bar {
+  align-items: stretch;
+  justify-content: space-around;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  min-height: calc(58px + env(safe-area-inset-bottom, 0px));
+  background: #ffffff;
+  border-top: 1px solid #ebedf2;
+  box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.06);
+  z-index: 990;
+  padding: 2px 4px calc(4px + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
+}
+
+.bottom-nav-tab {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: transparent;
+  border: none;
+  text-decoration: none;
+  color: #6b7280;
+  padding: 7px 2px 4px;
+  cursor: pointer;
+  transition: color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.bottom-nav-tab::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%) scaleX(0);
+  width: 36px;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: #1c1c1c;
+  transition: transform 0.18s ease;
+}
+
+.bottom-nav-tab.active::before {
+  transform: translateX(-50%) scaleX(1);
+}
+
+.bottom-nav-tab:hover {
+  color: #111827;
+}
+
+.bottom-nav-tab.active {
+  color: #111827;
+}
+
+.tab-icon {
+  transition: transform 0.18s ease, fill 0.18s ease;
+}
+
+.bottom-nav-tab.active .tab-icon {
+  color: #1c1c1c;
+  fill: #f8cb46;
+  stroke-width: 2.1;
+  transform: scale(1.06);
+}
+
+.tab-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.bottom-nav-tab.active .tab-label {
+  color: #111827;
+  font-weight: 800;
+}
+
+.cart-tab-trigger {
+  position: relative;
+}
+
+.cart-icon-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cart-tab-badge {
+  position: absolute;
+  top: -6px;
+  right: -10px;
+  background: #0c831f;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  min-width: 17px;
+  height: 17px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* --- Floating Blinkit Cart Notification Bar (Mobile & App) --- */
+.mobile-floating-cart-bar {
+  align-items: center;
+  justify-content: space-between;
+  position: fixed;
+  bottom: calc(66px + env(safe-area-inset-bottom, 0px));
+  left: 14px;
+  right: 14px;
+  background: #0c831f;
+  color: #ffffff;
+  padding: 12px 18px;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(12, 131, 31, 0.38);
+  z-index: 989;
+  cursor: pointer;
+  animation: slideUpFloat 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUpFloat {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.floating-cart-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cart-items-count-badge {
+  font-size: 13px;
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.cart-items-price-tag {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.floating-cart-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 800;
+}
+
 @media (max-width: 768px) {
-  /* Give enough bottom clearance for body so fixed bottom nav doesn't overlap content */
-  body {
-    padding-bottom: 74px !important;
+  body:not(.checkout-page-active) {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
-  /* Fixed Bottom Nav Bar */
-  .mobile-bottom-nav-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-around;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 60px;
-    background: #ffffff;
-    border-top: 1px solid #edf0f5;
-    box-shadow: 0 -3px 12px rgba(0, 0, 0, 0.05);
-    z-index: 990;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
-
-  .bottom-nav-tab {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 3px;
-    background: transparent;
-    border: none;
-    text-decoration: none;
-    color: #64748b;
-    padding: 6px 0;
-    cursor: pointer;
-    transition: color 0.15s ease;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  .bottom-nav-tab:hover {
-    color: #1e293b;
-  }
-
-  .bottom-nav-tab.active {
-    color: #0c831f;
-  }
-
-  .bottom-nav-tab.active .tab-icon {
-    transform: scale(1.08);
-  }
-
-  .tab-icon {
-    transition: transform 0.2s ease;
-  }
-
-  .tab-label {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: -0.2px;
-  }
-
-  .cart-tab-trigger {
-    position: relative;
-  }
-
-  .cart-icon-wrapper {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .cart-tab-badge {
-    position: absolute;
-    top: -6px;
-    right: -10px;
-    background: #0c831f;
-    color: #ffffff;
-    font-size: 10px;
-    font-weight: 800;
-    min-width: 17px;
-    height: 17px;
-    border-radius: 9999px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 4px;
-    border: 2px solid #ffffff;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-  }
-
-  /* --- Floating Blinkit Cart Notification Bar (Mobile) --- */
+  .mobile-bottom-nav-bar,
   .mobile-floating-cart-bar {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: fixed;
-    bottom: 68px;
-    left: 14px;
-    right: 14px;
-    background: #0c831f;
-    color: #ffffff;
-    padding: 12px 18px;
-    border-radius: 12px;
-    box-shadow: 0 6px 20px rgba(12, 131, 31, 0.38);
-    z-index: 989;
-    cursor: pointer;
-    animation: slideUpFloat 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
+}
 
-  @keyframes slideUpFloat {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
+body.capacitor-native-app:not(.checkout-page-active) {
+  padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
+}
 
-  .floating-cart-left {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .cart-items-count-badge {
-    font-size: 13px;
-    font-weight: 800;
-    background: rgba(255, 255, 255, 0.2);
-    padding: 3px 8px;
-    border-radius: 6px;
-  }
-
-  .cart-items-price-tag {
-    font-size: 16px;
-    font-weight: 800;
-  }
-
-  .floating-cart-right {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 14px;
-    font-weight: 800;
-  }
+body.capacitor-native-app .mobile-bottom-nav-bar,
+body.capacitor-native-app .mobile-floating-cart-bar {
+  display: flex;
 }
 

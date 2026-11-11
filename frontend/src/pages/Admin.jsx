@@ -23,7 +23,11 @@ import {
   RefreshCw,
   Phone,
   Navigation,
-  DollarSign
+  DollarSign,
+  UserPlus,
+  Mail,
+  MapPin,
+  X
 } from 'lucide-react';
 import CategoryManagement from '../components/CategoryManagement';
 import ProductManagement from '../components/ProductManagement';
@@ -33,27 +37,41 @@ import { adminCategoriesAPI, adminProductsAPI, adminOrdersAPI, adminUsersAPI } f
 import { useAuth } from '../context/AuthContext';
 import '../styles/Admin.css';
 
-const MOCK_RIDERS = [
-  { id: 'r1', name: 'Suresh Kumar', phone: '9876543210', vehicle: 'UP-32-BK-2024', status: 'On Delivery', activeOrder: 'ORD-8941', battery: '92%' },
-  { id: 'r2', name: 'Rahul Verma', phone: '9876543211', vehicle: 'UP-32-BK-1102', status: 'At Dark Store', activeOrder: 'Available', battery: '85%' },
-  { id: 'r3', name: 'Amit Singh', phone: '9876543212', vehicle: 'UP-32-BK-3390', status: 'Packing Bag', activeOrder: 'ORD-8944', battery: '78%' },
-  { id: 'r4', name: 'Vikram Patel', phone: '9876543213', vehicle: 'UP-32-BK-4512', status: 'At Dark Store', activeOrder: 'Available', battery: '95%' },
-];
-
 const Admin = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
   const [liveOrdersCount, setLiveOrdersCount] = useState(0);
+  const [riders, setRiders] = useState([]);
+  const [ridersLoading, setRidersLoading] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  // Keep live clock updated
+  const fetchRiders = async () => {
+    setRidersLoading(true);
+    try {
+      const res = await adminUsersAPI.getRiders();
+      setRiders(res.data || []);
+    } catch (err) {
+      console.error('Error loading riders:', err);
+    } finally {
+      setRidersLoading(false);
+    }
+  };
+
+  // Keep live clock updated and sync fleet
   useEffect(() => {
+    fetchRiders();
     const timer = setInterval(() => {
       setCurrentTime(new Date().toLocaleTimeString());
     }, 1000);
-    return () => clearInterval(timer);
+    const fleetInterval = setInterval(fetchRiders, 12000);
+    return () => {
+      clearInterval(timer);
+      clearInterval(fleetInterval);
+    };
   }, []);
+
+  const onlineRidersCount = riders.filter((r) => r.verificationStatus === 'verified' && r.isOnline).length;
 
   const handleLogout = () => {
     logout();
@@ -102,7 +120,7 @@ const Admin = () => {
             title="View Fleet Status"
           >
             <span className="pill-dot green"></span>
-            <span>Active Riders: <strong>4 Online</strong></span>
+            <span>Active Riders: <strong>{onlineRidersCount} Online</strong></span>
           </button>
 
           {/* External Navigation Shortcuts */}
@@ -171,7 +189,7 @@ const Admin = () => {
             >
               <Truck size={18} />
               <span>Rider Fleet Monitor</span>
-              <span className="sidebar-counter-badge green">4</span>
+              <span className="sidebar-counter-badge green">{riders.length}</span>
             </button>
           </nav>
 
@@ -220,11 +238,19 @@ const Admin = () => {
           {activeTab === 'dashboard' && (
             <AdminDashboard 
               onSwitchTab={setActiveTab} 
-              onUpdateLiveCount={setLiveOrdersCount} 
+              onUpdateLiveCount={setLiveOrdersCount}
+              riders={riders}
             />
           )}
           {activeTab === 'orders' && <OrderManagement />}
-          {activeTab === 'riders' && <RiderFleetMonitor onSwitchTab={setActiveTab} />}
+          {activeTab === 'riders' && (
+            <RiderFleetMonitor
+              onSwitchTab={setActiveTab}
+              riders={riders}
+              loading={ridersLoading}
+              onRefreshRiders={fetchRiders}
+            />
+          )}
           {activeTab === 'products' && <ProductManagement />}
           {activeTab === 'categories' && <CategoryManagement />}
           {activeTab === 'banners' && <BannerManagement />}
@@ -237,7 +263,7 @@ const Admin = () => {
 /* =========================================================================
    DASHBOARD OVERVIEW COMPONENT (KPIs + Live Order Stream + Quick Actions)
    ========================================================================= */
-const AdminDashboard = ({ onSwitchTab, onUpdateLiveCount }) => {
+const AdminDashboard = ({ onSwitchTab, onUpdateLiveCount, riders = [] }) => {
   const [stats, setStats] = useState({ categories: 0, products: 0, orders: 0, users: 0, totalRevenue: 0 });
   const [recentOrders, setRecentOrders] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -391,8 +417,10 @@ const AdminDashboard = ({ onSwitchTab, onUpdateLiveCount }) => {
             </div>
           </div>
           <div className="kpi-value-row">
-            <span className="kpi-main-number">4 Riders</span>
-            <span className="kpi-trend positive">🟢 100% Online</span>
+            <span className="kpi-main-number">{riders.length} Riders</span>
+            <span className="kpi-trend positive">
+              {riders.filter((r) => r.verificationStatus === 'verified' && r.isOnline).length} Online
+            </span>
           </div>
           <span className="kpi-footer-sub">Avg instant delivery ETA: 10-12 mins</span>
         </div>
@@ -505,20 +533,40 @@ const AdminDashboard = ({ onSwitchTab, onUpdateLiveCount }) => {
             </div>
 
             <div className="rider-mini-list">
-              {MOCK_RIDERS.map((r) => (
-                <div key={r.id} className="rider-mini-card">
-                  <div className="rider-avatar-icon">🛵</div>
-                  <div className="rider-mini-info">
-                    <strong>{r.name}</strong>
-                    <span>{r.vehicle} • Bat: {r.battery}</span>
-                  </div>
-                  <div className="rider-mini-status">
-                    <span className={`rider-badge ${r.status === 'On Delivery' ? 'busy' : 'available'}`}>
-                      {r.status}
-                    </span>
-                  </div>
+              {riders.length === 0 ? (
+                <div className="rider-empty-mini">
+                  No delivery partners created yet. Add one in Rider Fleet!
                 </div>
-              ))}
+              ) : (
+                riders.slice(0, 5).map((r) => (
+                  <div key={r._id} className="rider-mini-card">
+                    <div className="rider-avatar-icon">🛵</div>
+                    <div className="rider-mini-info">
+                      <strong>{r.name}</strong>
+                      <span>
+                        {r.vehicleNumber || 'KYC Pending'} • {r.assignedHub?.split('•')[0]?.trim() || 'Hub'}
+                      </span>
+                    </div>
+                    <div className="rider-mini-status">
+                      <span
+                        className={`rider-badge ${
+                          r.verificationStatus !== 'verified'
+                            ? 'busy'
+                            : r.isOnline
+                            ? 'available'
+                            : 'busy'
+                        }`}
+                      >
+                        {r.verificationStatus !== 'verified'
+                          ? 'Pending KYC'
+                          : r.isOnline
+                          ? 'Online'
+                          : 'Offline'}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
@@ -582,74 +630,264 @@ const AdminDashboard = ({ onSwitchTab, onUpdateLiveCount }) => {
 };
 
 /* =========================================================================
-   RIDER FLEET MONITOR TAB
+   RIDER FLEET MONITOR + CREATE RIDER (NAME, EMAIL, PHONE ONLY)
    ========================================================================= */
-const RiderFleetMonitor = ({ onSwitchTab }) => {
+const RiderFleetMonitor = ({ onSwitchTab, riders = [], loading, onRefreshRiders }) => {
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [formData, setFormData] = useState({ name: '', email: '', phone: '' });
+  const [creating, setCreating] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [createdNotice, setCreatedNotice] = useState(null);
+  const [updatingStatusId, setUpdatingStatusId] = useState(null);
+
+  const handleCreateRider = async (e) => {
+    e.preventDefault();
+    setFormError('');
+    setCreatedNotice(null);
+
+    if (!formData.name.trim() || !formData.email.trim() || !formData.phone.trim()) {
+      setFormError('Name, Email, and Phone Number are all required.');
+      return;
+    }
+
+    setCreating(true);
+    try {
+      const res = await adminUsersAPI.createRider({
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim(),
+      });
+      setCreatedNotice({
+        email: res.data?.rider?.email || formData.email,
+        temporaryPassword: res.data?.temporaryPassword || 'rider123',
+        name: res.data?.rider?.name || formData.name,
+      });
+      setFormData({ name: '', email: '', phone: '' });
+      setShowCreateForm(false);
+      if (onRefreshRiders) onRefreshRiders();
+    } catch (err) {
+      setFormError(err.response?.data?.message || err.message || 'Could not create rider.');
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleToggleRiderVerification = async (rider) => {
+    const nextStatus = rider.verificationStatus === 'verified' ? 'suspended' : 'verified';
+    setUpdatingStatusId(rider._id);
+    try {
+      await adminUsersAPI.updateRiderStatus(rider._id, nextStatus);
+      if (onRefreshRiders) onRefreshRiders();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update rider status');
+    } finally {
+      setUpdatingStatusId(null);
+    }
+  };
+
   return (
     <div className="fleet-monitor-container">
       <div className="workspace-header-bar">
         <div>
-          <h1 className="workspace-title">Rider Fleet & Dispatch Tracking</h1>
+          <h1 className="workspace-title">Rider Fleet &amp; Partner Onboarding</h1>
           <p className="workspace-subtitle">
-            Live delivery partner locations, task assignments, vehicle numbers and battery health
+            Add riders with just Name, Email &amp; Phone — riders complete Vehicle &amp; KYC verification upon app login
           </p>
         </div>
 
-        <Link to="/delivery" target="_blank" rel="noopener noreferrer" className="launch-rider-app-btn">
-          <Truck size={16} />
-          <span>Launch Rider App Simulation</span>
-          <ExternalLink size={14} />
-        </Link>
+        <div className="fleet-header-actions">
+          <button
+            type="button"
+            className="add-rider-primary-btn"
+            onClick={() => {
+              setShowCreateForm(!showCreateForm);
+              setFormError('');
+            }}
+          >
+            <UserPlus size={16} />
+            <span>{showCreateForm ? 'Close Form' : 'Create Delivery Partner'}</span>
+          </button>
+
+          <button
+            type="button"
+            className="refresh-dashboard-btn"
+            onClick={onRefreshRiders}
+            disabled={loading}
+          >
+            <RefreshCw size={15} className={loading ? 'spin-icon' : ''} />
+            <span>Refresh</span>
+          </button>
+
+          <Link to="/delivery" target="_blank" rel="noopener noreferrer" className="launch-rider-app-btn">
+            <Truck size={16} />
+            <span>Open Rider Portal</span>
+            <ExternalLink size={14} />
+          </Link>
+        </div>
       </div>
 
-      <div className="fleet-grid">
-        {MOCK_RIDERS.map((rider) => (
-          <div key={rider.id} className="fleet-rider-card">
-            <div className="fleet-card-top">
-              <div className="rider-main-badge">
-                <div className="rider-pic">🛵</div>
-                <div>
-                  <h3>{rider.name}</h3>
-                  <span className="rider-phone">📞 {rider.phone}</span>
-                </div>
-              </div>
+      {createdNotice && (
+        <div className="rider-created-banner">
+          <div>
+            <strong>Delivery Partner Added: {createdNotice.name}</strong>
+            <p>
+              Login Email: <code>{createdNotice.email}</code> &bull; Initial Password:{' '}
+              <code>{createdNotice.temporaryPassword}</code> &bull; Jab rider Delivery App login karega, waha wo apna Vehicle aur KYC verification process complete karega.
+            </p>
+          </div>
+          <button type="button" onClick={() => setCreatedNotice(null)} aria-label="Close">
+            <X size={16} />
+          </button>
+        </div>
+      )}
 
-              <span className={`status-pill ${rider.status === 'On Delivery' ? 'on-job' : 'ready'}`}>
-                {rider.status}
-              </span>
+      {showCreateForm && (
+        <div className="create-rider-panel">
+          <h3>Create New Delivery Partner (Quick Add)</h3>
+          <p className="create-rider-sub">
+            Sirf rider ka Naam, Email aur Phone Number daalein. Baaki vehicle, license aur KYC verification rider app me login karke khud complete karega.
+          </p>
+
+          {formError && <div className="admin-error-banner">{formError}</div>}
+
+          <form onSubmit={handleCreateRider} className="create-rider-form-grid">
+            <div className="rider-input-col">
+              <label>Rider Full Name *</label>
+              <input
+                type="text"
+                placeholder="e.g. Suresh Kumar"
+                value={formData.name}
+                onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
+                required
+              />
             </div>
 
-            <div className="fleet-card-details">
-              <div className="detail-row">
-                <span className="label">Vehicle:</span>
-                <span className="val bold">{rider.vehicle}</span>
-              </div>
-              <div className="detail-row">
-                <span className="label">Active Order:</span>
-                <span className="val mono text-blue">{rider.activeOrder}</span>
-              </div>
-              <div className="detail-row">
-                <span className="label">Device Battery:</span>
-                <span className="val text-green">{rider.battery}</span>
-              </div>
-              <div className="detail-row">
-                <span className="label">Assigned Hub:</span>
-                <span className="val">Dark Store #04 • Vibhuti Khand</span>
-              </div>
+            <div className="rider-input-col">
+              <label>Email Address *</label>
+              <input
+                type="email"
+                placeholder="e.g. suresh.rider@progicart.com"
+                value={formData.email}
+                onChange={(e) => setFormData((p) => ({ ...p, email: e.target.value }))}
+                required
+              />
             </div>
 
-            <div className="fleet-card-actions">
-              <button 
-                type="button" 
-                className="btn-assign-order"
-                onClick={() => onSwitchTab('orders')}
-              >
-                Assign Order from Queue
+            <div className="rider-input-col">
+              <label>Phone Number *</label>
+              <input
+                type="tel"
+                placeholder="e.g. 9876543210"
+                value={formData.phone}
+                onChange={(e) => setFormData((p) => ({ ...p, phone: e.target.value }))}
+                required
+              />
+            </div>
+
+            <div className="rider-submit-col">
+              <button type="submit" className="create-rider-submit-btn" disabled={creating}>
+                {creating ? 'Creating...' : 'Create Rider Account'}
               </button>
             </div>
-          </div>
-        ))}
-      </div>
+          </form>
+        </div>
+      )}
+
+      {riders.length === 0 ? (
+        <div className="orders-empty-state">
+          <Truck size={42} className="empty-icon text-muted" />
+          <h3>No Delivery Partners Registered Yet</h3>
+          <p>Click "Create Delivery Partner" above or let riders self-register through the Progicart Rider APK.</p>
+        </div>
+      ) : (
+        <div className="fleet-grid">
+          {riders.map((rider) => {
+            const isVerified = rider.verificationStatus === 'verified';
+            const isSuspended = rider.verificationStatus === 'suspended';
+            return (
+              <div key={rider._id} className="fleet-rider-card">
+                <div className="fleet-card-top">
+                  <div className="rider-main-badge">
+                    <div className="rider-pic">🛵</div>
+                    <div>
+                      <h3>{rider.name}</h3>
+                      <span className="rider-phone">📞 {rider.phone}</span>
+                      <span className="rider-email-small">✉️ {rider.email}</span>
+                    </div>
+                  </div>
+
+                  <span
+                    className={`status-pill ${
+                      isVerified
+                        ? rider.isOnline
+                          ? 'ready'
+                          : 'on-job'
+                        : 'pending-pill'
+                    }`}
+                  >
+                    {isSuspended
+                      ? 'Suspended'
+                      : !isVerified
+                      ? 'Pending KYC'
+                      : rider.isOnline
+                      ? 'Verified • Online'
+                      : 'Verified • Offline'}
+                  </span>
+                </div>
+
+                <div className="fleet-card-details">
+                  <div className="detail-row">
+                    <span className="label">Vehicle:</span>
+                    <span className="val bold">
+                      {rider.vehicleNumber
+                        ? `${rider.vehicleType ? rider.vehicleType.toUpperCase() + ' • ' : ''}${rider.vehicleNumber}`
+                        : 'Pending Rider Setup'}
+                    </span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="label">Driving License / ID:</span>
+                    <span className="val mono">
+                      {rider.kycDetails?.drivingLicenseNumber || 'Not Submitted'}
+                    </span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="label">Zone / GPS:</span>
+                    <span className="val">{rider.assignedHub || 'Vibhuti Khand Hub'}</span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="label">Orders (Active / Done):</span>
+                    <span className="val text-green">
+                      {rider.activeOrdersCount || 0} Active / {rider.completedOrdersCount || 0} Done
+                    </span>
+                  </div>
+                </div>
+
+                <div className="fleet-card-actions fleet-dual-actions">
+                  <button
+                    type="button"
+                    className="btn-assign-order"
+                    onClick={() => onSwitchTab('orders')}
+                  >
+                    Assign Order
+                  </button>
+                  <button
+                    type="button"
+                    className={`btn-verify-toggle ${isVerified ? 'suspend' : 'approve'}`}
+                    disabled={updatingStatusId === rider._id}
+                    onClick={() => handleToggleRiderVerification(rider)}
+                  >
+                    {updatingStatusId === rider._id
+                      ? 'Saving...'
+                      : isVerified
+                      ? 'Suspend'
+                      : 'Approve KYC'}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

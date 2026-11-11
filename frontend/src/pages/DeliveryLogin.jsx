@@ -1,19 +1,20 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { 
-  Bike, 
-  Lock, 
-  Mail, 
-  ArrowRight, 
-  AlertCircle, 
-  CheckCircle2, 
+import {
+  Bike,
+  Lock,
+  Mail,
+  ArrowRight,
+  AlertCircle,
+  CheckCircle2,
   ChevronLeft,
   Zap,
-  ShieldCheck,
-  ShoppingBag
+  UserPlus,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import '../styles/DeliveryLogin.css';
+
+const IS_RIDER_APP = import.meta.env.VITE_APP_MODE === 'rider';
 
 const DeliveryLogin = () => {
   const [email, setEmail] = useState('');
@@ -46,10 +47,15 @@ const DeliveryLogin = () => {
         return;
       }
 
-      setSuccess('Rider authenticated. Loading Delivery Console...');
+      const needsKyc = !user?.isAdmin && user?.verificationStatus !== 'verified';
+      setSuccess(
+        needsKyc
+          ? 'Account verified! Opening KYC onboarding to complete registration...'
+          : 'Rider authenticated. Loading Delivery Console...'
+      );
       setTimeout(() => {
-        navigate('/delivery');
-      }, 500);
+        navigate('/delivery', { replace: true });
+      }, 450);
     } catch (err) {
       console.error('Delivery login error:', err);
       setError(err.message || err.response?.data?.message || 'Invalid email or password.');
@@ -60,29 +66,28 @@ const DeliveryLogin = () => {
 
   return (
     <div className="delivery-login-page">
-      <div className="delivery-login-ambient-1"></div>
-      <div className="delivery-login-ambient-2"></div>
-
       <div className="delivery-login-wrapper">
-        <Link to="/" className="delivery-back-link">
-          <ChevronLeft size={16} /> Back to Storefront
-        </Link>
+        {!IS_RIDER_APP && (
+          <Link to="/" className="delivery-back-link">
+            <ChevronLeft size={16} /> Back to Storefront
+          </Link>
+        )}
 
         <div className="delivery-card">
           <div className="delivery-card-header">
             <div className="rider-badge-icon">
-              <Bike size={32} color="#1c1c1c" />
+              <Bike size={30} color="#111827" />
             </div>
             <div className="delivery-brand-wrap">
               <img src="/logo.png" alt="Progicart" className="delivery-login-logo" />
               <div className="rider-hub-pill">
-                <Zap size={12} fill="#0c831f" color="#0c831f" />
+                <Zap size={12} />
                 <span>RIDER FLEET PARTNER HUB</span>
               </div>
             </div>
             <h1 className="delivery-title">Delivery Partner Login</h1>
             <p className="delivery-subtitle">
-              Instant 10-minute order dispatch & delivery routing console for Progicart riders.
+              Log in with your email to accept nearest 10-minute delivery orders or complete your rider KYC.
             </p>
           </div>
 
@@ -102,12 +107,12 @@ const DeliveryLogin = () => {
 
           <form onSubmit={handleDeliverySubmit} className="delivery-login-form">
             <div className="delivery-input-group">
-              <label>Partner Email / Rider ID</label>
+              <label>Partner Email</label>
               <div className="delivery-input-field">
                 <Mail size={18} className="input-svg-icon" />
                 <input
                   type="email"
-                  placeholder="Enter rider email or ID"
+                  placeholder="Enter rider email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -117,12 +122,12 @@ const DeliveryLogin = () => {
             </div>
 
             <div className="delivery-input-group">
-              <label>Security PIN / Password</label>
+              <label>Password</label>
               <div className="delivery-input-field">
                 <Lock size={18} className="input-svg-icon" />
                 <input
                   type="password"
-                  placeholder="Enter security password"
+                  placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -130,9 +135,9 @@ const DeliveryLogin = () => {
               </div>
             </div>
 
-            <button 
-              type="submit" 
-              className="delivery-login-btn" 
+            <button
+              type="submit"
+              className="delivery-login-btn"
               disabled={loading}
             >
               {loading ? (
@@ -147,8 +152,12 @@ const DeliveryLogin = () => {
           </form>
 
           <div className="delivery-card-footer">
+            <Link to="/delivery/register" className="rider-register-cta-link">
+              <UserPlus size={16} />
+              <span>New Delivery Partner? Self-Register Here</span>
+            </Link>
             <p className="delivery-copyright">
-              ⚡ Progicart Instant Delivery Network • Lucknow & National Hubs
+              Progicart Instant Delivery Network • Rider Fleet App
             </p>
           </div>
         </div>
@@ -158,4 +167,3 @@ const DeliveryLogin = () => {
 };
 
 export default DeliveryLogin;
-

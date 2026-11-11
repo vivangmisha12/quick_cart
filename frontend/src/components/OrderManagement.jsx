@@ -1,59 +1,69 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  ShoppingBag, 
-  Search, 
-  Filter, 
-  Clock, 
-  MapPin, 
-  Phone, 
-  Mail, 
-  User, 
-  CheckCircle2, 
-  Truck, 
-  AlertCircle, 
+import {
+  ShoppingBag,
+  Search,
+  Clock,
+  MapPin,
+  Phone,
+  Mail,
+  User,
+  Truck,
   RefreshCw,
   CreditCard,
-  Banknote,
   Sparkles,
-  ChevronDown
+  RotateCcw,
+  Store,
 } from 'lucide-react';
-import { adminOrdersAPI } from '../api/api';
+import { adminOrdersAPI, adminUsersAPI } from '../api/api';
 import '../styles/OrderManagement.css';
 
-const STATUS_FILTERS = ['all', 'confirmed', 'packing', 'picked_up', 'out_for_delivery', 'delivered', 'cancelled'];
+const STATUS_FILTERS = ['all', 'assigned', 'confirmed', 'packing', 'picked_up', 'out_for_delivery', 'delivered', 'cancelled'];
 
 const OrderManagement = () => {
   const [orders, setOrders] = useState([]);
+  const [riders, setRiders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [updatingId, setUpdatingId] = useState(null);
+  const [tick, setTick] = useState(0);
 
-  const fetchOrders = async () => {
-    setLoading(true);
+  const fetchOrders = async (silent = false) => {
+    if (!silent) setLoading(true);
     setError('');
     try {
-      const res = await adminOrdersAPI.getAll();
-      setOrders(res.data || []);
+      const [orderRes, riderRes] = await Promise.all([
+        adminOrdersAPI.getAll(),
+        adminUsersAPI.getRiders().catch(() => ({ data: [] })),
+      ]);
+      setOrders(orderRes.data || []);
+      setRiders((riderRes.data || []).filter((r) => r.verificationStatus === 'verified'));
     } catch (err) {
       console.error('Error fetching admin orders:', err);
-      setError('Failed to load orders. Please try again.');
+      if (!silent) setError('Failed to load orders. Please try again.');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchOrders();
+    fetchOrders(false);
+    const poll = setInterval(() => fetchOrders(true), 5000);
+    const secTimer = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => {
+      clearInterval(poll);
+      clearInterval(secTimer);
+    };
   }, []);
 
   const handleUpdateStatus = async (orderId, newStatus) => {
     setUpdatingId(orderId);
     try {
-      await adminOrdersAPI.updateStatus(orderId, newStatus);
+      const res = await adminOrdersAPI.updateStatus(orderId, newStatus);
+      const updatedOrder = res.data?.order;
       setOrders((prev) =>
-        prev.map((ord) => (ord._id === orderId ? { ...ord, status: newStatus } : ord))
+        prev.map((ord) => (ord._id === orderId ? updatedOrder || { ...ord, status: newStatus } : ord))
       );
     } catch (err) {
       console.error('Failed to update order status:', err);
@@ -63,8 +73,27 @@ const OrderManagement = () => {
     }
   };
 
+  const handleRerouteOrAssign = async (orderId, riderId = null) => {
+    setUpdatingId(orderId);
+    try {
+      const res = await adminOrdersAPI.rerouteOrder(orderId, riderId);
+      const updatedOrder = res.data?.order;
+      if (updatedOrder) {
+        setOrders((prev) => prev.map((ord) => (ord._id === orderId ? updatedOrder : ord)));
+      } else {
+        await fetchOrders(true);
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Could not re-route order.');
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
   const getStatusBadge = (status) => {
     switch (status) {
+      case 'assigned':
+        return <span className="admin-status-badge badge-yellow">🛵 Auto-Assigned (120s SLA)</span>;
       case 'confirmed':
         return <span className="admin-status-badge badge-blue">✓ Confirmed</span>;
       case 'packing':
@@ -82,7 +111,6 @@ const OrderManagement = () => {
     }
   };
 
-  // Filter orders based on status & search
   const filteredOrders = orders.filter((order) => {
     const matchesStatus = selectedStatus === 'all' || order.status === selectedStatus;
     const term = searchTerm.toLowerCase();
@@ -92,6 +120,7 @@ const OrderManagement = () => {
     const customerEmail = order.userId?.email?.toLowerCase() || '';
     const orderId = order._id?.toLowerCase() || '';
     const street = order.shippingAddress?.street?.toLowerCase() || '';
+    const riderName = order.deliveryPartner?.name?.toLowerCase() || '';
 
     const matchesSearch =
       !searchTerm ||
@@ -99,22 +128,23 @@ const OrderManagement = () => {
       customerPhone.includes(term) ||
       customerEmail.includes(term) ||
       orderId.includes(term) ||
-      street.includes(term);
+      street.includes(term) ||
+      riderName.includes(term);
 
     return matchesStatus && matchesSearch;
   });
 
   return (
-    <div className="admin-orders-container">
+    <div className="admin-orders-container" data-tick={tick}>
       {/* Top Header */}
       <div className="orders-top-header">
         <div>
-          <h2>Customer Orders & Live Dispatch</h2>
+          <h2>Customer Orders &amp; Live 120s Auto Dispatch</h2>
           <p className="orders-top-sub">
-            Monitor real-time customer purchases, assigned riders, and 10-minute delivery execution.
+            Orders auto-assign to nearest online rider &amp; auto re-route to next Dark Store Hub if unaccepted in 120 seconds.
           </p>
         </div>
-        <button className="refresh-orders-btn" onClick={fetchOrders} disabled={loading}>
+        <button className="refresh-orders-btn" onClick={() => fetchOrders(false)} disabled={loading}>
           <RefreshCw size={16} className={loading ? 'spin-icon' : ''} />
           <span>Refresh Live</span>
         </button>
@@ -128,7 +158,7 @@ const OrderManagement = () => {
           <Search size={16} className="search-icon" />
           <input
             type="text"
-            placeholder="Search by customer name, phone, order ID, address..."
+            placeholder="Search by customer, rider, phone, order ID, address..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -171,6 +201,13 @@ const OrderManagement = () => {
               minute: '2-digit',
             });
 
+            const isAwaitingAccept =
+              ['pending', 'confirmed', 'assigned'].includes(order.status) && !order.assignment?.acceptedAt;
+            const secsLeft = order.assignment?.expiresAt
+              ? Math.max(0, Math.ceil((new Date(order.assignment.expiresAt).getTime() - Date.now()) / 1000))
+              : 0;
+            const rerouteCount = order.assignment?.rerouteCount || 0;
+
             return (
               <div key={order._id} className="admin-order-card">
                 {/* Card Top: Order ID, Date, Amount, Badge */}
@@ -180,10 +217,39 @@ const OrderManagement = () => {
                     <span className="order-time-stamp">
                       <Clock size={12} /> {dateStr}
                     </span>
+                    {rerouteCount > 0 && (
+                      <span className="reroute-counter-pill">
+                        <RotateCcw size={11} /> Re-routed {rerouteCount}x
+                      </span>
+                    )}
+                    {isAwaitingAccept && order.assignment?.expiresAt && (
+                      <span className="sla-countdown-pill">
+                        ⏱ {secsLeft}s left before next-hub re-route
+                      </span>
+                    )}
                   </div>
                   <div className="header-right">
                     <span className="order-total-price">₹{order.totalPrice.toFixed(2)}</span>
                     {getStatusBadge(order.status)}
+                  </div>
+                </div>
+
+                {/* Live Hub & Nearest Rider Routing Strip */}
+                <div className="order-routing-strip">
+                  <div className="routing-item">
+                    <Store size={14} />
+                    <span>
+                      <strong>Assigned Hub:</strong> {order.assignedHub?.name || 'Dark Store #04 • Vibhuti Khand'}
+                    </span>
+                  </div>
+                  <div className="routing-item">
+                    <Truck size={14} />
+                    <span>
+                      <strong>Assigned Rider:</strong>{' '}
+                      {order.deliveryPartner?.name || 'Pending Verification'}
+                      {order.deliveryPartner?.distanceKm ? ` (${order.deliveryPartner.distanceKm} km away)` : ''}
+                      {order.deliveryPartner?.phone ? ` • ${order.deliveryPartner.phone}` : ''}
+                    </span>
                   </div>
                 </div>
 
@@ -220,7 +286,6 @@ const OrderManagement = () => {
                       {address.city ? `${address.city}, ` : ''}{address.state} {address.zipcode ? `- ${address.zipcode}` : ''}
                     </span>
 
-                    {/* Delivery Instructions */}
                     {order.deliveryInstructions?.length > 0 && (
                       <div className="instructions-badge-strip">
                         {order.deliveryInstructions.map((ins, i) => (
@@ -279,24 +344,57 @@ const OrderManagement = () => {
                   </div>
                 </div>
 
-                {/* Card Actions / Status Transition Bar */}
+                {/* Card Actions / Status + Manual Rider Assign + Re-route Controls */}
                 <div className="order-card-footer">
                   <div className="status-change-group">
-                    <label>Update Live Status:</label>
+                    <label>Status:</label>
                     <select
                       value={order.status}
                       disabled={updatingId === order._id}
                       onChange={(e) => handleUpdateStatus(order._id, e.target.value)}
                       className="status-select-control"
                     >
+                      <option value="assigned">Auto-Assigned</option>
                       <option value="confirmed">Confirmed</option>
                       <option value="packing">Packing at Store</option>
                       <option value="picked_up">Picked Up by Rider</option>
-                      <option value="out_for_delivery">Out for Delivery (On the way)</option>
+                      <option value="out_for_delivery">Out for Delivery</option>
                       <option value="delivered">Delivered</option>
                       <option value="cancelled">Cancelled</option>
                     </select>
                   </div>
+
+                  {!['delivered', 'cancelled'].includes(order.status) && (
+                    <div className="order-dispatch-actions">
+                      {riders.length > 0 && (
+                        <select
+                          className="status-select-control"
+                          value={order.deliveryPartner?.id || ''}
+                          disabled={updatingId === order._id}
+                          onChange={(e) => {
+                            if (e.target.value) handleRerouteOrAssign(order._id, e.target.value);
+                          }}
+                        >
+                          <option value="">Assign Verified Rider...</option>
+                          {riders.map((r) => (
+                            <option key={r._id} value={r._id}>
+                              {r.name} ({r.isOnline ? 'Online' : 'Offline'})
+                            </option>
+                          ))}
+                        </select>
+                      )}
+
+                      <button
+                        type="button"
+                        className="manual-reroute-btn"
+                        disabled={updatingId === order._id}
+                        onClick={() => handleRerouteOrAssign(order._id, null)}
+                      >
+                        <RotateCcw size={13} />
+                        <span>Re-route Next Location</span>
+                      </button>
+                    </div>
+                  )}
 
                   {updatingId === order._id && (
                     <span className="updating-status-text">Updating...</span>
@@ -312,4 +410,3 @@ const OrderManagement = () => {
 };
 
 export default OrderManagement;
-

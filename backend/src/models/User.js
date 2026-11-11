@@ -10,19 +10,49 @@ const userSchema = new mongoose.Schema({
   // Multiple delivery addresses
   addresses: [
     {
-      label: { type: String, enum: ['Home', 'Work', 'Other'] },
-      street: String,
-      city: String,
-      zipcode: String,
+      label: { type: String, enum: ['Home', 'Work', 'Other'], default: 'Home' },
+      houseNo: { type: String, default: '' },
+      area: { type: String, default: '' },
+      landmark: { type: String, default: '' },
+      street: { type: String, default: '' },
+      city: { type: String, default: '' },
+      state: { type: String, default: '' },
+      zipcode: { type: String, default: '' },
+      country: { type: String, default: 'India' },
       coordinates: { lat: Number, lng: Number },
       isDefault: { type: Boolean, default: false },
+      lastUsedAt: { type: Date, default: Date.now },
     }
   ],
   
   isAdmin: { type: Boolean, default: false },
   isDeliveryPartner: { type: Boolean, default: false },
   role: { type: String, enum: ['customer', 'admin', 'delivery_partner'], default: 'customer' },
+  vehicleType: { type: String, enum: ['bike', 'scooter', 'ev', 'cycle', ''], default: '' },
   vehicleNumber: { type: String, default: '' },
+  verificationStatus: {
+    type: String,
+    enum: ['pending', 'verified', 'rejected', 'suspended'],
+    default: 'verified',
+  },
+  onboardingCompleted: { type: Boolean, default: false },
+  createdByAdmin: { type: Boolean, default: false },
+  isOnline: { type: Boolean, default: false },
+  assignedHub: { type: String, default: 'Dark Store #04 • Vibhuti Khand, Lucknow' },
+  currentLocation: {
+    lat: { type: Number, default: 26.8602 },
+    lng: { type: Number, default: 81.0068 },
+    area: { type: String, default: 'Vibhuti Khand, Gomti Nagar, Lucknow' },
+    updatedAt: { type: Date, default: Date.now },
+  },
+  kycDetails: {
+    drivingLicenseNumber: { type: String, default: '' },
+    idType: { type: String, default: 'Aadhaar' },
+    idNumber: { type: String, default: '' },
+    emergencyContact: { type: String, default: '' },
+    bankOrUpi: { type: String, default: '' },
+    submittedAt: { type: Date },
+  },
   createdAt: { type: Date, default: Date.now },
 });
 

@@ -6,3 +6,4 @@ foreach ($e in $entries) {
     Write-Host "$($e.FullName) - $($e.Length) bytes"
 }
 $zip.Dispose()
+

@@ -939,6 +939,16 @@
 }
 
 /* Responsive Design for Mobile & Tablet */
+@media (max-width: 1024px) {
+  .announcement-ticker-bar.hide-on-compact {
+    display: none;
+  }
+}
+
+body.capacitor-native-app .announcement-ticker-bar {
+  display: none;
+}
+
 @media (max-width: 900px) {
   .top-promo-banner {
     display: none;
@@ -948,6 +958,7 @@
 @media (max-width: 768px) {
   .navbar {
     padding: 6px 0 8px 0;
+    border-bottom: none;
   }
 
   .navbar-container {

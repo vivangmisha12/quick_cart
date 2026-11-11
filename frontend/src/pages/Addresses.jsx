@@ -13,10 +13,11 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLocationContext } from '../context/LocationContext';
+import { userAddressesAPI } from '../api/api';
 import '../styles/Addresses.css';
 
 const Addresses = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const { setLocation, detectLocation } = useLocationContext();
   const navigate = useNavigate();
 
@@ -29,7 +30,9 @@ const Addresses = () => {
 
   const [formData, setFormData] = useState({
     label: 'Home',
+    houseNo: '',
     street: '',
+    landmark: '',
     city: '',
     state: '',
     zipcode: '',
@@ -46,28 +49,54 @@ const Addresses = () => {
     loadAddresses();
   }, [user, navigate]);
 
-  const loadAddresses = () => {
+  const loadAddresses = async () => {
     if (!user?.id) {
       setAddresses([]);
       return;
     }
-    const saved = localStorage.getItem(`savedAddresses_${user.id}`);
-    if (saved) {
-      try {
-        setAddresses(JSON.parse(saved));
-      } catch (e) {
-        setAddresses([]);
+
+    let resolved = Array.isArray(user.addresses) ? user.addresses : [];
+    try {
+      const res = await userAddressesAPI.getAll();
+      if (Array.isArray(res.data?.addresses)) {
+        resolved = res.data.addresses;
       }
-    } else {
-      setAddresses([]);
+    } catch (err) {}
+
+    if (resolved.length === 0) {
+      const saved = localStorage.getItem(`savedAddresses_${user.id}`);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) resolved = parsed;
+        } catch (e) {}
+      }
+    }
+
+    const normalized = resolved.map((addr) => ({
+      ...addr,
+      id: String(addr.id || addr._id || Date.now()),
+      latitude: addr.latitude || addr.coordinates?.lat || '',
+      longitude: addr.longitude || addr.coordinates?.lng || '',
+    }));
+    setAddresses(normalized);
+    if (normalized.length > 0) {
+      localStorage.setItem(`savedAddresses_${user.id}`, JSON.stringify(normalized));
     }
   };
 
   const saveAddresses = (newAddresses) => {
     if (!user?.id) return;
-    localStorage.setItem(`savedAddresses_${user.id}`, JSON.stringify(newAddresses));
-    setAddresses(newAddresses);
-    window.dispatchEvent(new CustomEvent('addressesUpdated', { detail: newAddresses }));
+    const normalized = newAddresses.map((addr) => ({
+      ...addr,
+      id: String(addr.id || addr._id || Date.now()),
+    }));
+    localStorage.setItem(`savedAddresses_${user.id}`, JSON.stringify(normalized));
+    setAddresses(normalized);
+    if (typeof updateUser === 'function') {
+      updateUser({ addresses: normalized });
+    }
+    window.dispatchEvent(new CustomEvent('addressesUpdated', { detail: normalized }));
   };
 
   const handleAddressChange = (e) => {
@@ -102,7 +131,7 @@ const Addresses = () => {
     }
   };
 
-  const handleAddAddress = (e) => {
+  const handleAddAddress = async (e) => {
     e.preventDefault();
 
     if (!formData.street || !formData.city) {
@@ -110,24 +139,76 @@ const Addresses = () => {
       return;
     }
 
-    if (editingId) {
-      const updated = addresses.map((addr) =>
-        addr.id === editingId ? { ...formData, id: addr.id } : addr
-      );
-      saveAddresses(updated);
-      setEditingId(null);
-    } else {
-      const newAddress = {
-        ...formData,
-        id: Date.now().toString(),
-      };
-      saveAddresses([...addresses, newAddress]);
+    const houseNo = (formData.houseNo || '').trim();
+    const area = (formData.street || '').trim();
+    const landmark = (formData.landmark || '').trim();
+    const fullStreet = [houseNo, area, landmark ? `(Near ${landmark})` : '']
+      .filter(Boolean)
+      .join(', ');
+
+    const payload = {
+      label: formData.label || 'Home',
+      houseNo,
+      area,
+      landmark,
+      street: fullStreet || area,
+      city: (formData.city || '').trim(),
+      state: (formData.state || '').trim(),
+      zipcode: (formData.zipcode || '').trim(),
+      latitude: formData.latitude,
+      longitude: formData.longitude,
+      coordinates:
+        formData.latitude && formData.longitude
+          ? { lat: Number(formData.latitude), lng: Number(formData.longitude) }
+          : undefined,
+      isDefault: Boolean(formData.isDefault),
+    };
+
+    try {
+      let apiAddresses = null;
+      if (editingId && /^[a-f0-9]{24}$/i.test(String(editingId))) {
+        const res = await userAddressesAPI.update(editingId, payload);
+        apiAddresses = res.data?.addresses;
+      } else {
+        const res = await userAddressesAPI.save(payload);
+        apiAddresses = res.data?.addresses;
+      }
+
+      if (Array.isArray(apiAddresses) && apiAddresses.length > 0) {
+        saveAddresses(
+          apiAddresses.map((a) => ({
+            ...a,
+            latitude: a.latitude || a.coordinates?.lat || '',
+            longitude: a.longitude || a.coordinates?.lng || '',
+          }))
+        );
+      } else if (editingId) {
+        saveAddresses(
+          addresses.map((addr) =>
+            addr.id === editingId ? { ...payload, id: addr.id } : addr
+          )
+        );
+      } else {
+        saveAddresses([{ ...payload, id: Date.now().toString() }, ...addresses]);
+      }
+    } catch (err) {
+      if (editingId) {
+        saveAddresses(
+          addresses.map((addr) =>
+            addr.id === editingId ? { ...payload, id: addr.id } : addr
+          )
+        );
+      } else {
+        saveAddresses([{ ...payload, id: Date.now().toString() }, ...addresses]);
+      }
     }
 
-    // Reset Form
+    setEditingId(null);
     setFormData({
       label: 'Home',
+      houseNo: '',
       street: '',
+      landmark: '',
       city: '',
       state: '',
       zipcode: '',
@@ -136,13 +217,28 @@ const Addresses = () => {
       isDefault: false,
     });
     setShowForm(false);
-    setActiveSuccessMsg('Address saved successfully with GPS coordinates!');
+    setActiveSuccessMsg('Address saved to your account & database!');
     setTimeout(() => setActiveSuccessMsg(''), 4000);
   };
 
-  const handleDeleteAddress = (id) => {
+  const handleDeleteAddress = async (id) => {
     if (window.confirm('Are you sure you want to delete this address?')) {
-      const updated = addresses.filter((addr) => addr.id !== id);
+      try {
+        if (/^[a-f0-9]{24}$/i.test(String(id))) {
+          const res = await userAddressesAPI.remove(id);
+          if (Array.isArray(res.data?.addresses)) {
+            saveAddresses(
+              res.data.addresses.map((a) => ({
+                ...a,
+                latitude: a.latitude || a.coordinates?.lat || '',
+                longitude: a.longitude || a.coordinates?.lng || '',
+              }))
+            );
+            return;
+          }
+        }
+      } catch (err) {}
+      const updated = addresses.filter((addr) => String(addr.id) !== String(id));
       saveAddresses(updated);
     }
   };
@@ -150,6 +246,9 @@ const Addresses = () => {
   const handleEditAddress = (address) => {
     setFormData({
       ...address,
+      houseNo: address.houseNo || '',
+      street: address.area || address.street || '',
+      landmark: address.landmark || '',
       latitude: address.latitude || address.coordinates?.lat || '',
       longitude: address.longitude || address.coordinates?.lng || '',
     });
@@ -257,14 +356,40 @@ const Addresses = () => {
               </div>
             </div>
 
+            <div className="form-row">
+              <div className="form-group">
+                <label>House / Flat / Floor No.</label>
+                <input
+                  type="text"
+                  name="houseNo"
+                  value={formData.houseNo}
+                  onChange={handleAddressChange}
+                  placeholder="e.g., Flat 402, Sunshine Heights"
+                  className="form-input"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Nearby Landmark (Optional)</label>
+                <input
+                  type="text"
+                  name="landmark"
+                  value={formData.landmark}
+                  onChange={handleAddressChange}
+                  placeholder="e.g., Opposite Wave Mall"
+                  className="form-input"
+                />
+              </div>
+            </div>
+
             <div className="form-group">
-              <label>Street Address / House No. *</label>
+              <label>Area / Street / Sector *</label>
               <input
                 type="text"
                 name="street"
                 value={formData.street}
                 onChange={handleAddressChange}
-                placeholder="e.g., Flat 402, Sunshine Heights, Hazratganj"
+                placeholder="e.g., Vibhuti Khand, Hazratganj"
                 className="form-input"
                 required
               />

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Heart, 
   ShoppingCart, 
@@ -20,6 +20,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useLocationContext } from '../context/LocationContext';
+import TopCategoryStrip from './TopCategoryStrip';
 import '../styles/Navbar.css';
 
 const TRENDING_SEARCHES = ['Milk', 'Curd', 'Bread', 'Potato Chips', 'Cold Drinks', 'Chocolate', 'Onion'];
@@ -29,6 +30,8 @@ const Navbar = () => {
   const { totalItems, cart, openCartDrawer } = useCart();
   const { location, setLocation, detectLocation, locating, error: locationError } = useLocationContext();
   const navigate = useNavigate();
+  const routeLocation = useLocation();
+  const showCategoryTabs = routeLocation.pathname === '/' || routeLocation.pathname === '/products';
 
   const [search, setSearch] = useState('');
   const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
@@ -204,7 +207,7 @@ const Navbar = () => {
               <Search size={18} className="search-icon-left" />
               <input
                 type="text"
-                placeholder='Search "milk", "bread", "chips", "butter"...'
+                placeholder='Search for atta, dal, milk and more'
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onFocus={() => setShowSearchSuggestions(true)}
@@ -368,8 +371,11 @@ const Navbar = () => {
         </div>
       </nav>
 
-      {/* Modern Ticker Announcement */}
-      <div className="announcement-ticker-bar">
+      {/* Upper Icon Category Tabs on Mobile/App (right under Search Bar) */}
+      <TopCategoryStrip />
+
+      {/* Modern Ticker Announcement (hidden inside mobile app or when category tabs sit directly under search) */}
+      <div className={`announcement-ticker-bar ${showCategoryTabs ? 'hide-on-compact' : ''}`}>
         <div className="ticker-track">
           <div className="ticker-content">
             <span>⚡ <strong>SUPERFAST 10 MIN DELIVERY</strong> in your area</span>

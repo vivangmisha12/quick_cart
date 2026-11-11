@@ -16,6 +16,19 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    flavorDimensions "app"
+    productFlavors {
+        customer {
+            dimension "app"
+            applicationId "com.progicart.app"
+        }
+        rider {
+            dimension "app"
+            applicationId "com.progicart.rider"
+            versionCode 1
+            versionName "1.0-rider"
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false

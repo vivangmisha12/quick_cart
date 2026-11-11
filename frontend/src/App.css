@@ -28,9 +28,12 @@ html, body, #root {
   padding: 20px 0;
 }
 
-.app-main-standalone {
+.app-main-standalone,
+.app-main-checkout {
   flex: 1;
   padding: 0;
+  min-width: 0;
+  width: 100%;
 }
 
 a {

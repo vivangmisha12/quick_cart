@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import AuthShell, { AuthField } from '../components/AuthShell';
+import { UserPlus, User, Mail, Phone, Lock, ArrowRight } from 'lucide-react';
 import '../styles/Auth.css';
 
 const Register = () => {
@@ -26,7 +28,7 @@ const Register = () => {
     setError('');
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError('Passwords do not match.');
       return;
     }
 
@@ -49,82 +51,92 @@ const Register = () => {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-box">
-        <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-          <Link to="/">
-            <img src="/logo.png" alt="Progicart" style={{ height: '46px', width: 'auto', objectFit: 'contain' }} />
+    <AuthShell
+      wide
+      badgeIcon={UserPlus}
+      badgeLabel="NEW CUSTOMER ACCOUNT"
+      title="Create your account"
+      subtitle="Join Progicart for 10–15 min delivery and saved doorstep addresses."
+      error={error}
+      footer={
+        <>
+          Already have an account?{' '}
+          <Link to="/login" className="auth-switch-link">
+            Sign in here
           </Link>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="auth-form">
+        <AuthField
+          id="register-name"
+          label="Full Name"
+          icon={User}
+          type="text"
+          name="name"
+          autoComplete="name"
+          placeholder="e.g. Aarav Sharma"
+          value={formData.name}
+          onChange={handleChange}
+        />
+
+        <AuthField
+          id="register-email"
+          label="Email Address"
+          icon={Mail}
+          type="email"
+          name="email"
+          autoComplete="email"
+          placeholder="you@example.com"
+          value={formData.email}
+          onChange={handleChange}
+        />
+
+        <AuthField
+          id="register-phone"
+          label="Mobile Number"
+          icon={Phone}
+          type="tel"
+          inputMode="tel"
+          name="phone"
+          autoComplete="tel"
+          placeholder="10-digit mobile number"
+          value={formData.phone}
+          onChange={handleChange}
+        />
+
+        <div className="auth-grid-2">
+          <AuthField
+            id="register-password"
+            label="Password"
+            icon={Lock}
+            name="password"
+            autoComplete="new-password"
+            placeholder="Create password"
+            value={formData.password}
+            onChange={handleChange}
+            isPassword
+          />
+
+          <AuthField
+            id="register-confirm-password"
+            label="Confirm Password"
+            icon={Lock}
+            name="confirmPassword"
+            autoComplete="new-password"
+            placeholder="Re-enter password"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            isPassword
+          />
         </div>
-        <h1>Create Progicart Account</h1>
-        {error && <div className="error-msg">{error}</div>}
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Name</label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Phone</label>
-            <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Password</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Confirm Password</label>
-            <input
-              type="password"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <button type="submit" disabled={loading}>
-            {loading ? 'Registering...' : 'Register'}
-          </button>
-        </form>
-
-        <p>
-          Already have an account? <Link to="/login" className="auth-link a">Login</Link>
-        </p>
-      </div>
-    </div>
+        <button type="submit" className="auth-submit-btn" disabled={loading}>
+          <span>{loading ? 'Creating account...' : 'Create Account'}</span>
+          {!loading && <ArrowRight size={16} />}
+        </button>
+      </form>
+    </AuthShell>
   );
 };
 

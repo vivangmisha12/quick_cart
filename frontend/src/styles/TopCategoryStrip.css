@@ -1,0 +1,123 @@
+/* ==========================================================================
+   Upper Horizontal Icon Category Tabs (Blinkit Mobile / App Header Strip)
+   ========================================================================== */
+
+.top-category-strip-wrapper {
+  display: none;
+  background: #ffffff;
+  border-top: 1px solid #f1f4f7;
+  border-bottom: 1px solid #e8ecef;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 1024px) {
+  .top-category-strip-wrapper {
+    display: block;
+  }
+}
+
+body.capacitor-native-app .top-category-strip-wrapper {
+  display: block;
+}
+
+.top-category-strip-scroll {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 6px 10px 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.top-category-strip-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.top-cat-tab {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+  min-width: 66px;
+  max-width: 82px;
+  padding: 4px 6px 9px;
+  background: transparent;
+  border: none;
+  color: #4b5563;
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s ease;
+}
+
+.top-cat-tab:active {
+  transform: scale(0.96);
+}
+
+.top-cat-icon-box {
+  position: relative;
+  width: 28px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #3f3f46;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.top-cat-tab.active .top-cat-icon-box {
+  color: #111827;
+}
+
+.top-cat-tab.active .top-cat-icon-box svg {
+  fill: #f8cb46;
+  stroke: #111827;
+}
+
+.top-cat-new-badge {
+  position: absolute;
+  top: -4px;
+  right: -14px;
+  background: #e23744;
+  color: #ffffff;
+  font-size: 8.5px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 2px 5px;
+  border-radius: 999px;
+  letter-spacing: 0.2px;
+  box-shadow: 0 1px 3px rgba(226, 55, 68, 0.35);
+}
+
+.top-cat-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #52525b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  line-height: 1.2;
+}
+
+.top-cat-tab.active .top-cat-label {
+  color: #111827;
+  font-weight: 800;
+}
+
+.top-cat-active-bar {
+  position: absolute;
+  bottom: 0;
+  left: 10px;
+  right: 10px;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: #1c1c1c;
+}
+

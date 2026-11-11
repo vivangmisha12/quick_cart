@@ -17,9 +17,24 @@ api.interceptors.request.use((config) => {
 export const authAPI = {
   register: (name, email, phone, password, confirmPassword) =>
     api.post('/auth/register', { name, email, phone, password, confirmPassword }),
+  registerDelivery: (data) =>
+    api.post('/auth/delivery/register', data),
   login: (email, password, portal = '') =>
     api.post('/auth/login', { email, password, portal }),
+  verifyDelivery: (data) =>
+    api.put('/auth/delivery/verify', data),
+  updateDeliveryStatus: (data) =>
+    api.put('/auth/delivery/status', data),
   getProfile: () => api.get('/auth/profile'),
+  updateProfile: (data) => api.put('/auth/profile', data),
+};
+
+// Saved Delivery Addresses (User DB Collection)
+export const userAddressesAPI = {
+  getAll: () => api.get('/users/addresses'),
+  save: (data) => api.post('/users/addresses', data),
+  update: (addressId, data) => api.put(`/users/addresses/${addressId}`, data),
+  remove: (addressId) => api.delete(`/users/addresses/${addressId}`),
 };
 
 // Categories APIs
@@ -58,8 +73,8 @@ export const ordersAPI = {
     return api.post('/orders', { shippingAddress: orderData, paymentMethod });
   },
   getUserOrders: () => api.get('/orders'),
-  createRazorpayOrder: (amount) =>
-    api.post('/orders/razorpay/create-order', { amount }),
+  createRazorpayOrder: (deliveryTip = 0, shippingAddress = null) =>
+    api.post('/orders/razorpay/create-order', { deliveryTip, shippingAddress }),
   verifyRazorpayPayment: (paymentData) =>
     api.post('/orders/razorpay/verify-payment', paymentData),
 };
@@ -69,6 +84,8 @@ export const adminOrdersAPI = {
   getAll: () => api.get('/orders/admin/all'),
   updateStatus: (id, status, deliveryPartner) =>
     api.put(`/orders/${id}/status`, { status, deliveryPartner }),
+  rerouteOrder: (id, riderId = null) =>
+    api.post(`/orders/${id}/reroute`, riderId ? { riderId } : {}),
 };
 
 // Delivery Partner APIs
@@ -76,12 +93,18 @@ export const deliveryAPI = {
   getActiveOrders: () => api.get('/orders/delivery/active'),
   updateOrderStatus: (id, status, partnerInfo = {}) =>
     api.put(`/orders/delivery/${id}/status`, { status, ...partnerInfo }),
+  declineOrder: (id) =>
+    api.put(`/orders/delivery/${id}/decline`),
 };
 
 // Admin Users APIs
 export const adminUsersAPI = {
   getCount: () => api.get('/users/admin/count'),
   getAll: () => api.get('/users/admin'),
+  getRiders: () => api.get('/users/admin/riders'),
+  createRider: (data) => api.post('/users/admin/riders', data),
+  updateRiderStatus: (id, verificationStatus) =>
+    api.patch(`/users/admin/riders/${id}/status`, { verificationStatus }),
 };
 
 

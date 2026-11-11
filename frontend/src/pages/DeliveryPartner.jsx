@@ -25,9 +25,14 @@ import {
   Wallet,
   Bike,
   User,
-  Power
+  Power,
+  Lock,
+  Crosshair,
+  RotateCcw
 } from 'lucide-react';
-import { deliveryAPI } from '../api/api';
+import { deliveryAPI, authAPI } from '../api/api';
+import RiderVerificationFields, { RIDER_HUB_OPTIONS } from '../components/RiderVerificationFields';
+import '../styles/DeliveryLogin.css';
 import '../styles/DeliveryPartner.css';
 
 const ORDER_STEPS = [
@@ -41,8 +46,14 @@ const getStepIndex = (status) => {
   if (status === 'delivered') return 4;
   if (status === 'out_for_delivery' || status === 'shipped') return 2;
   if (status === 'picked_up') return 2;
-  if (status === 'packing' || status === 'assigned') return 1;
-  return 0; // pending / confirmed
+  if (status === 'packing') return 1;
+  return 0; // pending / confirmed / assigned
+};
+
+const getAcceptanceSecondsLeft = (order) => {
+  if (!order?.assignment?.expiresAt) return 120;
+  const diff = Math.ceil((new Date(order.assignment.expiresAt).getTime() - Date.now()) / 1000);
+  return Math.max(0, diff);
 };
 
 const formatMinutesAgo = (dateString) => {
@@ -52,33 +63,56 @@ const formatMinutesAgo = (dateString) => {
 };
 
 const DeliveryPartner = () => {
-  const { user, logout } = useAuth();
+  const { user, updateUser, logout } = useAuth();
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [toastMsg, setToastMsg] = useState('');
   const [activeTab, setActiveTab] = useState('active'); // 'active' | 'completed'
-  const [isOnDuty, setIsOnDuty] = useState(true);
+  const [isOnDuty, setIsOnDuty] = useState(user?.isOnline !== undefined ? Boolean(user.isOnline) : true);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [updatingId, setUpdatingId] = useState(null);
+  const [syncingGps, setSyncingGps] = useState(false);
   const [checkedItems, setCheckedItems] = useState({});
-  const [tick, setTick] = useState(0); // Live clock tick for SLA minutes elapsed
+  const [tick, setTick] = useState(0); // Live clock tick for SLA minutes & 120s timers
 
-  // Incoming Request Alert Modal state
+  // Incoming Request Alert Modal state (120-second SLA)
   const [incomingOrder, setIncomingOrder] = useState(null);
-  const [incomingCountdown, setIncomingCountdown] = useState(30);
+  const [incomingCountdown, setIncomingCountdown] = useState(120);
+
+  // Verification / KYC onboarding state for Admin-created riders
+  const defaultHub = RIDER_HUB_OPTIONS[0];
+  const [kycForm, setKycForm] = useState({
+    newPassword: '',
+    vehicleType: user?.vehicleType || 'bike',
+    vehicleNumber: user?.vehicleNumber || '',
+    drivingLicenseNumber: user?.kycDetails?.drivingLicenseNumber || '',
+    idType: user?.kycDetails?.idType || 'Aadhaar',
+    idNumber: user?.kycDetails?.idNumber || '',
+    emergencyContact: user?.kycDetails?.emergencyContact || user?.phone || '',
+    bankOrUpi: user?.kycDetails?.bankOrUpi || '',
+    assignedHub: user?.assignedHub || defaultHub.value,
+    lat: user?.currentLocation?.lat || defaultHub.lat,
+    lng: user?.currentLocation?.lng || defaultHub.lng,
+    area: user?.currentLocation?.area || defaultHub.area,
+    gpsLocked: false,
+  });
+  const [verifyingKyc, setVerifyingKyc] = useState(false);
+  const [kycError, setKycError] = useState('');
 
   // Keep track of known orders to avoid re-alerting already seen orders
   const knownOrderIdsRef = useRef(new Set());
   const initialLoadRef = useRef(true);
+
+  const needsVerification = Boolean(user && !user.isAdmin && user.verificationStatus !== 'verified');
 
   // Dynamic Rider Profile Info from logged in user
   const riderProfile = {
     name: user?.name || 'Progicart Rider',
     phone: user?.phone || '9876543210',
     vehicleNumber: user?.vehicleNumber || 'UP-32-BK-2024',
-    darkStore: 'Dark Store #04 • Vibhuti Khand, Lucknow',
+    darkStore: user?.assignedHub || 'Dark Store #04 • Vibhuti Khand, Lucknow',
   };
 
   const showToast = (msg) => {
@@ -131,6 +165,7 @@ const DeliveryPartner = () => {
 
   // Fetch active delivery orders from backend
   const fetchDeliveryOrders = async (silent = false) => {
+    if (needsVerification) return;
     if (!silent) setLoading(true);
     setError('');
     try {
@@ -140,13 +175,14 @@ const DeliveryPartner = () => {
 
       if (isOnDuty && fetched.length > 0) {
         fetched.forEach((ord) => {
-          const isPending = ['confirmed', 'packing', 'pending'].includes(ord.status);
-          if (isPending && !knownOrderIdsRef.current.has(ord._id)) {
+          const isAwaitingAccept =
+            ['confirmed', 'pending', 'assigned'].includes(ord.status) && !ord.assignment?.acceptedAt;
+          if (isAwaitingAccept && !knownOrderIdsRef.current.has(ord._id)) {
             knownOrderIdsRef.current.add(ord._id);
 
             if (!initialLoadRef.current) {
               setIncomingOrder(ord);
-              setIncomingCountdown(30);
+              setIncomingCountdown(getAcceptanceSecondsLeft(ord) || 120);
               playOrderAlertSound();
             }
           } else {
@@ -164,8 +200,65 @@ const DeliveryPartner = () => {
     }
   };
 
+  // Sync live GPS coordinates & online duty status to backend
+  const syncRiderStatusToServer = async (nextOnline, withGps = false) => {
+    const sendStatus = async (coordsPayload = {}) => {
+      try {
+        const res = await authAPI.updateDeliveryStatus({
+          isOnline: nextOnline,
+          ...coordsPayload,
+        });
+        if (res.data?.user) updateUser(res.data.user);
+      } catch (e) {
+        console.warn('Rider status sync notice:', e);
+      }
+    };
+
+    if (withGps && navigator.geolocation) {
+      setSyncingGps(true);
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          await sendStatus({
+            lat: Number(pos.coords.latitude.toFixed(6)),
+            lng: Number(pos.coords.longitude.toFixed(6)),
+            area: `Live GPS (${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)})`,
+          });
+          setSyncingGps(false);
+          showToast('Live GPS location synced for nearest order matching!');
+        },
+        async () => {
+          await sendStatus();
+          setSyncingGps(false);
+        },
+        { enableHighAccuracy: true, timeout: 6000 }
+      );
+    } else {
+      await sendStatus();
+    }
+  };
+
+  // Complete KYC / Verification form submit (Admin-created rider onboarding)
+  const handleCompleteKycVerification = async (e) => {
+    e.preventDefault();
+    setKycError('');
+    setVerifyingKyc(true);
+    try {
+      const res = await authAPI.verifyDelivery(kycForm);
+      if (res.data?.user) {
+        updateUser(res.data.user);
+        setIsOnDuty(true);
+      }
+      showToast('KYC Verified! You are now ONLINE and ready for nearest deliveries.');
+    } catch (err) {
+      setKycError(err.response?.data?.message || err.message || 'Verification failed. Check fields.');
+    } finally {
+      setVerifyingKyc(false);
+    }
+  };
+
   // Setup Real-Time Listeners (BroadcastChannel + LocalStorage + Fast 3s Polling)
   useEffect(() => {
+    if (needsVerification) return;
     fetchDeliveryOrders(false);
 
     let channel;
@@ -174,14 +267,7 @@ const DeliveryPartner = () => {
         channel = new BroadcastChannel('blinkit_realtime_orders');
         channel.onmessage = (event) => {
           if (event.data?.type === 'NEW_ORDER' && event.data?.order) {
-            const newOrd = event.data.order;
-            knownOrderIdsRef.current.add(newOrd._id);
-            if (isOnDuty) {
-              setIncomingOrder(newOrd);
-              setIncomingCountdown(30);
-              playOrderAlertSound();
-              fetchDeliveryOrders(true);
-            }
+            fetchDeliveryOrders(true);
           }
         };
       }
@@ -206,9 +292,9 @@ const DeliveryPartner = () => {
       window.removeEventListener('storage', handleStorageChange);
       clearInterval(interval);
     };
-  }, [isOnDuty, soundEnabled]);
+  }, [isOnDuty, soundEnabled, needsVerification]);
 
-  // Countdown timer for Incoming Order Request Modal
+  // Countdown timer for Incoming Order Request Modal (120-Second SLA Auto Re-route)
   useEffect(() => {
     let timer;
     if (incomingOrder && incomingCountdown > 0) {
@@ -216,7 +302,9 @@ const DeliveryPartner = () => {
         setIncomingCountdown((prev) => {
           if (prev <= 1) {
             setIncomingOrder(null);
-            return 30;
+            fetchDeliveryOrders(true);
+            showToast('120s window expired — Order auto re-routed to next hub/rider!');
+            return 120;
           }
           return prev - 1;
         });
@@ -224,6 +312,14 @@ const DeliveryPartner = () => {
     }
     return () => clearInterval(timer);
   }, [incomingOrder, incomingCountdown]);
+
+  // Live 1s countdown tick for assigned-but-unaccepted order cards
+  useEffect(() => {
+    const secTimer = setInterval(() => {
+      setTick((t) => t + 1);
+    }, 1000);
+    return () => clearInterval(secTimer);
+  }, []);
 
   // Accept incoming order request
   const handleAcceptIncomingOrder = async (orderToAccept) => {
@@ -242,14 +338,27 @@ const DeliveryPartner = () => {
       showToast('Order accepted! Start packing items at Dark Store.');
     } catch (err) {
       console.error('Accept order error:', err);
-      setError('Could not accept order. Please try again.');
+      setError(err.response?.data?.message || 'Could not accept order. Please try again.');
     } finally {
       setUpdatingId(null);
     }
   };
 
-  const handleDeclineIncomingOrder = () => {
+  const handleDeclineOrder = async (orderToDecline) => {
+    const target = orderToDecline || incomingOrder;
     setIncomingOrder(null);
+    if (!target?._id) return;
+    setUpdatingId(target._id);
+    try {
+      await deliveryAPI.declineOrder(target._id);
+      await fetchDeliveryOrders(true);
+      showToast('Order skipped — immediately re-routed to next nearest rider & location!');
+    } catch (err) {
+      console.warn('Decline order notice:', err);
+      await fetchDeliveryOrders(true);
+    } finally {
+      setUpdatingId(null);
+    }
   };
 
   // Progression of delivery statuses (Optimistic update + server sync)
@@ -330,6 +439,89 @@ const DeliveryPartner = () => {
       .toUpperCase();
   };
 
+  // First-Login KYC & Verification Onboarding Screen for Admin-created Delivery Partners
+  if (needsVerification) {
+    return (
+      <div className="rider-portal-page">
+        <header className="rider-top-header">
+          <div className="rider-header-content">
+            <div className="rider-brand-group">
+              <div className="rider-logo-wrap">
+                <img src="/logo.png" alt="Progicart" className="rider-header-logo-img" />
+              </div>
+              <span className="rider-pill">KYC VERIFICATION</span>
+            </div>
+            <div className="rider-header-actions">
+              <button
+                type="button"
+                className="rider-logout-btn"
+                onClick={() => {
+                  logout();
+                  navigate('/delivery/login');
+                }}
+              >
+                <LogOut size={15} />
+                <span className="hide-xs">Logout</span>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <div className="rider-kyc-onboarding-container">
+          <div className="rider-kyc-onboarding-card">
+            <div className="kyc-welcome-banner">
+              <div className="kyc-avatar-badge">{getInitials(user?.name)}</div>
+              <div>
+                <span className="kyc-status-chip">VERIFICATION PENDING</span>
+                <h2>Welcome, {user?.name}!</h2>
+                <p>
+                  Admin has added your profile ({user?.email} &bull; {user?.phone}). Complete your Vehicle &amp; KYC verification below to start receiving nearest orders.
+                </p>
+              </div>
+            </div>
+
+            {kycError && (
+              <div className="rider-alert-banner error">
+                <AlertCircle size={16} />
+                <span>{kycError}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleCompleteKycVerification} className="delivery-login-form">
+              <RiderVerificationFields
+                form={kycForm}
+                onChange={(k, v) => setKycForm((prev) => ({ ...prev, [k]: v }))}
+                onLocationDetected={(loc) => setKycForm((prev) => ({ ...prev, ...loc }))}
+              />
+
+              <div className="delivery-input-group">
+                <label>Set New Password (Optional — replace temporary password)</label>
+                <div className="delivery-input-field">
+                  <Lock size={17} className="input-svg-icon" />
+                  <input
+                    type="password"
+                    placeholder="Leave blank to keep existing password (min 6 chars)"
+                    value={kycForm.newPassword}
+                    onChange={(e) => setKycForm((prev) => ({ ...prev, newPassword: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                className="status-transition-btn delivered-cta"
+                disabled={verifyingKyc}
+              >
+                <ShieldCheck size={18} />
+                <span>{verifyingKyc ? 'Submitting Verification...' : 'Submit Verification & Start Duty'}</span>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="rider-portal-page">
       {/* Toast Notification Banner */}
@@ -368,6 +560,16 @@ const DeliveryPartner = () => {
             >
               {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
               <span className="hide-xs">{soundEnabled ? 'Sound ON' : 'Muted'}</span>
+            </button>
+
+            <button
+              type="button"
+              className="rider-icon-btn"
+              onClick={() => syncRiderStatusToServer(isOnDuty, true)}
+              disabled={syncingGps}
+              title="Sync Live GPS Location"
+            >
+              <Crosshair size={16} className={syncingGps ? 'spin-icon' : ''} />
             </button>
 
             <button
@@ -424,7 +626,8 @@ const DeliveryPartner = () => {
               onClick={() => {
                 const next = !isOnDuty;
                 setIsOnDuty(next);
-                showToast(next ? 'You are now ONLINE and receiving orders!' : 'Shift paused. You are Offline.');
+                syncRiderStatusToServer(next, next);
+                showToast(next ? 'You are now ONLINE and receiving nearest orders!' : 'Shift paused. You are Offline.');
               }}
             >
               <div className="shift-indicator-track">
@@ -584,6 +787,15 @@ const DeliveryPartner = () => {
 
                 const isOnlinePaid = order.paymentMethod && order.paymentMethod !== 'cod';
                 const orderEarn = 35 + (order.deliveryTip || 0);
+                const acceptSecondsLeft = getAcceptanceSecondsLeft(order);
+                const isAwaitingAccept =
+                  ['confirmed', 'pending', 'assigned'].includes(order.status) && !order.assignment?.acceptedAt;
+                const hubName = order.assignedHub?.name || 'Progicart Dark Store #04';
+                const hubAddr = order.assignedHub?.address || 'Vibhuti Khand, Lucknow';
+                const distanceText = order.deliveryPartner?.distanceKm
+                  ? `${order.deliveryPartner.distanceKm} km from you`
+                  : '~1.4 km route';
+                const rerouteCount = order.assignment?.rerouteCount || 0;
 
                 return (
                   <div key={order._id} className="rider-order-card" data-tick={tick}>
@@ -591,10 +803,19 @@ const DeliveryPartner = () => {
                     <div className="order-meta-header">
                       <div className={`speed-target-pill ${urgencyClass}`}>
                         <Zap size={13} />
-                        <span>{minutesElapsed}m ago • 10m SLA</span>
+                        <span>
+                          {isAwaitingAccept
+                            ? `Accept in ${acceptSecondsLeft}s • 120s Re-route SLA`
+                            : `${minutesElapsed}m ago • 10m SLA`}
+                        </span>
                       </div>
 
                       <div className="payout-badge">
+                        {rerouteCount > 0 && (
+                          <span className="tip-tag">
+                            <RotateCcw size={10} /> Re-routed #{rerouteCount}
+                          </span>
+                        )}
                         <span>Payout</span>
                         <strong>₹{orderEarn}</strong>
                         {order.deliveryTip > 0 && (
@@ -618,13 +839,15 @@ const DeliveryPartner = () => {
 
                       <div className="current-status-tag">
                         {order.status === 'out_for_delivery' || order.status === 'shipped' ? (
-                          <span className="tag-out">🛵 On the Way</span>
+                          <span className="tag-out">On the Way</span>
                         ) : order.status === 'picked_up' ? (
-                          <span className="tag-picked">📦 Bag Picked Up</span>
-                        ) : order.status === 'packing' || order.status === 'assigned' ? (
-                          <span className="tag-packing">🏪 Packing at Store</span>
+                          <span className="tag-picked">Bag Picked Up</span>
+                        ) : order.status === 'packing' ? (
+                          <span className="tag-packing">Packing at Store</span>
+                        ) : order.status === 'assigned' ? (
+                          <span className="tag-ready">Assigned ({acceptSecondsLeft}s)</span>
                         ) : (
-                          <span className="tag-ready">⚡ New Task</span>
+                          <span className="tag-ready">New Task</span>
                         )}
                       </div>
                     </div>
@@ -659,14 +882,14 @@ const DeliveryPartner = () => {
                         </div>
                         <div className="stop-info">
                           <span className="stop-type">PICKUP POINT</span>
-                          <strong className="stop-name">Progicart Dark Store #04</strong>
-                          <span className="stop-addr">Aisle 2 • Vibhuti Khand, Lucknow</span>
+                          <strong className="stop-name">{hubName}</strong>
+                          <span className="stop-addr">{hubAddr}</span>
                         </div>
                       </div>
 
                       <div className="timeline-connector-row">
                         <div className="timeline-connector"></div>
-                        <span className="distance-chip">~1.4 km route</span>
+                        <span className="distance-chip">{distanceText}</span>
                       </div>
 
                       <div className="route-stop dropoff-stop">
@@ -788,23 +1011,35 @@ const DeliveryPartner = () => {
 
                     {/* Primary Interactive Rider CTA Button */}
                     <div className="rider-cta-action">
-                      {order.status === 'confirmed' || order.status === 'pending' ? (
-                        <button
-                          type="button"
-                          className="status-transition-btn accept-pickup-cta"
-                          disabled={updatingId === order._id}
-                          onClick={() => handleStatusTransition(order._id, 'packing')}
-                        >
-                          {updatingId === order._id ? (
-                            <span>Accepting Task...</span>
-                          ) : (
-                            <>
-                              <span>Accept Delivery Task & Start Packing</span>
-                              <ChevronRight size={18} />
-                            </>
-                          )}
-                        </button>
-                      ) : order.status === 'packing' || order.status === 'assigned' ? (
+                      {order.status === 'confirmed' || order.status === 'pending' || order.status === 'assigned' ? (
+                        <div className="rider-accept-decline-row">
+                          <button
+                            type="button"
+                            className="status-transition-btn accept-pickup-cta"
+                            disabled={updatingId === order._id}
+                            onClick={() => handleStatusTransition(order._id, 'packing')}
+                          >
+                            {updatingId === order._id ? (
+                              <span>Accepting Task...</span>
+                            ) : (
+                              <>
+                                <span>Accept Delivery ({acceptSecondsLeft}s) &amp; Pack</span>
+                                <ChevronRight size={18} />
+                              </>
+                            )}
+                          </button>
+
+                          <button
+                            type="button"
+                            className="skip-reroute-btn"
+                            disabled={updatingId === order._id}
+                            onClick={() => handleDeclineOrder(order)}
+                            title="Skip & Re-route to next nearest rider/hub"
+                          >
+                            Skip
+                          </button>
+                        </div>
+                      ) : order.status === 'packing' ? (
                         <button
                           type="button"
                           className="status-transition-btn packed-pickup-cta"
@@ -953,7 +1188,7 @@ const DeliveryPartner = () => {
               <button
                 type="button"
                 className="dismiss-incoming-btn"
-                onClick={handleDeclineIncomingOrder}
+                onClick={() => setIncomingOrder(null)}
                 aria-label="Dismiss"
               >
                 <X size={18} />
@@ -974,7 +1209,7 @@ const DeliveryPartner = () => {
 
                 <div className="countdown-ring-box">
                   <span className="countdown-number">{incomingCountdown}s</span>
-                  <span className="countdown-label">ACCEPT</span>
+                  <span className="countdown-label">120s SLA</span>
                 </div>
               </div>
 
@@ -982,12 +1217,14 @@ const DeliveryPartner = () => {
                 <div className="route-point">
                   <Store size={16} className="text-blue" />
                   <div>
-                    <span className="pt-label">PICKUP</span>
-                    <strong>Progicart Dark Store #04 (Aisle 2)</strong>
+                    <span className="pt-label">PICKUP HUB</span>
+                    <strong>{incomingOrder.assignedHub?.name || 'Progicart Dark Store #04'}</strong>
                   </div>
                 </div>
 
-                <div className="route-arrow-down">↓ ~1.4 km route</div>
+                <div className="route-arrow-down">
+                  ↓ {incomingOrder.deliveryPartner?.distanceKm ? `${incomingOrder.deliveryPartner.distanceKm} km from you` : '~1.4 km route'}
+                </div>
 
                 <div className="route-point">
                   <MapPin size={16} className="text-green" />
@@ -1036,9 +1273,10 @@ const DeliveryPartner = () => {
                 <button
                   type="button"
                   className="decline-incoming-btn"
-                  onClick={handleDeclineIncomingOrder}
+                  disabled={updatingId === incomingOrder._id}
+                  onClick={() => handleDeclineOrder(incomingOrder)}
                 >
-                  Decline
+                  Skip &amp; Re-route
                 </button>
               </div>
             </div>

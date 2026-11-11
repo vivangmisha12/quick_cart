@@ -29,10 +29,14 @@ const resolveAssetUrl = (urlPath) => {
   return urlPath.startsWith('/') ? urlPath : `/${urlPath}`;
 };
 
+const IS_RIDER_APP = import.meta.env.VITE_APP_MODE === 'rider';
+
 export default function SplashScreen({ onFinish, minDuration = 1800, maxTimeout = 4500 }) {
   const [progress, setProgress] = useState(15);
   const [exiting, setExiting] = useState(false);
-  const [statusMessage, setStatusMessage] = useState('Connecting to Progicart Dark Store...');
+  const [statusMessage, setStatusMessage] = useState(
+    IS_RIDER_APP ? 'Connecting to Progicart Rider Hub...' : 'Connecting to Progicart Dark Store...'
+  );
 
   const hasFinishedRef = useRef(false);
 
@@ -71,6 +75,16 @@ export default function SplashScreen({ onFinish, minDuration = 1800, maxTimeout 
     };
 
     const loadAllHomeAssets = async () => {
+      if (IS_RIDER_APP) {
+        await preloadImage('/logo.png');
+        const remaining = Math.max(0, minDuration - (Date.now() - startTime));
+        setTimeout(() => {
+          if (!isMounted) return;
+          finishSplash();
+        }, remaining);
+        return;
+      }
+
       const urlsToLoad = new Set(STATIC_CATEGORY_IMAGES);
 
       try {

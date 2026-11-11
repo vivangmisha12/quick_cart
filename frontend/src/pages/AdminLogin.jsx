@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { 
-  ShieldCheck, 
-  Lock, 
-  Mail, 
-  ArrowRight, 
-  AlertCircle, 
-  CheckCircle2, 
+import {
+  ShieldCheck,
+  Lock,
+  Mail,
+  ArrowRight,
+  AlertCircle,
+  CheckCircle2,
   Store,
   ChevronLeft
 } from 'lucide-react';
@@ -127,9 +127,9 @@ const AdminLogin = () => {
               </div>
             </div>
 
-            <button 
-              type="submit" 
-              className="admin-login-submit-btn" 
+            <button
+              type="submit"
+              className="admin-login-submit-btn"
               disabled={loading}
             >
               {loading ? (

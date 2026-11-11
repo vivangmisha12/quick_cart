@@ -195,3 +195,4 @@ foreach ($item in $splashList) {
 
 $logo.Dispose()
 Write-Host "All Android Icons and Splash screens successfully generated with Progicart Logo!"
+

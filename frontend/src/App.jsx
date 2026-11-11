@@ -1,4 +1,5 @@
 import React from 'react';
+import { Capacitor } from '@capacitor/core';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
@@ -31,9 +32,12 @@ import Addresses from './pages/Addresses';
 import InfoPage from './pages/InfoPage';
 import AdminLogin from './pages/AdminLogin';
 import DeliveryLogin from './pages/DeliveryLogin';
+import DeliveryRegister from './pages/DeliveryRegister';
 import DeliveryPartner from './pages/DeliveryPartner';
 
 import './App.css';
+
+const IS_RIDER_APP = import.meta.env.VITE_APP_MODE === 'rider';
 
 // Protected Route - For authenticated users only
 const ProtectedRoute = ({ children }) => {
@@ -65,22 +69,32 @@ const AppContent = () => {
     location.pathname === '/admin-login' ||
     location.pathname === '/delivery-login';
 
+  const isCheckoutPage = location.pathname === '/checkout';
+  const isNativeMobileApp = Boolean(Capacitor?.isNativePlatform?.());
+
+  React.useEffect(() => {
+    document.body.classList.toggle('capacitor-native-app', isNativeMobileApp);
+    return () => {
+      document.body.classList.remove('capacitor-native-app');
+    };
+  }, [isNativeMobileApp]);
+
   return (
     <>
       {showSplash && (
         <SplashScreen 
           onFinish={() => setShowSplash(false)} 
-          minDuration={1800}
-          maxTimeout={5500}
+          minDuration={IS_RIDER_APP ? 800 : 1800}
+          maxTimeout={IS_RIDER_APP ? 2500 : 5500}
         />
       )}
       {!isStandalonePortal && <Navbar />}
       {!isStandalonePortal && <CartDrawer />}
-      <main className={isStandalonePortal ? "app-main-standalone" : "app-main"}>
+      <main className={isStandalonePortal ? "app-main-standalone" : isCheckoutPage ? "app-main-checkout" : "app-main"}>
         <Routes>
           {/* Public Routes */}
-          <Route path="/" element={<Home />} />
-          <Route path="/products" element={<Products />} />
+          <Route path="/" element={IS_RIDER_APP ? <Navigate to="/delivery" replace /> : <Home />} />
+          <Route path="/products" element={IS_RIDER_APP ? <Navigate to="/delivery" replace /> : <Products />} />
           <Route path="/products/:id" element={<ProductDetails />} />
           <Route path="/info/:slug" element={<InfoPage />} />
           
@@ -97,7 +111,22 @@ const AppContent = () => {
           />
 
           {/* Dedicated Delivery Partner Fleet Routes */}
-          <Route path="/delivery/login" element={token && (user?.isDeliveryPartner || user?.role === 'delivery_partner') ? <Navigate to="/delivery" replace /> : <DeliveryLogin />} />
+          <Route
+            path="/delivery/login"
+            element={
+              token && (user?.isDeliveryPartner || user?.role === 'delivery_partner' || user?.isAdmin)
+                ? <Navigate to="/delivery" replace />
+                : <DeliveryLogin />
+            }
+          />
+          <Route
+            path="/delivery/register"
+            element={
+              token && (user?.isDeliveryPartner || user?.role === 'delivery_partner')
+                ? <Navigate to="/delivery" replace />
+                : <DeliveryRegister />
+            }
+          />
           <Route path="/delivery-login" element={<Navigate to="/delivery/login" replace />} />
           <Route
             path="/delivery"
@@ -109,9 +138,27 @@ const AppContent = () => {
           />
           <Route path="/delivery-partner" element={<Navigate to="/delivery" replace />} />
 
-          {/* Customer Auth Routes (Customers ONLY) */}
-          <Route path="/login" element={!token ? <Login /> : <Navigate to={user?.isAdmin ? '/admin' : (user?.isDeliveryPartner ? '/delivery' : '/')} replace />} />
-          <Route path="/register" element={!token ? <Register /> : <Navigate to="/" replace />} />
+          {/* Customer Auth Routes */}
+          <Route
+            path="/login"
+            element={
+              IS_RIDER_APP
+                ? <Navigate to="/delivery/login" replace />
+                : !token
+                ? <Login />
+                : <Navigate to={user?.isAdmin ? '/admin' : (user?.isDeliveryPartner ? '/delivery' : '/')} replace />
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              IS_RIDER_APP
+                ? <Navigate to="/delivery/register" replace />
+                : !token
+                ? <Register />
+                : <Navigate to="/" replace />
+            }
+          />
 
           {/* Protected Routes */}
           <Route
@@ -171,10 +218,10 @@ const AppContent = () => {
           />
 
           {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" />} />
+          <Route path="*" element={<Navigate to={IS_RIDER_APP ? '/delivery' : '/'} />} />
         </Routes>
       </main>
-      {!isStandalonePortal && <Footer />}
+      {!isStandalonePortal && !isNativeMobileApp && <Footer />}
       {!isStandalonePortal && <MobileBottomNav />}
     </>
   );
@@ -197,15 +244,15 @@ class ErrorBoundary extends React.Component {
       return (
         <div style={{ minHeight: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '30px', textAlign: 'center', fontFamily: 'system-ui, sans-serif' }}>
           <img src="/logo.png" alt="Progicart" style={{ height: '52px', objectFit: 'contain', marginBottom: '16px' }} />
-          <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#111827', margin: '0 0 8px 0' }}>Kuch gadbad hui (Something went wrong)</h2>
+          <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#111827', margin: '0 0 8px 0' }}>Something went wrong</h2>
           <p style={{ color: '#6b7280', fontSize: '14px', maxWidth: '420px', margin: '0 0 20px 0' }}>
-            {this.state.error?.message || 'Page render karte waqt samasya aayi. Kripya page reload karein.'}
+            {this.state.error?.message || 'An unexpected error occurred while loading this page. Please reload the page.'}
           </p>
           <button 
             onClick={() => { this.setState({ hasError: false }); window.location.reload(); }}
             style={{ background: '#0c831f', color: '#ffffff', border: 'none', padding: '10px 24px', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '14px' }}
           >
-            Page Reload Karein
+            Reload Page
           </button>
         </div>
       );

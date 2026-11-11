@@ -1,89 +1,66 @@
-/* Delivery Fleet Partner Login Styles */
+/* Delivery Fleet Partner Login & Self-Registration (Warm Light Cream Theme) */
 .delivery-login-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #071f0d 0%, #0d3816 50%, #051409 100%);
+  background: #faf7f0;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 24px 16px;
-  position: relative;
-  overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-}
-
-.delivery-login-ambient-1 {
-  position: absolute;
-  width: 500px;
-  height: 500px;
-  top: -100px;
-  right: -100px;
-  background: radial-gradient(circle, rgba(248, 203, 70, 0.15) 0%, rgba(248, 203, 70, 0) 70%);
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-.delivery-login-ambient-2 {
-  position: absolute;
-  width: 600px;
-  height: 600px;
-  bottom: -150px;
-  left: -150px;
-  background: radial-gradient(circle, rgba(12, 131, 31, 0.25) 0%, rgba(12, 131, 31, 0) 70%);
-  border-radius: 50%;
-  pointer-events: none;
+  color: #111827;
 }
 
 .delivery-login-wrapper {
   width: 100%;
-  max-width: 440px;
-  position: relative;
-  z-index: 10;
+  max-width: 460px;
+}
+
+.delivery-login-wrapper.wide {
+  max-width: 600px;
 }
 
 .delivery-back-link {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #a7f3d0;
+  color: #111827;
   text-decoration: none;
   font-size: 13px;
-  font-weight: 600;
-  margin-bottom: 16px;
-  padding: 6px 12px;
-  background: rgba(255, 255, 255, 0.08);
+  font-weight: 700;
+  margin-bottom: 14px;
+  padding: 7px 14px;
+  background: #f4efe3;
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.2s ease;
+  border: 1px solid #e3dac6;
 }
 
 .delivery-back-link:hover {
-  background: rgba(255, 255, 255, 0.16);
-  color: #fff;
-  transform: translateX(-2px);
+  background: #ebe4d4;
 }
 
 .delivery-card {
-  background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
-  padding: 32px 28px;
+  background: #fffdf8;
+  border-radius: 18px;
+  border: 1px solid #e5ded0;
+  box-shadow: 0 12px 30px rgba(17, 24, 39, 0.06);
+  padding: 28px 24px;
 }
 
 .delivery-card-header {
   text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .rider-badge-icon {
-  width: 64px;
-  height: 64px;
-  background: linear-gradient(135deg, #f8cb46 0%, #e6b800 100%);
-  border-radius: 18px;
+  width: 58px;
+  height: 58px;
+  background: #f4efe3;
+  border: 1px solid #e3dac6;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 16px auto;
-  box-shadow: 0 8px 16px rgba(248, 203, 70, 0.35);
+  margin: 0 auto 14px auto;
 }
 
 .delivery-brand-wrap {
@@ -91,11 +68,11 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .delivery-login-logo {
-  height: 38px;
+  height: 36px;
   width: auto;
   object-fit: contain;
 }
@@ -104,28 +81,54 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: #e8f5e9;
-  color: #0c831f;
+  background: #f4efe3;
+  color: #111827;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.5px;
-  padding: 4px 10px;
+  padding: 4px 12px;
   border-radius: 20px;
-  border: 1px solid #c8e6c9;
+  border: 1px solid #e3dac6;
 }
 
 .delivery-title {
-  margin: 0 0 8px 0;
-  font-size: 24px;
+  margin: 0 0 6px 0;
+  font-size: 22px;
   font-weight: 800;
-  color: #1c1c1c;
+  color: #111827;
 }
 
 .delivery-subtitle {
   margin: 0;
   font-size: 13px;
-  color: #666;
+  color: #4b5563;
   line-height: 1.5;
+}
+
+.rider-step-pills {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 18px;
+  background: #f4efe3;
+  padding: 5px;
+  border-radius: 10px;
+  border: 1px solid #e3dac6;
+}
+
+.step-pill {
+  text-align: center;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #6b7280;
+}
+
+.step-pill.active {
+  background: #fffdf8;
+  color: #111827;
+  border: 1px solid #e3dac6;
 }
 
 .delivery-alert-banner {
@@ -136,25 +139,37 @@
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .delivery-alert-banner.error {
-  background: #ffebee;
-  border: 1px solid #ffcdd2;
-  color: #c62828;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
 }
 
 .delivery-alert-banner.success {
-  background: #e8f5e9;
-  border: 1px solid #c8e6c9;
-  color: #0c831f;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
 }
 
 .delivery-login-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
+}
+
+.delivery-form-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.rider-kyc-fields-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .delivery-input-group {
@@ -165,51 +180,114 @@
 }
 
 .delivery-input-group label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #333;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #111827;
 }
 
 .delivery-input-field {
   display: flex;
   align-items: center;
-  border: 1.5px solid #e0e0e0;
-  border-radius: 8px;
+  border: 1.5px solid #e3dac6;
+  border-radius: 9px;
   padding: 0 12px;
-  background: #fafafa;
-  transition: all 0.2s ease;
+  background: #faf7f0;
+  transition: border-color 0.2s ease, background 0.2s ease;
 }
 
 .delivery-input-field:focus-within {
-  border-color: #0c831f;
-  background: #fff;
-  box-shadow: 0 0 0 3px rgba(12, 131, 31, 0.12);
+  border-color: #111827;
+  background: #ffffff;
 }
 
 .input-svg-icon {
-  color: #888;
+  color: #4b5563;
   flex-shrink: 0;
-  margin-right: 10px;
+  margin-right: 9px;
 }
 
-.delivery-input-field input {
+.delivery-input-field input,
+.delivery-input-field select {
   width: 100%;
   border: none;
   background: transparent;
-  padding: 12px 0;
-  font-size: 14px;
-  color: #1c1c1c;
+  padding: 11px 0;
+  font-size: 13.5px;
+  color: #111827;
   outline: none;
+  font-weight: 600;
 }
 
-.delivery-creds-hint {
-  background: #fcfcfc;
-  border: 1px dashed #dcdcdc;
-  padding: 10px 12px;
-  border-radius: 6px;
+.delivery-gps-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #f4efe3;
+  border: 1px solid #e3dac6;
+  border-radius: 10px;
+  padding: 11px 12px;
+}
+
+.gps-box-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  text-align: left;
+  color: #111827;
+}
+
+.gps-box-info strong {
+  display: block;
+  font-size: 12.5px;
+  color: #111827;
+}
+
+.gps-box-info span {
+  display: block;
+  font-size: 11.5px;
+  color: #4b5563;
+}
+
+.gps-detect-mini-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #111827;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 11px;
   font-size: 12px;
-  color: #555;
-  text-align: center;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.delivery-step-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.delivery-secondary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #f4efe3;
+  color: #111827;
+  border: 1px solid #d6cab0;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .delivery-login-btn {
@@ -217,70 +295,86 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: linear-gradient(135deg, #0c831f 0%, #0a6c1a 100%);
+  background: #111827;
   color: #ffffff;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 13px 18px;
-  font-size: 15px;
+  font-size: 14.5px;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(12, 131, 31, 0.3);
-  margin-top: 6px;
+  transition: background 0.2s ease;
+  margin-top: 2px;
 }
 
 .delivery-login-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #0a6c1a 0%, #085514 100%);
-  box-shadow: 0 6px 16px rgba(12, 131, 31, 0.4);
-  transform: translateY(-1px);
+  background: #27272a;
 }
 
 .delivery-login-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-  transform: none;
 }
 
 .delivery-card-footer {
-  margin-top: 24px;
-  padding-top: 18px;
-  border-top: 1px solid #f0f0f0;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #ece5d5;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rider-register-cta-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #f4efe3;
+  color: #111827;
+  border: 1px solid #d6cab0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-size: 13.5px;
+  font-weight: 800;
+}
+
+.rider-register-cta-link:hover {
+  background: #eae2cf;
 }
 
 .delivery-footer-links {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  margin-bottom: 12px;
 }
 
 .footer-role-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: #0c831f;
-  text-decoration: none;
-  font-size: 13px;
-  font-weight: 600;
-  transition: color 0.2s;
-}
-
-.footer-role-link:hover {
-  color: #085514;
+  color: #111827;
   text-decoration: underline;
-}
-
-.footer-dot {
-  color: #bbb;
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .delivery-copyright {
   margin: 0;
   font-size: 11px;
-  color: #999;
+  color: #6b7280;
 }
 
+@media (max-width: 580px) {
+  .delivery-form-row-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .delivery-card {
+    padding: 22px 16px;
+  }
+
+  .delivery-gps-box {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
