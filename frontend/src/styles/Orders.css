@@ -8,6 +8,8 @@
   min-height: calc(100vh - 120px);
   padding: 28px 16px 64px;
   color: #111827;
+  overflow-x: clip;
+  width: 100%;
 }
 
 .orders-page .orders-container {
@@ -522,6 +524,149 @@
   color: #6b7280;
 }
 
+/* --- Orders Sections, Thumbnails & Settled Receipt Bar --- */
+.orders-page .orders-inline-notice {
+  background: #fdf6e9;
+  border: 1px solid #f3dfb8;
+  color: #92560a;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.orders-page .orders-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.orders-page .orders-section-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.orders-page .orders-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.orders-page .orders-section-heading h2 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.orders-page .orders-section-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: #f4efe3;
+  border: 1px solid #ddd2ba;
+  color: #111827;
+  font-size: 11.5px;
+  font-weight: 800;
+}
+
+.orders-page .order-item-thumb {
+  width: 38px;
+  height: 38px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #ede6d8;
+  background: #ffffff;
+  flex-shrink: 0;
+}
+
+.orders-page .order-settled-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 13px;
+  border-radius: 11px;
+  border: 1px solid #cfe3cf;
+  background: #eef6ee;
+  margin-bottom: 2px;
+}
+
+.orders-page .order-settled-bar.tone-muted {
+  background: #f4efe3;
+  border-color: #e3dac6;
+}
+
+.orders-page .order-settled-bar.tone-rose {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.orders-page .settled-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #2f5e2f;
+}
+
+.orders-page .order-settled-bar.tone-muted .settled-left {
+  color: #4b5563;
+}
+
+.orders-page .order-settled-bar.tone-rose .settled-left {
+  color: #b91c1c;
+}
+
+.orders-page .payment-status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  background: #ffffff;
+  border: 1px solid #cfe3cf;
+  color: #2f5e2f;
+}
+
+.orders-page .payment-status-pill.tone-muted {
+  border-color: #ddd2ba;
+  color: #4b5563;
+}
+
+.orders-page .payment-status-pill.tone-rose {
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.orders-page .payment-inline-label.tone-paid {
+  color: #2f5e2f;
+}
+
+.orders-page .payment-inline-label.tone-rose {
+  color: #b91c1c;
+}
+
+.orders-page .payment-inline-sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
 /* --- Order Action Buttons (All Light Cream Theme) --- */
 .orders-page .order-actions {
   display: flex;
@@ -532,7 +677,8 @@
 }
 
 .orders-page .details-btn,
-.orders-page .track-btn {
+.orders-page .track-btn,
+.orders-page .reorder-btn {
   flex: 1;
   display: inline-flex;
   align-items: center;
@@ -571,10 +717,28 @@
   box-shadow: 0 3px 10px rgba(17, 24, 39, 0.05);
 }
 
+.orders-page .reorder-btn {
+  background: #eef6ee;
+  color: #2f5e2f;
+  border: 1px solid #cfe3cf;
+}
+
+.orders-page .reorder-btn:hover:not(:disabled) {
+  background: #e2efe2;
+  border-color: #b7d6b7;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(47, 94, 47, 0.08);
+}
+
+.orders-page .reorder-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 /* --- Responsive --- */
 @media (max-width: 768px) {
   .orders-page {
-    padding: 18px 12px 86px;
+    padding: 18px 12px calc(92px + env(safe-area-inset-bottom, 0px));
   }
 
   .orders-page .orders-header h1 {
@@ -605,7 +769,14 @@
   }
 
   .orders-page .order-actions {
-    flex-direction: column;
+    flex-direction: row;
     gap: 8px;
+  }
+
+  .orders-page .details-btn,
+  .orders-page .track-btn,
+  .orders-page .reorder-btn {
+    padding: 10px 12px;
+    font-size: 13px;
   }
 }

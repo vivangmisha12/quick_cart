@@ -5,7 +5,6 @@ import {
   User,
   Mail,
   Phone,
-  Lock,
   ArrowRight,
   ArrowLeft,
   AlertCircle,
@@ -14,6 +13,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { DeliveryAuthTabs, DeliveryPasswordField } from '../components/DeliveryAuthTabs';
 import RiderVerificationFields, { RIDER_HUB_OPTIONS } from '../components/RiderVerificationFields';
 import '../styles/DeliveryLogin.css';
 
@@ -143,6 +143,8 @@ const DeliveryRegister = () => {
             </p>
           </div>
 
+          <DeliveryAuthTabs activeMode="register" />
+
           <div className="rider-step-pills">
             <div className={`step-pill ${step >= 1 ? 'active' : ''}`}>1. Account</div>
             <div className={`step-pill ${step >= 2 ? 'active' : ''}`}>2. Vehicle & KYC</div>
@@ -210,33 +212,21 @@ const DeliveryRegister = () => {
               </div>
 
               <div className="delivery-form-row-2">
-                <div className="delivery-input-group">
-                  <label>Create Password *</label>
-                  <div className="delivery-input-field">
-                    <Lock size={17} className="input-svg-icon" />
-                    <input
-                      type="password"
-                      placeholder="Min 6 characters"
-                      value={form.password}
-                      onChange={(e) => updateField('password', e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
+                <DeliveryPasswordField
+                  label="Create Password *"
+                  placeholder="Min 6 characters"
+                  value={form.password}
+                  onChange={(e) => updateField('password', e.target.value)}
+                  autoComplete="new-password"
+                />
 
-                <div className="delivery-input-group">
-                  <label>Confirm Password *</label>
-                  <div className="delivery-input-field">
-                    <Lock size={17} className="input-svg-icon" />
-                    <input
-                      type="password"
-                      placeholder="Repeat password"
-                      value={form.confirmPassword}
-                      onChange={(e) => updateField('confirmPassword', e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
+                <DeliveryPasswordField
+                  label="Confirm Password *"
+                  placeholder="Repeat password"
+                  value={form.confirmPassword}
+                  onChange={(e) => updateField('confirmPassword', e.target.value)}
+                  autoComplete="new-password"
+                />
               </div>
 
               <button type="submit" className="delivery-login-btn">

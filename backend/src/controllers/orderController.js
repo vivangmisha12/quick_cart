@@ -496,6 +496,60 @@ exports._razorpayHelpers = {
   verifyHmacSignature,
 };
 
+// Mark COD orders as paid once delivered (and lazily backfill legacy delivered COD orders on read)
+function syncDeliveredCodPayment(order, settledAt = new Date()) {
+  if (!order) return false;
+  const method = String(order.paymentMethod || 'cod').toLowerCase();
+  const payStatus = String(order.paymentStatus || 'pending').toLowerCase();
+  if (
+    order.status !== 'delivered' ||
+    method !== 'cod' ||
+    ['paid', 'refunded'].includes(payStatus)
+  ) {
+    return false;
+  }
+
+  order.paymentStatus = 'paid';
+  order.paidAt = order.paidAt || settledAt;
+  if (!order.paymentMethodDetail) {
+    order.paymentMethodDetail = 'cash_on_delivery';
+  }
+  return true;
+}
+
+async function normalizeAndPersistDeliveredCod(ordersOrOrder) {
+  const list = Array.isArray(ordersOrOrder) ? ordersOrOrder : [ordersOrOrder];
+  const persistOps = [];
+
+  for (const doc of list) {
+    if (!doc) continue;
+    const settledAt = doc.updatedAt || doc.createdAt || new Date();
+    if (syncDeliveredCodPayment(doc, settledAt)) {
+      persistOps.push(
+        Order.updateOne(
+          {
+            _id: doc._id,
+            status: 'delivered',
+            paymentStatus: { $nin: ['paid', 'refunded'] },
+          },
+          {
+            $set: {
+              paymentStatus: 'paid',
+              paidAt: doc.paidAt,
+              paymentMethodDetail: doc.paymentMethodDetail,
+            },
+          }
+        )
+      );
+    }
+  }
+
+  if (persistOps.length > 0) {
+    await Promise.all(persistOps);
+  }
+  return ordersOrOrder;
+}
+
 // Get user orders
 exports.getUserOrders = async (req, res) => {
   try {
@@ -503,6 +557,7 @@ exports.getUserOrders = async (req, res) => {
     const orders = await Order.find({ userId: req.userId }).sort({
       createdAt: -1,
     });
+    await normalizeAndPersistDeliveredCod(orders);
     res.json(orders);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
@@ -522,6 +577,7 @@ exports.getOrderById = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
+    await normalizeAndPersistDeliveredCod(order);
     res.json(order);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
@@ -532,28 +588,34 @@ exports.getOrderById = async (req, res) => {
 exports.updateOrderStatus = async (req, res) => {
   try {
     const { status, deliveryPartner } = req.body;
-    const updateData = { status, updatedAt: Date.now() };
-
-    if (deliveryPartner) {
-      updateData.deliveryPartner = deliveryPartner;
-    }
-
-    if (status === 'packing') {
-      updateData['assignment.acceptedAt'] = new Date();
-      updateData['assignment.expiresAt'] = null;
-    }
-
-    const order = await Order.findByIdAndUpdate(
-      req.params.id,
-      updateData,
-      { new: true }
-    ).populate('userId', 'name email phone');
+    const order = await Order.findById(req.params.id);
 
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
     }
 
-    res.json({ message: 'Order status updated', order });
+    const now = new Date();
+    order.status = status;
+    order.updatedAt = now;
+
+    if (deliveryPartner) {
+      order.deliveryPartner = deliveryPartner;
+    }
+
+    if (status === 'packing') {
+      if (!order.assignment) {
+        order.assignment = { rerouteCount: 0, attemptedRiderIds: [], attemptedHubIds: [], logs: [] };
+      }
+      order.assignment.acceptedAt = order.assignment.acceptedAt || now;
+      order.assignment.expiresAt = null;
+    }
+
+    syncDeliveredCodPayment(order, now);
+
+    await order.save();
+    const populated = await Order.findById(order._id).populate('userId', 'name email phone');
+
+    res.json({ message: 'Order status updated', order: populated });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
@@ -629,6 +691,7 @@ exports.getAllOrders = async (req, res) => {
     const orders = await Order.find()
       .populate('userId', 'name email phone')
       .sort({ createdAt: -1 });
+    await normalizeAndPersistDeliveredCod(orders);
     res.json(orders);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
@@ -649,6 +712,7 @@ exports.getDeliveryActiveOrders = async (req, res) => {
         .populate('userId', 'name email phone')
         .sort({ createdAt: -1 })
         .limit(60);
+      await normalizeAndPersistDeliveredCod(allOrders);
       return res.json(allOrders);
     }
 
@@ -677,6 +741,7 @@ exports.getDeliveryActiveOrders = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(60);
 
+    await normalizeAndPersistDeliveredCod(orders);
     res.json(orders);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
@@ -752,6 +817,7 @@ exports.deliveryUpdateOrderStatus = async (req, res) => {
     const now = new Date();
     order.status = status;
     order.updatedAt = now;
+    const codCollected = syncDeliveredCodPayment(order, now);
     order.deliveryPartner = {
       id: existingOwnerId === requesterId || !existingOwnerId || !rider.isAdmin ? rider._id : order.deliveryPartner.id,
       name: partnerName || rider.name || 'Progicart Rider',
@@ -775,8 +841,12 @@ exports.deliveryUpdateOrderStatus = async (req, res) => {
         timestamp: now,
       });
     } else {
+      const logMessage =
+        status === 'delivered' && codCollected
+          ? `Delivered & COD cash collected by ${order.deliveryPartner.name}`
+          : `Status updated to ${status} by ${order.deliveryPartner.name}`;
       order.assignment.logs.push({
-        message: `Status updated to ${status} by ${order.deliveryPartner.name}`,
+        message: logMessage,
         hubName: order.assignedHub?.name || 'Dark Store',
         riderName: order.deliveryPartner.name,
         distanceKm: order.deliveryPartner.distanceKm || 0,

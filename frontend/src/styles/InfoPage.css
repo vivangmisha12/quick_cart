@@ -4,6 +4,8 @@
   min-height: calc(100vh - 120px);
   background: #f7f9fc;
   padding-bottom: 60px;
+  overflow-x: clip;
+  width: 100%;
 }
 
 /* 1. Hero Banner */
@@ -38,7 +40,8 @@
 .info-breadcrumbs {
   display: flex;
   align-items: center;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 4px 6px;
   font-size: 13px;
   color: rgba(255, 255, 255, 0.75);
 }
@@ -105,7 +108,7 @@
   margin: -24px auto 0;
   padding: 0 24px;
   display: grid;
-  grid-template-columns: 280px 1fr;
+  grid-template-columns: minmax(0, 260px) minmax(0, 1fr);
   gap: 28px;
   position: relative;
   z-index: 10;
@@ -444,7 +447,7 @@
 /* Responsive */
 @media (max-width: 900px) {
   .info-body-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 20px;
   }
 
@@ -461,28 +464,28 @@
 
 @media (max-width: 600px) {
   .info-page-container {
-    padding-bottom: 74px;
+    padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px));
   }
 
   .info-hero-banner {
-    padding: 32px 16px;
+    padding: 28px 16px;
   }
 
   .info-main-title {
-    font-size: 26px;
+    font-size: 24px;
   }
 
   .info-body-grid {
-    padding: 0 16px;
+    padding: 0 12px;
     margin-top: -16px;
   }
 
   .info-content-card {
-    padding: 20px 18px;
+    padding: 18px 16px;
   }
 
   .sidebar-links-list {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .info-trust-footer-strip {

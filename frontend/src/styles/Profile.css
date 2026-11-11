@@ -7,6 +7,8 @@
   min-height: calc(100vh - 120px);
   padding: 28px 16px 64px;
   color: #111827;
+  overflow-x: clip;
+  width: 100%;
 }
 
 .account-page .profile-container {
@@ -921,7 +923,7 @@
 /* --- Responsive Mobile Layout --- */
 @media (max-width: 768px) {
   .account-page {
-    padding: 16px 12px 86px;
+    padding: 16px 12px calc(92px + env(safe-area-inset-bottom, 0px));
   }
 
   .account-page .profile-hero {

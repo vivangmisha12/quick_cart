@@ -7,6 +7,8 @@
   min-height: calc(100vh - 120px);
   padding: 28px 16px 64px;
   color: #111827;
+  overflow-x: clip;
+  width: 100%;
 }
 
 .wishlist-page .wishlist-container {
@@ -350,7 +352,7 @@
 /* --- Responsive --- */
 @media (max-width: 768px) {
   .wishlist-page {
-    padding: 18px 12px 86px;
+    padding: 18px 12px calc(92px + env(safe-area-inset-bottom, 0px));
   }
 
   .wishlist-page .wishlist-header h1 {
@@ -387,7 +389,7 @@
 
 @media (max-width: 400px) {
   .wishlist-page {
-    padding: 14px 10px 86px;
+    padding: 14px 10px calc(92px + env(safe-area-inset-bottom, 0px));
   }
 
   .wishlist-page .wishlist-grid {

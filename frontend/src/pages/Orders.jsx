@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useCart } from '../context/CartContext';
 import { useNavigate } from 'react-router-dom';
 import { ordersAPI } from '../api/api';
 import {
@@ -19,8 +20,73 @@ import {
   Store,
   UserCheck,
   Receipt,
+  RotateCcw,
 } from 'lucide-react';
 import '../styles/Orders.css';
+
+const FINAL_ORDER_STATUSES = new Set(['delivered', 'cancelled']);
+
+function getOrderPaymentSummary(order) {
+  const method = String(order?.paymentMethod || 'cod').toLowerCase();
+  const rawStatus = String(order?.paymentStatus || 'pending').toLowerCase();
+  const orderStatus = String(order?.status || 'confirmed').toLowerCase();
+  const isDelivered = orderStatus === 'delivered';
+  const isCancelled = orderStatus === 'cancelled';
+
+  if (method === 'cod') {
+    if (isDelivered || rawStatus === 'paid') {
+      return {
+        label: 'COD • PAID',
+        detail: 'Cash collected on delivery',
+        tone: 'paid',
+      };
+    }
+    if (isCancelled) {
+      return {
+        label: rawStatus === 'refunded' ? 'COD • REFUNDED' : 'COD • CANCELLED',
+        detail: 'No payment collected',
+        tone: 'muted',
+      };
+    }
+    return {
+      label: 'COD • PAY ON DELIVERY',
+      detail: `Keep ₹${Number(order?.totalPrice || 0).toFixed(0)} cash/UPI ready`,
+      tone: 'pending',
+    };
+  }
+
+  const methodTitle =
+    method === 'razorpay' && order?.paymentMethodDetail
+      ? `RAZORPAY (${String(order.paymentMethodDetail).toUpperCase()})`
+      : method.toUpperCase();
+
+  if (rawStatus === 'paid' || isDelivered) {
+    return {
+      label: `${methodTitle} • PAID`,
+      detail: 'Paid online',
+      tone: 'paid',
+    };
+  }
+  if (rawStatus === 'refunded') {
+    return {
+      label: `${methodTitle} • REFUNDED`,
+      detail: 'Amount refunded',
+      tone: 'muted',
+    };
+  }
+  if (rawStatus === 'failed') {
+    return {
+      label: `${methodTitle} • FAILED`,
+      detail: 'Payment failed',
+      tone: 'rose',
+    };
+  }
+  return {
+    label: `${methodTitle} • ${rawStatus.toUpperCase()}`,
+    detail: 'Online payment',
+    tone: 'pending',
+  };
+}
 
 const STATUS_META = {
   pending: { label: 'Pending', tone: 'amber', icon: Clock, step: 1 },
@@ -43,26 +109,21 @@ const TRACK_STEPS = [
 
 const Orders = () => {
   const { user } = useAuth();
+  const { addToCart, openCartDrawer } = useCart();
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [trackingOrderId, setTrackingOrderId] = useState(null);
+  const [reorderingOrderId, setReorderingOrderId] = useState(null);
+  const [reorderNotice, setReorderNotice] = useState('');
 
-  useEffect(() => {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-    fetchOrders();
-  }, [user, navigate]);
-
-  const fetchOrders = async (isManualRefresh = false) => {
+  const fetchOrders = useCallback(async (isManualRefresh = false, silent = false) => {
     try {
       if (isManualRefresh) {
         setRefreshing(true);
-      } else {
+      } else if (!silent) {
         setLoading(true);
       }
       const response = await ordersAPI.getUserOrders();
@@ -70,8 +131,85 @@ const Orders = () => {
     } catch (error) {
       console.error('Error fetching orders:', error);
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
       setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    fetchOrders();
+  }, [user, navigate, fetchOrders]);
+
+  const activeOrders = orders.filter((order) => !FINAL_ORDER_STATUSES.has(order.status));
+  const pastOrders = orders.filter((order) => FINAL_ORDER_STATUSES.has(order.status));
+
+  // Auto-sync live order transitions (e.g. Out for Delivery -> Delivered + COD Paid)
+  useEffect(() => {
+    if (!user) return undefined;
+
+    const handleResumeSync = () => {
+      if (document.visibilityState === 'visible') {
+        fetchOrders(false, true);
+      }
+    };
+
+    window.addEventListener('focus', handleResumeSync);
+    document.addEventListener('visibilitychange', handleResumeSync);
+
+    let pollTimer;
+    if (activeOrders.length > 0) {
+      pollTimer = setInterval(() => {
+        fetchOrders(false, true);
+      }, 12000);
+    }
+
+    return () => {
+      window.removeEventListener('focus', handleResumeSync);
+      document.removeEventListener('visibilitychange', handleResumeSync);
+      if (pollTimer) clearInterval(pollTimer);
+    };
+  }, [user, activeOrders.length, fetchOrders]);
+
+  const handleOrderAgain = async (order) => {
+    const items = Array.isArray(order?.items) ? order.items : [];
+    const reorderable = items.filter((item) => item?.productId);
+
+    if (reorderable.length === 0) {
+      navigate('/products');
+      return;
+    }
+
+    setReorderingOrderId(order._id);
+    setReorderNotice('');
+
+    try {
+      let addedCount = 0;
+      for (const item of reorderable) {
+        const added = await addToCart(
+          {
+            _id: item.productId,
+            name: item.name,
+            price: item.price,
+            image: item.image,
+          },
+          Number(item.quantity || 1)
+        );
+        if (added) addedCount += 1;
+      }
+
+      if (addedCount > 0) {
+        openCartDrawer();
+      } else {
+        setReorderNotice('Unable to add past items automatically. Please browse categories.');
+      }
+    } finally {
+      setReorderingOrderId(null);
     }
   };
 
@@ -84,6 +222,19 @@ const Orders = () => {
       </div>
     );
   }
+
+  const orderSections = [
+    activeOrders.length > 0 && {
+      key: 'active',
+      title: 'Live Orders',
+      list: activeOrders,
+    },
+    pastOrders.length > 0 && {
+      key: 'past',
+      title: 'Delivered & Past Orders',
+      list: pastOrders,
+    },
+  ].filter(Boolean);
 
   return (
     <div className="orders-page">
@@ -106,6 +257,10 @@ const Orders = () => {
           )}
         </div>
 
+        {reorderNotice && (
+          <div className="orders-inline-notice">{reorderNotice}</div>
+        )}
+
         {orders.length === 0 ? (
           <div className="empty-orders">
             <div className="empty-icon-box">
@@ -123,99 +278,147 @@ const Orders = () => {
             </button>
           </div>
         ) : (
-          <div className="orders-list">
-            {orders.map((order) => {
-              const statusKey = order.status || 'confirmed';
-              const meta = STATUS_META[statusKey] || {
-                label: statusKey,
-                tone: 'cream',
-                icon: Package,
-                step: 1,
-              };
-              const StatusIcon = meta.icon;
-              const isDetailsOpen = selectedOrder === order._id;
-              const isTrackerOpen = trackingOrderId === order._id;
-              const itemsSubtotal = (order.items || []).reduce(
-                (sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1),
-                0
-              );
+          <div className="orders-sections">
+            {orderSections.map((section) => (
+              <div key={section.key} className="orders-section-group">
+                <div className="orders-section-heading">
+                  <h2>{section.title}</h2>
+                  <span className="orders-section-count">{section.list.length}</span>
+                </div>
+                <div className="orders-list">
+                  {section.list.map((order) => {
+                    const statusKey = order.status || 'confirmed';
+                    const isDelivered = statusKey === 'delivered';
+                    const isCancelled = statusKey === 'cancelled';
+                    const isFinalized = isDelivered || isCancelled;
+                    const meta = STATUS_META[statusKey] || {
+                      label: statusKey,
+                      tone: 'cream',
+                      icon: Package,
+                      step: 1,
+                    };
+                    const StatusIcon = meta.icon;
+                    const paymentSummary = getOrderPaymentSummary(order);
+                    const isDetailsOpen = selectedOrder === order._id;
+                    const isTrackerOpen = trackingOrderId === order._id;
+                    const isReordering = reorderingOrderId === order._id;
+                    const itemsSubtotal = (order.items || []).reduce(
+                      (sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1),
+                      0
+                    );
+                    const displayDate = new Date(
+                      isDelivered ? order.updatedAt || order.createdAt : order.createdAt
+                    ).toLocaleString('en-IN', {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    });
 
-              return (
-                <div key={order._id} className="order-card">
-                  <div className="order-header">
-                    <div className="order-info">
-                      <div className="order-title-row">
-                        <h3>Order #{order._id?.slice(-8).toUpperCase()}</h3>
-                        <span className={`status-badge tone-${meta.tone}`}>
-                          <StatusIcon size={13} />
-                          <span>{meta.label}</span>
-                        </span>
-                      </div>
-                      <p className="order-date">
-                        <Calendar size={13} />
-                        <span>
-                          {new Date(order.createdAt).toLocaleString('en-IN', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
-                      </p>
-                    </div>
-                    <div className="order-amount">
-                      <span className="amount-label">Total</span>
-                      <span className="total">₹{Number(order.totalPrice || 0).toFixed(0)}</span>
-                    </div>
-                  </div>
-
-                  <div className="order-items">
-                    <h4>Items ({order.items?.length || 0})</h4>
-                    <div className="items-list">
-                      {order.items?.map((item, idx) => (
-                        <div key={idx} className="item-row">
-                          <div className="item-details">
-                            <p className="item-name">{item.name}</p>
-                            <p className="item-qty">Qty: {item.quantity}</p>
+                    return (
+                      <div
+                        key={order._id}
+                        className={`order-card ${isFinalized ? 'is-past-order' : 'is-active-order'}`}
+                      >
+                        <div className="order-header">
+                          <div className="order-info">
+                            <div className="order-title-row">
+                              <h3>Order #{order._id?.slice(-8).toUpperCase()}</h3>
+                              <span className={`status-badge tone-${meta.tone}`}>
+                                <StatusIcon size={13} />
+                                <span>{meta.label}</span>
+                              </span>
+                            </div>
+                            <p className="order-date">
+                              <Calendar size={13} />
+                              <span>
+                                {isDelivered ? `Delivered on ${displayDate}` : displayDate}
+                              </span>
+                            </p>
                           </div>
-                          <div className="item-price">
-                            ₹{Number(item.price || 0) * Number(item.quantity || 1)}
+                          <div className="order-amount">
+                            <span className="amount-label">Total</span>
+                            <span className="total">₹{Number(order.totalPrice || 0).toFixed(0)}</span>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
 
-                  <div className="order-summary-grid">
-                    <div className="order-meta-box">
-                      <h4>
-                        <MapPin size={14} />
-                        <span>Delivery Address</span>
-                      </h4>
-                      <p>
-                        {[
-                          order.shippingAddress?.street,
-                          order.shippingAddress?.city,
-                          order.shippingAddress?.state,
-                          order.shippingAddress?.zipcode,
-                        ]
-                          .filter(Boolean)
-                          .join(', ') || 'Not provided'}
-                      </p>
-                    </div>
+                        <div className="order-items">
+                          <h4>Items ({order.items?.length || 0})</h4>
+                          <div className="items-list">
+                            {order.items?.map((item, idx) => (
+                              <div key={idx} className="item-row">
+                                {item.image && (
+                                  <img
+                                    src={item.image}
+                                    alt={item.name}
+                                    className="order-item-thumb"
+                                    loading="lazy"
+                                  />
+                                )}
+                                <div className="item-details">
+                                  <p className="item-name">{item.name}</p>
+                                  <p className="item-qty">Qty: {item.quantity}</p>
+                                </div>
+                                <div className="item-price">
+                                  ₹{Number(item.price || 0) * Number(item.quantity || 1)}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
 
-                    <div className="order-meta-box">
-                      <h4>
-                        <CreditCard size={14} />
-                        <span>Payment</span>
-                      </h4>
-                      <p>
-                        {order.paymentMethod?.toUpperCase() || 'COD'}
-                        {order.paymentStatus ? ` • ${order.paymentStatus.toUpperCase()}` : ''}
-                      </p>
-                    </div>
-                  </div>
+                        {isFinalized && (
+                          <div className={`order-settled-bar tone-${paymentSummary.tone}`}>
+                            <div className="settled-left">
+                              {isDelivered ? (
+                                <CheckCircle2 size={15} />
+                              ) : (
+                                <XCircle size={15} />
+                              )}
+                              <span>
+                                {isDelivered
+                                  ? paymentSummary.detail
+                                  : 'Order was cancelled'}
+                              </span>
+                            </div>
+                            <span className={`payment-status-pill tone-${paymentSummary.tone}`}>
+                              {paymentSummary.label}
+                            </span>
+                          </div>
+                        )}
+
+                        {(!isFinalized || isDetailsOpen) && (
+                          <div className="order-summary-grid">
+                            <div className="order-meta-box">
+                              <h4>
+                                <MapPin size={14} />
+                                <span>Delivery Address</span>
+                              </h4>
+                              <p>
+                                {[
+                                  order.shippingAddress?.street,
+                                  order.shippingAddress?.city,
+                                  order.shippingAddress?.state,
+                                  order.shippingAddress?.zipcode,
+                                ]
+                                  .filter(Boolean)
+                                  .join(', ') || 'Not provided'}
+                              </p>
+                            </div>
+
+                            <div className="order-meta-box">
+                              <h4>
+                                <CreditCard size={14} />
+                                <span>Payment</span>
+                              </h4>
+                              <p className={`payment-inline-label tone-${paymentSummary.tone}`}>
+                                {paymentSummary.label}
+                              </p>
+                              <span className="payment-inline-sub">{paymentSummary.detail}</span>
+                            </div>
+                          </div>
+                        )}
 
                   {/* Expanded More Details Panel */}
                   {isDetailsOpen && (
@@ -354,7 +557,12 @@ const Orders = () => {
                       {isDetailsOpen ? (
                         <>
                           <ChevronUp size={15} />
-                          <span>Less Details</span>
+                          <span>{isFinalized ? 'Hide Receipt' : 'Less Details'}</span>
+                        </>
+                      ) : isFinalized ? (
+                        <>
+                          <Receipt size={15} />
+                          <span>View Receipt</span>
                         </>
                       ) : (
                         <>
@@ -364,7 +572,17 @@ const Orders = () => {
                       )}
                     </button>
 
-                    {order.status !== 'delivered' && order.status !== 'cancelled' && (
+                    {isFinalized ? (
+                      <button
+                        type="button"
+                        onClick={() => handleOrderAgain(order)}
+                        disabled={isReordering}
+                        className="reorder-btn"
+                      >
+                        <RotateCcw size={15} className={isReordering ? 'spin-icon' : ''} />
+                        <span>{isReordering ? 'Adding...' : 'Order Again'}</span>
+                      </button>
+                    ) : (
                       <button
                         type="button"
                         onClick={() =>
@@ -380,6 +598,9 @@ const Orders = () => {
                 </div>
               );
             })}
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>

@@ -39,6 +39,9 @@ import './App.css';
 
 const IS_RIDER_APP = import.meta.env.VITE_APP_MODE === 'rider';
 
+const isRiderAccountUser = (u) =>
+  Boolean(u?.isDeliveryPartner || u?.role === 'delivery_partner' || u?.isAdmin);
+
 // Protected Route - For authenticated users only
 const ProtectedRoute = ({ children }) => {
   const { token } = useAuth();
@@ -54,8 +57,62 @@ const AdminRoute = ({ children }) => {
 // Delivery Route - For delivery partners & admin only (redirects to /delivery/login)
 const DeliveryRoute = ({ children }) => {
   const { token, user } = useAuth();
-  const isDelivery = token && (user?.isDeliveryPartner || user?.role === 'delivery_partner' || user?.isAdmin);
+  const isDelivery = Boolean(token && isRiderAccountUser(user));
   return isDelivery ? children : <Navigate to="/delivery/login" replace />;
+};
+
+const RiderAppContent = () => {
+  const { token, user, logout } = useAuth();
+  const [showSplash, setShowSplash] = React.useState(true);
+  const isDeliveryAuthenticated = Boolean(token && isRiderAccountUser(user));
+
+  // Clear non-rider sessions if somehow present in standalone Rider App
+  React.useEffect(() => {
+    if (token && user && !isRiderAccountUser(user)) {
+      logout();
+    }
+  }, [token, user, logout]);
+
+  return (
+    <>
+      {showSplash && (
+        <SplashScreen
+          onFinish={() => setShowSplash(false)}
+          minDuration={800}
+          maxTimeout={2500}
+        />
+      )}
+      <main className="app-main-standalone">
+        <Routes>
+          <Route
+            path="/delivery/login"
+            element={isDeliveryAuthenticated ? <Navigate to="/delivery" replace /> : <DeliveryLogin />}
+          />
+          <Route
+            path="/delivery/register"
+            element={isDeliveryAuthenticated ? <Navigate to="/delivery" replace /> : <DeliveryRegister />}
+          />
+          <Route
+            path="/delivery"
+            element={
+              <DeliveryRoute>
+                <DeliveryPartner />
+              </DeliveryRoute>
+            }
+          />
+          <Route path="/register" element={<Navigate to="/delivery/register" replace />} />
+          <Route path="/delivery-register" element={<Navigate to="/delivery/register" replace />} />
+          <Route path="/delivery-login" element={<Navigate to="/delivery/login" replace />} />
+          <Route path="/delivery-partner" element={<Navigate to="/delivery" replace />} />
+          {/* Block all customer/admin storefront routes inside Rider App */}
+          <Route
+            path="*"
+            element={<Navigate to={isDeliveryAuthenticated ? '/delivery' : '/delivery/login'} replace />}
+          />
+        </Routes>
+      </main>
+    </>
+  );
 };
 
 const AppContent = () => {
@@ -63,8 +120,8 @@ const AppContent = () => {
   const location = useLocation();
   const [showSplash, setShowSplash] = React.useState(true);
 
-  const isStandalonePortal = 
-    location.pathname.startsWith('/admin') || 
+  const isStandalonePortal =
+    location.pathname.startsWith('/admin') ||
     location.pathname.startsWith('/delivery') ||
     location.pathname === '/admin-login' ||
     location.pathname === '/delivery-login';
@@ -78,6 +135,10 @@ const AppContent = () => {
       document.body.classList.remove('capacitor-native-app');
     };
   }, [isNativeMobileApp]);
+
+  if (IS_RIDER_APP) {
+    return <RiderAppContent />;
+  }
 
   return (
     <>
@@ -266,13 +327,17 @@ function App() {
     <ErrorBoundary>
       <Router>
         <AuthProvider>
-          <CartProvider>
-            <WishlistProvider>
-              <LocationProvider>
-                <AppContent />
-              </LocationProvider>
-            </WishlistProvider>
-          </CartProvider>
+          {IS_RIDER_APP ? (
+            <AppContent />
+          ) : (
+            <CartProvider>
+              <WishlistProvider>
+                <LocationProvider>
+                  <AppContent />
+                </LocationProvider>
+              </WishlistProvider>
+            </CartProvider>
+          )}
         </AuthProvider>
       </Router>
     </ErrorBoundary>

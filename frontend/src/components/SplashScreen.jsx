@@ -48,7 +48,9 @@ export default function SplashScreen({ onFinish, minDuration = 1800, maxTimeout 
       if (hasFinishedRef.current) return;
       hasFinishedRef.current = true;
       setProgress(100);
-      setStatusMessage('⚡ 10-Minute delivery ready in your area');
+      setStatusMessage(
+        IS_RIDER_APP ? '⚡ Rider Fleet Console ready' : '⚡ 10-Minute delivery ready in your area'
+      );
 
       setTimeout(() => {
         if (!isMounted) return;
@@ -184,22 +186,44 @@ export default function SplashScreen({ onFinish, minDuration = 1800, maxTimeout 
           />
           <div className="splash-badge-pill">
             <Zap size={14} className="splash-lightning" fill="#f8cb46" />
-            <span>10 MINS DELIVERY</span>
+            <span>{IS_RIDER_APP ? 'RIDER FLEET APP' : '10 MINS DELIVERY'}</span>
           </div>
         </div>
 
         <h1 className="splash-tagline">
-          Everything delivered in <span>10 minutes</span>
+          {IS_RIDER_APP ? (
+            <>
+              Progicart Partner <span>Delivery Console</span>
+            </>
+          ) : (
+            <>
+              Everything delivered in <span>10 minutes</span>
+            </>
+          )}
         </h1>
 
         <div className="splash-categories-ticker">
-          <span>Fresh Fruits & Veggies</span>
-          <span className="ticker-dot"></span>
-          <span>Dairy & Milk</span>
-          <span className="ticker-dot"></span>
-          <span>Snacks & Munchies</span>
-          <span className="ticker-dot"></span>
-          <span>Instant Needs</span>
+          {IS_RIDER_APP ? (
+            <>
+              <span>Live Order Alerts</span>
+              <span className="ticker-dot"></span>
+              <span>GPS Route Sync</span>
+              <span className="ticker-dot"></span>
+              <span>Fast Payouts</span>
+              <span className="ticker-dot"></span>
+              <span>Dark Store Hub</span>
+            </>
+          ) : (
+            <>
+              <span>Fresh Fruits & Veggies</span>
+              <span className="ticker-dot"></span>
+              <span>Dairy & Milk</span>
+              <span className="ticker-dot"></span>
+              <span>Snacks & Munchies</span>
+              <span className="ticker-dot"></span>
+              <span>Instant Needs</span>
+            </>
+          )}
         </div>
       </div>
 
@@ -218,7 +242,9 @@ export default function SplashScreen({ onFinish, minDuration = 1800, maxTimeout 
         </div>
 
         <span className="splash-footer-badge">
-          India's Fastest Instant Delivery • 100% Quality Guaranteed
+          {IS_RIDER_APP
+            ? 'Progicart Delivery Partner Network • Dedicated Rider App'
+            : "India's Fastest Instant Delivery • 100% Quality Guaranteed"}
         </span>
       </div>
     </div>

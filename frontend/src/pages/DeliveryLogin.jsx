@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   Bike,
-  Lock,
   Mail,
   ArrowRight,
   AlertCircle,
@@ -12,6 +11,7 @@ import {
   UserPlus,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { DeliveryAuthTabs, DeliveryPasswordField } from '../components/DeliveryAuthTabs';
 import '../styles/DeliveryLogin.css';
 
 const IS_RIDER_APP = import.meta.env.VITE_APP_MODE === 'rider';
@@ -24,7 +24,7 @@ const DeliveryLogin = () => {
   const [success, setSuccess] = useState('');
 
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, logout } = useAuth();
 
   const handleDeliverySubmit = async (e) => {
     e.preventDefault();
@@ -42,6 +42,7 @@ const DeliveryLogin = () => {
       const user = res?.user;
 
       if (!user?.isDeliveryPartner && user?.role !== 'delivery_partner' && !user?.isAdmin) {
+        logout();
         setError('Access Denied: This portal is strictly for registered Progicart Delivery Fleet Partners.');
         setLoading(false);
         return;
@@ -91,6 +92,8 @@ const DeliveryLogin = () => {
             </p>
           </div>
 
+          <DeliveryAuthTabs activeMode="login" />
+
           {error && (
             <div className="delivery-alert-banner error">
               <AlertCircle size={16} />
@@ -121,19 +124,13 @@ const DeliveryLogin = () => {
               </div>
             </div>
 
-            <div className="delivery-input-group">
-              <label>Password</label>
-              <div className="delivery-input-field">
-                <Lock size={18} className="input-svg-icon" />
-                <input
-                  type="password"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
+            <DeliveryPasswordField
+              label="Password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+            />
 
             <button
               type="submit"

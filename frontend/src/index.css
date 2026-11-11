@@ -52,7 +52,18 @@ html, body, #root {
 
 html {
   overflow-y: scroll;
+  overflow-x: clip;
   scrollbar-gutter: stable;
+}
+
+@media (max-width: 768px) {
+  html {
+    scrollbar-gutter: auto;
+  }
+}
+
+body.capacitor-native-app {
+  overflow-x: clip;
 }
 
 body {

@@ -843,6 +843,7 @@
 
 .coords-actions-row {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: 4px;
 }
@@ -906,6 +907,8 @@
 
 .coords-inputs-row input {
   flex: 1;
+  min-width: 0;
+  width: 100%;
   padding: 8px 10px;
   border: 1px solid #dcdcdc;
   border-radius: 6px;
@@ -939,6 +942,44 @@
 }
 
 /* Responsive Design for Mobile & Tablet */
+@media (min-width: 769px) and (max-width: 1080px) {
+  .navbar-container {
+    padding: 0 16px;
+    gap: 12px;
+  }
+
+  .brand-logo-img {
+    height: 40px;
+    max-width: 112px;
+  }
+
+  .location-trigger-btn {
+    padding: 5px 8px;
+    gap: 8px;
+  }
+
+  .delivery-time-badge {
+    font-size: 13.5px;
+  }
+
+  .selected-address-text {
+    max-width: 110px;
+  }
+
+  .search-bar-container {
+    min-width: 160px;
+  }
+
+  .nav-actions-group {
+    gap: 10px;
+  }
+
+  .blinkit-login-btn {
+    padding: 6px 12px;
+    font-size: 13.5px;
+  }
+}
+
 @media (max-width: 1024px) {
   .announcement-ticker-bar.hide-on-compact {
     display: none;
@@ -1131,7 +1172,12 @@ body.capacitor-native-app .announcement-ticker-bar {
   }
 
   /* Location Modal Bottom Sheet on Mobile */
-  .location-dialog-card {
+  .modal-backdrop {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .location-modal-card {
     width: 100%;
     max-width: 100%;
     margin: auto 0 0 0;

@@ -2,12 +2,15 @@
 
 .home-page-wrapper {
   max-width: 1440px;
+  width: 100%;
   margin: 0 auto;
   padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 36px;
   min-height: calc(100vh - 120px);
+  overflow-x: clip;
+  box-sizing: border-box;
 }
 
 .modal-blur-active {
@@ -116,7 +119,8 @@
 .hero-cta-group {
   display: flex;
   align-items: center;
-  gap: 16px;
+  flex-wrap: wrap;
+  gap: 10px 16px;
   margin-top: 8px;
 }
 
@@ -180,7 +184,7 @@
 /* Promo Cards Strip */
 .promo-cards-strip {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
   gap: 18px;
 }
 
@@ -589,7 +593,7 @@
 /* Responsive */
 @media (max-width: 768px) {
   .home-page-wrapper {
-    padding: 12px 12px 60px;
+    padding: 12px 12px calc(92px + env(safe-area-inset-bottom, 0px));
     gap: 20px;
   }
 
@@ -603,7 +607,7 @@
     font-size: 22px;
   }
 
-  .hero-subhead {
+  .hero-subline {
     font-size: 13px;
   }
 
@@ -615,16 +619,27 @@
     display: none;
   }
 
-  .shelf-header {
-    margin-bottom: 12px;
+  .section-title-row {
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
   }
 
-  .shelf-header h3 {
-    font-size: 16px;
+  .title-left h2 {
+    font-size: 18px;
+  }
+
+  .title-sub {
+    font-size: 12px;
+  }
+
+  .see-all-action {
+    font-size: 13px;
+    flex-shrink: 0;
   }
 
   .category-pills-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 8px;
   }
 
@@ -636,11 +651,16 @@
     font-size: 10px;
     padding: 3px 2px 5px;
   }
+
+  .login-modal-card {
+    padding: 22px 18px;
+    border-radius: 16px;
+  }
 }
 
 @media (max-width: 480px) {
   .home-page-wrapper {
-    padding: 10px 10px 60px;
+    padding: 10px 10px calc(92px + env(safe-area-inset-bottom, 0px));
     gap: 16px;
   }
 
@@ -653,12 +673,22 @@
     font-size: 19px;
   }
 
-  .hero-subhead {
+  .hero-subline {
+    font-size: 12px;
+  }
+
+  .hero-shop-btn {
+    padding: 10px 18px;
+    font-size: 13px;
+  }
+
+  .hero-delivery-badge {
+    padding: 8px 12px;
     font-size: 12px;
   }
 
   .category-pills-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 6px;
   }
 

@@ -41,26 +41,47 @@ const loadRazorpayCheckoutScript = () => {
     return Promise.resolve(true);
   }
   return new Promise((resolve) => {
+    let settled = false;
+    const finish = (ok) => {
+      if (settled) return;
+      settled = true;
+      resolve(ok);
+    };
+
     const existing = document.querySelector(`script[src="${RAZORPAY_SCRIPT_URL}"]`);
-    if (existing && existing.dataset.status !== 'error') {
-      existing.addEventListener('load', () => resolve(Boolean(window.Razorpay)), { once: true });
+    if (existing && existing.dataset.loading === 'true') {
+      existing.addEventListener('load', () => finish(Boolean(window.Razorpay)), { once: true });
       existing.addEventListener('error', () => {
+        existing.dataset.loading = 'false';
         existing.dataset.status = 'error';
-        resolve(false);
+        finish(false);
       }, { once: true });
+      setTimeout(() => finish(Boolean(window.Razorpay)), 8000);
       return;
     }
+
     if (existing) existing.remove();
+
     const script = document.createElement('script');
     script.src = RAZORPAY_SCRIPT_URL;
     script.async = true;
+    script.dataset.loading = 'true';
+    const timeoutId = setTimeout(() => {
+      script.dataset.loading = 'false';
+      finish(Boolean(window.Razorpay));
+    }, 8000);
+
     script.onload = () => {
+      clearTimeout(timeoutId);
+      script.dataset.loading = 'false';
       script.dataset.status = 'loaded';
-      resolve(Boolean(window.Razorpay));
+      finish(Boolean(window.Razorpay));
     };
     script.onerror = () => {
+      clearTimeout(timeoutId);
+      script.dataset.loading = 'false';
       script.dataset.status = 'error';
-      resolve(false);
+      finish(false);
     };
     document.body.appendChild(script);
   });
