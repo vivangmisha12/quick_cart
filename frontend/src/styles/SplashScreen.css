@@ -11,11 +11,11 @@
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  background: radial-gradient(circle at 50% 35%, #ffffff 0%, #f0fdf4 65%, #dcfce7 100%);
+  background: radial-gradient(circle at 50% 35%, #FFFFFF 0%, #F4FBF5 65%, #EAF8ED 100%);
   padding: 40px 24px;
   overflow: hidden;
   user-select: none;
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.5s;
 }
 
@@ -137,14 +137,14 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: linear-gradient(135deg, #0c831f 0%, #096818 100%);
-  color: #ffffff;
+  background: linear-gradient(135deg, #168A32 0%, #075C28 100%);
+  color: #FFFFFF;
   padding: 6px 14px;
   border-radius: 9999px;
   font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-  box-shadow: 0 4px 12px rgba(12, 131, 31, 0.35);
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  box-shadow: 0 4px 12px rgba(22, 138, 50, 0.3);
   animation: badgePop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s both;
 }
 
@@ -168,21 +168,21 @@
 .splash-tagline {
   margin-top: 24px;
   font-size: 20px;
-  font-weight: 800;
-  color: #111827;
+  font-weight: 700;
+  color: #171A18;
   letter-spacing: -0.3px;
   animation: fadeInUp 0.5s ease 0.4s both;
 }
 
 .splash-tagline span {
-  color: #0c831f;
+  color: #168A32;
 }
 
 .splash-categories-ticker {
   margin-top: 8px;
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 600;
-  color: #6b7280;
+  color: #68716B;
   animation: fadeInUp 0.5s ease 0.5s both;
   display: flex;
   align-items: center;
@@ -192,7 +192,7 @@
 .ticker-dot {
   width: 4px;
   height: 4px;
-  background: #10b981;
+  background: #168A32;
   border-radius: 50%;
   display: inline-block;
 }
@@ -216,7 +216,7 @@
 .splash-progress-track {
   width: 100%;
   height: 6px;
-  background: rgba(167, 243, 208, 0.4);
+  background: rgba(22, 138, 50, 0.16);
   border-radius: 9999px;
   overflow: hidden;
   position: relative;
@@ -225,16 +225,16 @@
 
 .splash-progress-bar {
   height: 100%;
-  background: linear-gradient(90deg, #0c831f, #10b981, #f8cb46);
+  background: linear-gradient(90deg, #075C28, #168A32);
   border-radius: 9999px;
   transition: width 0.15s cubic-bezier(0.1, 0.9, 0.2, 1);
-  box-shadow: 0 0 10px rgba(12, 131, 31, 0.6);
+  box-shadow: 0 0 10px rgba(22, 138, 50, 0.45);
 }
 
 .splash-status-text {
   font-size: 13px;
   font-weight: 600;
-  color: #374151;
+  color: #171A18;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -245,7 +245,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #0c831f;
+  background: #168A32;
   animation: beaconPulse 1.2s infinite ease-in-out;
 }
 

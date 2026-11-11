@@ -67,9 +67,12 @@ export const AuthProvider = ({ children }) => {
           syncAddressesCache(normalized.id, normalized.addresses);
         }
       } catch (error) {
-        localStorage.removeItem('token');
-        setToken(null);
-        setUser(null);
+        const status = error?.response?.status;
+        if (status === 401 || status === 403) {
+          localStorage.removeItem('token');
+          setToken(null);
+          setUser(null);
+        }
       }
     };
 

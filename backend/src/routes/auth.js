@@ -9,15 +9,22 @@ const {
   updateProfile,
 } = require('../controllers/authController');
 const { authMiddleware } = require('../middleware/auth');
+const {
+  authLoginLimiter,
+  authIpBurstLimiter,
+  authRegisterLimiter,
+  profileMutationLimiter,
+  pollingReadLimiter,
+} = require('../middleware/rateLimiter');
 
 const router = express.Router();
 
-router.post('/register', register);
-router.post('/delivery/register', registerDeliveryPartner);
-router.post('/login', login);
-router.put('/delivery/verify', authMiddleware, verifyDeliveryPartner);
-router.put('/delivery/status', authMiddleware, updateDeliveryStatus);
-router.get('/profile', authMiddleware, getProfile);
-router.put('/profile', authMiddleware, updateProfile);
+router.post('/register', authRegisterLimiter, register);
+router.post('/delivery/register', authRegisterLimiter, registerDeliveryPartner);
+router.post('/login', authIpBurstLimiter, authLoginLimiter, login);
+router.put('/delivery/verify', authMiddleware, profileMutationLimiter, verifyDeliveryPartner);
+router.put('/delivery/status', authMiddleware, profileMutationLimiter, updateDeliveryStatus);
+router.get('/profile', authMiddleware, pollingReadLimiter, getProfile);
+router.put('/profile', authMiddleware, profileMutationLimiter, updateProfile);
 
 module.exports = router;

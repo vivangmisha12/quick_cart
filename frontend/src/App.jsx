@@ -12,6 +12,7 @@ import Footer from './components/Footer';
 import CartDrawer from './components/CartDrawer';
 import MobileBottomNav from './components/MobileBottomNav';
 import SplashScreen from './components/SplashScreen';
+import RateLimitBanner from './components/RateLimitBanner';
 
 // Pages
 import Home from './pages/Home';
@@ -75,6 +76,7 @@ const RiderAppContent = () => {
 
   return (
     <>
+      <RateLimitBanner />
       {showSplash && (
         <SplashScreen
           onFinish={() => setShowSplash(false)}
@@ -142,6 +144,7 @@ const AppContent = () => {
 
   return (
     <>
+      <RateLimitBanner />
       {showSplash && (
         <SplashScreen 
           onFinish={() => setShowSplash(false)} 

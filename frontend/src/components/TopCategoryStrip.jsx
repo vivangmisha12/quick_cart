@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  ShoppingBag,
+  LayoutGrid,
+  MoreHorizontal,
   Apple,
   Milk,
   Cookie,
@@ -49,7 +50,7 @@ const getShortCategoryLabel = (name = '') => {
     [/vegetables?\s*(&|and)?\s*fruits?/i, 'Fruits & Veg'],
     [/dairy,?\s*bread\s*(&|and)?\s*eggs?/i, 'Dairy & Bread'],
     [/chips\s*(&|and)?\s*namkeen|snacks\s*(&|and)?\s*munchies/i, 'Snacks'],
-    [/cold\s*drinks?\s*(&|and)?\s*juices?/i, 'Cold Drinks'],
+    [/cold\s*drinks?\s*(&|and)?\s*juices?/i, 'Beverages'],
     [/oil,?\s*ghee\s*(&|and)?\s*masala|masala,?\s*oil/i, 'Oil & Masala'],
     [/atta,?\s*rice\s*(&|and)?\s*dal/i, 'Atta & Dal'],
     [/bakery\s*(&|and)?\s*biscuits?/i, 'Bakery'],
@@ -127,21 +128,26 @@ const TopCategoryStrip = () => {
       <div className="top-category-strip-scroll" ref={stripRef}>
         <button
           type="button"
-          className={`top-cat-tab ${isAllActive ? 'active' : ''}`}
+          className={`top-cat-tab top-cat-all-tab ${isAllActive ? 'active' : ''}`}
           onClick={handleSelectAll}
         >
           <span className="top-cat-icon-box">
-            <ShoppingBag size={20} strokeWidth={isAllActive ? 2.3 : 1.8} />
+            <LayoutGrid size={20} strokeWidth={isAllActive ? 2.2 : 1.8} />
           </span>
           <span className="top-cat-label">All</span>
-          {isAllActive && <span className="top-cat-active-bar" />}
         </button>
 
-        {categories.map((cat, idx) => {
+        {categories.map((cat) => {
           const isActive = selectedCatId === cat._id;
           const IconComp = getCategoryIconComponent(cat.name);
           const shortLabel = getShortCategoryLabel(cat.name);
-          const showNewTag = idx === 0 && !isActive;
+          const lower = (cat.name || '').toLowerCase();
+          const toneClass =
+            lower.includes('vegetable') || lower.includes('fruit') || lower.includes('fresh')
+              ? 'tone-green'
+              : lower.includes('snack') || lower.includes('chip') || lower.includes('namkeen')
+              ? 'tone-amber'
+              : '';
 
           return (
             <button
@@ -151,15 +157,25 @@ const TopCategoryStrip = () => {
               onClick={() => handleSelectCategory(cat._id)}
               title={cat.name}
             >
-              <span className="top-cat-icon-box">
-                <IconComp size={20} strokeWidth={isActive ? 2.3 : 1.75} />
-                {showNewTag && <span className="top-cat-new-badge">New</span>}
+              <span className={`top-cat-icon-box ${toneClass}`}>
+                <IconComp size={20} strokeWidth={isActive ? 2.2 : 1.75} />
               </span>
               <span className="top-cat-label">{shortLabel}</span>
-              {isActive && <span className="top-cat-active-bar" />}
             </button>
           );
         })}
+
+        <button
+          type="button"
+          className="top-cat-tab"
+          onClick={() => navigate('/products')}
+          title="More categories"
+        >
+          <span className="top-cat-icon-box">
+            <MoreHorizontal size={20} strokeWidth={2} />
+          </span>
+          <span className="top-cat-label">More</span>
+        </button>
       </div>
     </div>
   );

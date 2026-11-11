@@ -161,7 +161,7 @@ const Home = () => {
           <div 
             className="hero-slider-card"
             style={{ 
-              background: heroBanners[currentHeroIndex].bg || '#0c831f',
+              background: heroBanners[currentHeroIndex].bg || '#168A32',
               backgroundImage: getBannerImageUrl(heroBanners[currentHeroIndex])
                 ? `url("${getBannerImageUrl(heroBanners[currentHeroIndex])}")`
                 : 'none',
@@ -190,7 +190,7 @@ const Home = () => {
                   {heroBanners[currentHeroIndex].cta || 'Shop Now'} <ArrowRight size={16} />
                 </Link>
                 <div className="hero-delivery-badge">
-                  <Clock size={16} color="#0c831f" />
+                  <Clock size={16} color="#168A32" />
                   <span>Free delivery on ₹499+</span>
                 </div>
               </div>
@@ -234,7 +234,7 @@ const Home = () => {
                   Shop Now <ArrowRight size={16} />
                 </Link>
                 <div className="hero-delivery-badge">
-                  <ShieldCheck size={16} color="#0c831f" />
+                  <ShieldCheck size={16} color="#168A32" />
                   <span>Best Quality Guaranteed</span>
                 </div>
               </div>

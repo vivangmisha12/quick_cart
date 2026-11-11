@@ -3,6 +3,11 @@ const User = require('../models/User');
 const Order = require('../models/Order');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const {
+  pollingReadLimiter,
+  profileMutationLimiter,
+  adminWriteLimiter,
+} = require('../middleware/rateLimiter');
+const {
   formatAddressEntry,
   upsertUserDeliveryAddress,
 } = require('../utils/userAddress');
@@ -10,7 +15,7 @@ const {
 const router = express.Router();
 
 // Customer: get saved delivery addresses from User table
-router.get('/addresses', authMiddleware, async (req, res) => {
+router.get('/addresses', authMiddleware, pollingReadLimiter, async (req, res) => {
   try {
     const user = await User.findById(req.userId).select('addresses');
     if (!user) {
@@ -25,7 +30,7 @@ router.get('/addresses', authMiddleware, async (req, res) => {
 });
 
 // Customer: add or update a delivery address in User table
-router.post('/addresses', authMiddleware, async (req, res) => {
+router.post('/addresses', authMiddleware, profileMutationLimiter, async (req, res) => {
   try {
     const body = req.body || {};
     const coords = body.coordinates || (body.latitude && body.longitude
@@ -45,7 +50,7 @@ router.post('/addresses', authMiddleware, async (req, res) => {
 });
 
 // Customer: update specific saved address in User table
-router.put('/addresses/:addressId', authMiddleware, async (req, res) => {
+router.put('/addresses/:addressId', authMiddleware, profileMutationLimiter, async (req, res) => {
   try {
     const body = req.body || {};
     const coords = body.coordinates || (body.latitude && body.longitude
@@ -65,7 +70,7 @@ router.put('/addresses/:addressId', authMiddleware, async (req, res) => {
 });
 
 // Customer: remove saved address from User table
-router.delete('/addresses/:addressId', authMiddleware, async (req, res) => {
+router.delete('/addresses/:addressId', authMiddleware, profileMutationLimiter, async (req, res) => {
   try {
     const user = await User.findById(req.userId);
     if (!user) {
@@ -87,7 +92,7 @@ router.delete('/addresses/:addressId', authMiddleware, async (req, res) => {
 });
 
 // Admin: get total users count
-router.get('/admin/count', authMiddleware, adminMiddleware, async (req, res) => {
+router.get('/admin/count', authMiddleware, adminMiddleware, pollingReadLimiter, async (req, res) => {
   try {
     const count = await User.countDocuments();
     res.json({ count });
@@ -97,7 +102,7 @@ router.get('/admin/count', authMiddleware, adminMiddleware, async (req, res) => 
 });
 
 // Admin: list all delivery partners with active & completed trip counts
-router.get('/admin/riders', authMiddleware, adminMiddleware, async (req, res) => {
+router.get('/admin/riders', authMiddleware, adminMiddleware, pollingReadLimiter, async (req, res) => {
   try {
     const riders = await User.find({
       $or: [{ isDeliveryPartner: true }, { role: 'delivery_partner' }],
@@ -150,7 +155,7 @@ router.get('/admin/riders', authMiddleware, adminMiddleware, async (req, res) =>
 });
 
 // Admin: create a new delivery partner (minimal onboarding: name, email, phone only)
-router.post('/admin/riders', authMiddleware, adminMiddleware, async (req, res) => {
+router.post('/admin/riders', authMiddleware, adminMiddleware, adminWriteLimiter, async (req, res) => {
   try {
     const { name, email, phone } = req.body;
 
@@ -197,7 +202,7 @@ router.post('/admin/riders', authMiddleware, adminMiddleware, async (req, res) =
 });
 
 // Admin: update delivery partner verification status (verified / pending / suspended)
-router.patch('/admin/riders/:id/status', authMiddleware, adminMiddleware, async (req, res) => {
+router.patch('/admin/riders/:id/status', authMiddleware, adminMiddleware, adminWriteLimiter, async (req, res) => {
   try {
     const { verificationStatus } = req.body;
     if (!['pending', 'verified', 'rejected', 'suspended'].includes(verificationStatus)) {
@@ -228,7 +233,7 @@ router.patch('/admin/riders/:id/status', authMiddleware, adminMiddleware, async 
 });
 
 // Admin: list all users
-router.get('/admin', authMiddleware, adminMiddleware, async (req, res) => {
+router.get('/admin', authMiddleware, adminMiddleware, pollingReadLimiter, async (req, res) => {
   try {
     const users = await User.find().select('-password');
     res.json(users);

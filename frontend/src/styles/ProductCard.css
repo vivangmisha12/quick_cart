@@ -1,8 +1,8 @@
 /* Authentic Blinkit Product Card Styling */
 
 .blinkit-product-card {
-  background: #ffffff;
-  border: 1px solid #edf0f4;
+  background: var(--white);
+  border: 1px solid var(--border);
   border-radius: 12px;
   overflow: hidden;
   display: flex;
@@ -16,15 +16,15 @@
 
 .blinkit-product-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
-  border-color: #dbe2ea;
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary);
 }
 
 /* Image Box */
 .card-image-box {
   width: 100%;
   height: 150px;
-  background: #fbfcfd;
+  background: var(--bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -49,13 +49,13 @@
   width: 70px;
   height: 70px;
   border-radius: 50%;
-  background: #eef1f6;
+  background: var(--primary-light);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 24px;
-  font-weight: 800;
-  color: #8892a0;
+  font-weight: 700;
+  color: var(--primary-dark);
 }
 
 /* 10 Min Delivery Tag */
@@ -63,18 +63,18 @@
   position: absolute;
   top: 8px;
   left: 8px;
-  background: rgba(243, 244, 246, 0.95);
-  color: #374151;
-  font-size: 9.5px;
-  font-weight: 800;
-  padding: 3px 7px;
+  background: var(--primary-soft);
+  color: var(--primary-dark);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 7px;
   border-radius: 6px;
   display: flex;
   align-items: center;
   gap: 3.5px;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.2px;
   z-index: 2;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--border);
 }
 
 /* Wishlist Button */
@@ -111,14 +111,14 @@
   position: absolute;
   bottom: 8px;
   left: 8px;
-  background: #0c831f;
-  color: #ffffff;
-  font-size: 10px;
-  font-weight: 800;
-  padding: 2.5px 7px;
+  background: var(--discount-badge);
+  color: var(--white);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 7px;
   border-radius: 5px;
-  letter-spacing: 0.3px;
-  box-shadow: 0 1px 4px rgba(12, 131, 31, 0.3);
+  letter-spacing: 0.2px;
+  box-shadow: 0 1px 4px rgba(22, 138, 50, 0.25);
 }
 
 /* Info Box */
@@ -134,22 +134,22 @@
 }
 
 .product-title {
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--text);
   line-height: 1.35;
   margin: 0 0 3px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  height: 36px;
+  height: 38px;
   letter-spacing: -0.01em;
 }
 
 .product-unit {
-  font-size: 11.5px;
-  color: #6b7280;
+  font-size: 12px;
+  color: var(--text-muted);
   font-weight: 500;
   margin-bottom: 10px;
   display: block;
@@ -176,55 +176,55 @@
 }
 
 .current-price {
-  font-size: 14.5px;
-  font-weight: 800;
-  color: #111827;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--price-text);
   line-height: 1.1;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.015em;
 }
 
 .mrp-price {
-  font-size: 11px;
-  color: #9ca3af;
+  font-size: 12px;
+  color: var(--text-muted);
   text-decoration: line-through;
-  margin-top: 1px;
+  margin-top: 2px;
   font-weight: 500;
 }
 
-/* Blinkit ADD Button */
+/* Progicart ADD Button */
 .blinkit-add-card-btn {
-  background: #f7fff9;
-  color: #0c831f;
-  border: 1.5px solid #0c831f;
+  background: var(--primary-soft);
+  color: var(--primary);
+  border: 1.5px solid var(--primary);
   border-radius: 7px;
-  padding: 6px 18px;
-  font-size: 12.5px;
-  font-weight: 800;
-  letter-spacing: 0.5px;
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .blinkit-add-card-btn:hover {
-  background: #0c831f;
-  color: #ffffff;
-  box-shadow: 0 2px 8px rgba(12, 131, 31, 0.3);
+  background: var(--primary);
+  color: var(--white);
+  box-shadow: 0 2px 8px rgba(22, 138, 50, 0.25);
 }
 
-/* Blinkit Stepper Pill */
+/* Progicart Stepper Pill */
 .blinkit-stepper-pill {
-  background: #0c831f;
+  background: var(--primary);
   border-radius: 6px;
   display: flex;
   align-items: center;
   overflow: hidden;
-  box-shadow: 0 2px 6px rgba(12, 131, 31, 0.25);
+  box-shadow: 0 2px 6px rgba(22, 138, 50, 0.22);
 }
 
 .stepper-action-btn {
   background: transparent;
   border: none;
-  color: #ffffff;
+  color: var(--white);
   width: 24px;
   height: 28px;
   cursor: pointer;
@@ -239,17 +239,17 @@
 }
 
 .stepper-qty-num {
-  color: #ffffff;
-  font-size: 12px;
-  font-weight: 800;
+  color: var(--white);
+  font-size: 13px;
+  font-weight: 700;
   padding: 0 4px;
   min-width: 16px;
   text-align: center;
 }
 
 .out-of-stock-label {
-  font-size: 11px;
-  color: #e23744;
+  font-size: 12px;
+  color: var(--danger);
   font-weight: 700;
 }
 
@@ -285,23 +285,23 @@
   border-radius: 6px;
 }
 
-/* --- Mobile Responsiveness for Product Cards --- */
-@media (max-width: 600px) {
+/* --- Responsive Product Cards (768px & 480px) --- */
+@media (max-width: 768px) {
   .blinkit-product-card {
-    width: 148px;
-    min-width: 148px;
+    width: 158px;
+    min-width: 158px;
     border-radius: 10px;
   }
 
   .card-image-box {
-    height: 116px;
+    height: 122px;
     padding: 8px;
   }
 
   .card-delivery-tag {
     top: 6px;
     left: 6px;
-    font-size: 8.5px;
+    font-size: 10.5px;
     padding: 2px 5px;
   }
 
@@ -315,7 +315,7 @@
   .card-discount-badge {
     bottom: 6px;
     left: 6px;
-    font-size: 9px;
+    font-size: 10.5px;
     padding: 2px 6px;
   }
 
@@ -324,8 +324,8 @@
   }
 
   .product-title {
-    font-size: 12.5px;
-    height: 33px;
+    font-size: 13px;
+    height: 34px;
     line-height: 1.3;
   }
 
@@ -335,16 +335,16 @@
   }
 
   .current-price {
-    font-size: 13.5px;
+    font-size: 15px;
   }
 
   .mrp-price {
-    font-size: 10px;
+    font-size: 10.5px;
   }
 
   .blinkit-add-card-btn {
     padding: 5px 12px;
-    font-size: 11.5px;
+    font-size: 12px;
     height: 28px;
     display: inline-flex;
     align-items: center;
@@ -357,28 +357,58 @@
   }
 
   .stepper-qty-num {
-    font-size: 11.5px;
+    font-size: 12px;
     min-width: 14px;
   }
 
   .out-of-stock-label {
-    font-size: 10px;
+    font-size: 11px;
   }
 }
 
-@media (max-width: 360px) {
+@media (max-width: 480px) {
   .blinkit-product-card {
-    width: 138px;
-    min-width: 138px;
+    width: 146px;
+    min-width: 146px;
+  }
+
+  .card-image-box {
+    height: 112px;
+  }
+
+  .card-delivery-tag,
+  .card-discount-badge {
+    font-size: 10px;
   }
 
   .card-info-box {
     padding: 8px;
   }
 
+  .product-title {
+    font-size: 12.5px;
+    height: 33px;
+  }
+
+  .product-unit {
+    font-size: 10.5px;
+  }
+
+  .current-price {
+    font-size: 14px;
+  }
+
+  .mrp-price {
+    font-size: 10px;
+  }
+
   .blinkit-add-card-btn {
-    padding: 4px 9px;
+    padding: 4px 10px;
     font-size: 11px;
+  }
+
+  .out-of-stock-label {
+    font-size: 10px;
   }
 }
 

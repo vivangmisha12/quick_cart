@@ -1,4 +1,8 @@
 const express = require('express');
+const {
+  locationReverseLimiter,
+  locationCurrentLimiter,
+} = require('../middleware/rateLimiter');
 const router = express.Router();
 
 // Lucknow default delivery hub
@@ -15,7 +19,7 @@ const LUCKNOW_DEFAULT = {
 
 // GET /api/location/reverse?lat=...&lng=...
 // Backend reverse geocoding with ISP Gateway correction
-router.get('/reverse', async (req, res) => {
+router.get('/reverse', locationReverseLimiter, async (req, res) => {
   try {
     const lat = parseFloat(req.query.lat);
     const lng = parseFloat(req.query.lng);
@@ -113,7 +117,7 @@ router.get('/reverse', async (req, res) => {
 });
 
 // GET /api/location/current
-router.get('/current', (req, res) => {
+router.get('/current', locationCurrentLimiter, (req, res) => {
   res.json(LUCKNOW_DEFAULT);
 });
 

@@ -25,9 +25,10 @@ const Products = () => {
   const selectedCategory = searchParams.get('category') || '';
   const selectedSubcategory = searchParams.get('subcategory') || '';
   const searchParam = searchParams.get('search') || '';
+  const sortParam = searchParams.get('sort') || 'relevance';
 
   const [searchInput, setSearchInput] = useState(searchParam);
-  const [sortBy, setSortBy] = useState('relevance');
+  const [sortBy, setSortBy] = useState(sortParam);
   const [loading, setLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -51,6 +52,10 @@ const Products = () => {
     setSearchInput(searchParam);
     fetchProducts(selectedCategory, selectedSubcategory, searchParam);
   }, [selectedCategory, selectedSubcategory, searchParam]);
+
+  useEffect(() => {
+    setSortBy(sortParam);
+  }, [sortParam]);
 
   const fetchCategories = async () => {
     try {

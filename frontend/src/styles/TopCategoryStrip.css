@@ -1,17 +1,15 @@
 /* ==========================================================================
-   Upper Horizontal Icon Category Tabs (Blinkit Mobile / App Header Strip)
+   Upper Horizontal Icon Category Tiles (Mobile / Native App Header Strip)
    ========================================================================== */
 
 .top-category-strip-wrapper {
   display: none;
-  background: #ffffff;
-  border-top: 1px solid #f1f4f7;
-  border-bottom: 1px solid #e8ecef;
+  background: var(--white);
   width: 100%;
   box-sizing: border-box;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 768px) {
   .top-category-strip-wrapper {
     display: block;
   }
@@ -23,12 +21,12 @@ body.capacitor-native-app .top-category-strip-wrapper {
 
 .top-category-strip-scroll {
   display: flex;
-  align-items: stretch;
-  gap: 4px;
+  align-items: flex-start;
+  gap: 8px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  padding: 6px 10px 0;
+  padding: 6px 12px 6px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -43,17 +41,18 @@ body.capacitor-native-app .top-category-strip-wrapper {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: 4px;
-  min-width: 66px;
-  max-width: 82px;
-  padding: 4px 6px 9px;
+  gap: 5px;
+  min-width: 58px;
+  max-width: 68px;
+  padding: 4px 4px;
   background: transparent;
   border: none;
-  color: #4b5563;
+  border-radius: 12px;
+  color: #374151;
   cursor: pointer;
   flex-shrink: 0;
   -webkit-tap-highlight-color: transparent;
-  transition: color 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.12s ease;
 }
 
 .top-cat-tab:active {
@@ -62,62 +61,67 @@ body.capacitor-native-app .top-category-strip-wrapper {
 
 .top-cat-icon-box {
   position: relative;
-  width: 28px;
-  height: 26px;
+  width: 44px;
+  height: 36px;
+  border-radius: 10px;
+  background: #F4F5F4;
+  border: 1px solid var(--border);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #3f3f46;
-  transition: transform 0.15s ease, color 0.15s ease;
+  color: var(--text);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.top-cat-icon-box.tone-green {
+  color: var(--primary);
+}
+
+.top-cat-icon-box.tone-amber {
+  color: var(--primary-dark);
+}
+
+.top-cat-tab.active {
+  background: var(--primary-light);
+  padding: 7px 6px 6px;
 }
 
 .top-cat-tab.active .top-cat-icon-box {
-  color: #111827;
-}
-
-.top-cat-tab.active .top-cat-icon-box svg {
-  fill: #f8cb46;
-  stroke: #111827;
-}
-
-.top-cat-new-badge {
-  position: absolute;
-  top: -4px;
-  right: -14px;
-  background: #e23744;
-  color: #ffffff;
-  font-size: 8.5px;
-  font-weight: 800;
-  line-height: 1;
-  padding: 2px 5px;
-  border-radius: 999px;
-  letter-spacing: 0.2px;
-  box-shadow: 0 1px 3px rgba(226, 55, 68, 0.35);
+  width: auto;
+  height: 24px;
+  border-color: transparent;
+  background: transparent;
+  color: var(--primary);
 }
 
 .top-cat-label {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
-  color: #52525b;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
+  color: var(--text);
+  white-space: normal;
+  word-break: break-word;
+  text-align: center;
+  max-width: 66px;
   line-height: 1.2;
 }
 
 .top-cat-tab.active .top-cat-label {
-  color: #111827;
-  font-weight: 800;
+  color: var(--primary);
+  font-weight: 600;
 }
 
-.top-cat-active-bar {
-  position: absolute;
-  bottom: 0;
-  left: 10px;
-  right: 10px;
-  height: 3px;
-  border-radius: 3px 3px 0 0;
-  background: #1c1c1c;
+@media (max-width: 480px) {
+  .top-category-strip-scroll {
+    gap: 6px;
+    padding: 6px 10px 6px;
+  }
+
+  .top-cat-tab {
+    min-width: 56px;
+  }
+
+  .top-cat-label {
+    font-size: 11px;
+  }
 }
 

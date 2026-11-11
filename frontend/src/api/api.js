@@ -4,14 +4,111 @@ import axios from 'axios';
 const API_URL = import.meta.env.VITE_API_URL || 'https://quick-cart-qnz6.onrender.com/api';
 
 const api = axios.create({ baseURL: API_URL });
-// Add token to requests
+
+const rateLimitedGetUntil = new Map();
+let lastToastDispatchedAt = 0;
+
+const normalizeRateLimitKey = (config) => {
+  const rawUrl = String(config?.url || '').split('?')[0];
+  return `${String(config?.method || 'get').toLowerCase()}:${rawUrl}`;
+};
+
+const parseRetryAfterSeconds = (response) => {
+  const fromBody = Number(response?.data?.retryAfterSeconds);
+  if (Number.isFinite(fromBody) && fromBody > 0) {
+    return Math.ceil(fromBody);
+  }
+  const fromHeader = Number(response?.headers?.['retry-after']);
+  if (Number.isFinite(fromHeader) && fromHeader > 0) {
+    return Math.ceil(fromHeader);
+  }
+  return 15;
+};
+
+// Add auth token and skip redundant GET polling requests during active 429 cooldown
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  const method = String(config.method || 'get').toLowerCase();
+  if (method === 'get') {
+    const key = normalizeRateLimitKey(config);
+    const blockedUntil = rateLimitedGetUntil.get(key) || 0;
+    const remainingMs = blockedUntil - Date.now();
+    if (remainingMs > 0) {
+      const retryAfterSeconds = Math.max(1, Math.ceil(remainingMs / 1000));
+      const message = `Too many requests. Cooling down for ${retryAfterSeconds}s.`;
+      const cooldownError = new Error(message);
+      cooldownError.isRateLimited = true;
+      cooldownError.isCooldownSkip = true;
+      cooldownError.retryAfterSeconds = retryAfterSeconds;
+      cooldownError.response = {
+        status: 429,
+        data: {
+          message,
+          code: 'RATE_LIMIT_EXCEEDED',
+          retryAfterSeconds,
+        },
+      };
+      return Promise.reject(cooldownError);
+    }
+    rateLimitedGetUntil.delete(key);
+  }
+
   return config;
 });
+
+// Normalize 429 rate-limit responses and emit a non-blocking notification event
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 429) {
+      const retryAfterSeconds = parseRetryAfterSeconds(error.response);
+      const serverMessage =
+        typeof error.response.data === 'object' ? error.response.data?.message : '';
+      const message =
+        serverMessage || `Too many requests. Please wait ${retryAfterSeconds}s and try again.`;
+
+      error.isRateLimited = true;
+      error.retryAfterSeconds = retryAfterSeconds;
+      error.message = message;
+      error.response.data = {
+        ...(typeof error.response.data === 'object' && error.response.data !== null
+          ? error.response.data
+          : {}),
+        message,
+        code: 'RATE_LIMIT_EXCEEDED',
+        retryAfterSeconds,
+      };
+
+      const method = String(error.config?.method || 'get').toLowerCase();
+      if (method === 'get') {
+        const key = normalizeRateLimitKey(error.config);
+        const cooldownMs = Math.min(retryAfterSeconds, 60) * 1000;
+        rateLimitedGetUntil.set(key, Date.now() + cooldownMs);
+      }
+
+      if (typeof window !== 'undefined' && !error.isCooldownSkip) {
+        const now = Date.now();
+        if (now - lastToastDispatchedAt > 2000) {
+          lastToastDispatchedAt = now;
+          window.dispatchEvent(
+            new CustomEvent('apiRateLimited', {
+              detail: {
+                message,
+                retryAfterSeconds,
+                url: error.config?.url || '',
+              },
+            })
+          );
+        }
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 // Auth APIs
 export const authAPI = {
