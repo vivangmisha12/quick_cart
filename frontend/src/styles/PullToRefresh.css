@@ -1,0 +1,48 @@
+.pull-to-refresh-layer {
+  position: fixed;
+  top: env(safe-area-inset-top, 0px);
+  left: 50%;
+  z-index: 1200;
+  pointer-events: none;
+  transition: transform 0.14s ease-out, opacity 0.14s ease-out;
+}
+
+.pull-to-refresh-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: var(--white);
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: 0 6px 20px rgba(23, 26, 24, 0.14);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pull-to-refresh-pill.is-ready,
+.pull-to-refresh-pill.is-refreshing {
+  border-color: var(--primary);
+  color: var(--primary-dark);
+  background: var(--primary-soft);
+}
+
+.ptr-spinner-icon {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.pull-to-refresh-pill.is-refreshing .ptr-spinner-icon {
+  animation: ptrSpin 0.75s linear infinite;
+}
+
+@keyframes ptrSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+

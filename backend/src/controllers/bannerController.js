@@ -1,4 +1,25 @@
 const Banner = require('../models/Banner');
+const cloudinary = require('../utils/cloudinary');
+const fs = require('fs/promises');
+
+const uploadBannerToCloudinary = async (file) => {
+  if (!file) return '';
+  let uploadedUrl = '';
+  try {
+    const res = await cloudinary.uploader.upload(file.path, {
+      folder: 'quick-cart/banners',
+    });
+    uploadedUrl = res?.secure_url || '';
+    return uploadedUrl;
+  } catch (err) {
+    console.error('Banner Cloudinary upload failed, falling back to local upload:', err.message);
+    return file.filename ? `/uploads/${file.filename}` : '';
+  } finally {
+    if (uploadedUrl && file?.path) {
+      await fs.unlink(file.path).catch(() => {});
+    }
+  }
+};
 
 exports.getAllBanners = async (req, res) => {
   try {
@@ -24,7 +45,9 @@ exports.createBanner = async (req, res) => {
     let imageUrl = '';
 
     if (req.files && req.files.length > 0) {
-      imageUrl = `/uploads/${req.files[0].filename}`;
+      imageUrl = await uploadBannerToCloudinary(req.files[0]);
+    } else if (req.file) {
+      imageUrl = await uploadBannerToCloudinary(req.file);
     }
 
     const newBanner = new Banner({
@@ -63,7 +86,9 @@ exports.updateBanner = async (req, res) => {
     if (isActive !== undefined) banner.isActive = isActive === 'true' || isActive === true;
 
     if (req.files && req.files.length > 0) {
-      banner.image = `/uploads/${req.files[0].filename}`;
+      banner.image = await uploadBannerToCloudinary(req.files[0]);
+    } else if (req.file) {
+      banner.image = await uploadBannerToCloudinary(req.file);
     }
 
     await banner.save();

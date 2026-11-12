@@ -142,3 +142,23 @@ input, select, textarea {
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+
+/* Global Shimmer Skeleton Loader */
+@keyframes progicartShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #edf2ee 25%, #f7fbf8 50%, #edf2ee 75%);
+  background-size: 200% 100%;
+  animation: progicartShimmer 1.35s ease-in-out infinite;
+}
+
+.skeleton-line {
+  border-radius: 6px;
+}

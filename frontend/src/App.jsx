@@ -13,6 +13,7 @@ import CartDrawer from './components/CartDrawer';
 import MobileBottomNav from './components/MobileBottomNav';
 import SplashScreen from './components/SplashScreen';
 import RateLimitBanner from './components/RateLimitBanner';
+import PullToRefresh from './components/PullToRefresh';
 
 // Pages
 import Home from './pages/Home';
@@ -77,6 +78,7 @@ const RiderAppContent = () => {
   return (
     <>
       <RateLimitBanner />
+      <PullToRefresh />
       {showSplash && (
         <SplashScreen
           onFinish={() => setShowSplash(false)}
@@ -145,11 +147,12 @@ const AppContent = () => {
   return (
     <>
       <RateLimitBanner />
+      <PullToRefresh />
       {showSplash && (
         <SplashScreen 
           onFinish={() => setShowSplash(false)} 
           minDuration={IS_RIDER_APP ? 800 : 1800}
-          maxTimeout={IS_RIDER_APP ? 2500 : 5500}
+          maxTimeout={IS_RIDER_APP ? 2500 : 8500}
         />
       )}
       {!isStandalonePortal && <Navbar />}

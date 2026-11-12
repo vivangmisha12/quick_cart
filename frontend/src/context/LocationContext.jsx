@@ -2,16 +2,44 @@ import React, { createContext, useContext, useMemo, useRef, useState } from 'rea
 
 const LocationContext = createContext(null);
 
+const SELECTED_LOCATION_KEY = 'progicart_selected_location';
+
 export const LocationProvider = ({ children }) => {
-  const [location, setLocation] = useState('Gomti Nagar, Lucknow');
-  const [formattedAddress, setFormattedAddress] = useState('Gomti Nagar, Lucknow, Uttar Pradesh');
-  const [addressParts, setAddressParts] = useState({ 
-    street: 'Gomti Nagar', 
-    city: 'Lucknow', 
-    state: 'Uttar Pradesh', 
-    country: 'India', 
-    zipcode: '226010' 
+  const [location, setLocationState] = useState(() => {
+    try {
+      return localStorage.getItem(SELECTED_LOCATION_KEY) || '';
+    } catch {
+      return '';
+    }
   });
+  const [formattedAddress, setFormattedAddress] = useState(() => {
+    try {
+      return localStorage.getItem(SELECTED_LOCATION_KEY) || '';
+    } catch {
+      return '';
+    }
+  });
+  const [addressParts, setAddressParts] = useState({ 
+    street: '', 
+    city: '', 
+    state: '', 
+    country: 'India', 
+    zipcode: '' 
+  });
+
+  const setLocation = (nextLocation) => {
+    const clean = typeof nextLocation === 'string' ? nextLocation.trim() : '';
+    setLocationState(clean);
+    try {
+      if (clean) {
+        localStorage.setItem(SELECTED_LOCATION_KEY, clean);
+      } else {
+        localStorage.removeItem(SELECTED_LOCATION_KEY);
+      }
+    } catch {
+      // Ignore storage quota errors cleanly
+    }
+  };
   const [coords, setCoords] = useState({ lat: 26.8530, lng: 80.9984 });
   const [locating, setLocating] = useState(false);
   const [error, setError] = useState('');

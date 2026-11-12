@@ -1,33 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Zap } from 'lucide-react';
-import { categoriesAPI, bannersAPI, productsAPI } from '../api/api';
+import { bootstrapHomeData, preloadImage } from '../utils/homeBootstrap';
 import '../styles/SplashScreen.css';
-
-// Core local category images that should always be cached immediately
-const STATIC_CATEGORY_IMAGES = [
-  '/logo.png',
-  '/category-images/fruits-vegetables.jpg',
-  '/category-images/dairy-bread-eggs.jpg',
-  '/category-images/snacks-munchies.jpg',
-  '/category-images/cold-drinks-juices.jpg',
-  '/category-images/bakery-biscuits.jpg',
-  '/category-images/atta-rice-dal.jpg',
-  '/category-images/masala-oil-more.jpg',
-  '/category-images/breakfast-instant-food.jpg',
-  '/category-images/tea-coffee-milk-drinks.jpg',
-  '/category-images/sweet-tooth.jpg',
-  '/category-images/cleaning-essentials.jpg',
-  '/category-images/personal-care.jpg',
-  '/category-images/baby-care.jpg',
-  '/category-images/pet-care.jpg',
-  '/category-images/pharma-wellness.jpg',
-];
-
-const resolveAssetUrl = (urlPath) => {
-  if (!urlPath) return null;
-  if (urlPath.startsWith('http://') || urlPath.startsWith('https://')) return urlPath;
-  return urlPath.startsWith('/') ? urlPath : `/${urlPath}`;
-};
 
 const IS_RIDER_APP = import.meta.env.VITE_APP_MODE === 'rider';
 
@@ -61,90 +35,35 @@ export default function SplashScreen({ onFinish, minDuration = 1800, maxTimeout 
       }, 250);
     };
 
-    // Preload an image into browser cache
-    const preloadImage = (src) => {
-      return new Promise((resolve) => {
-        if (!src) return resolve();
-        const img = new Image();
-        img.src = src;
-        if (img.complete) {
-          resolve();
-        } else {
-          img.onload = () => resolve();
-          img.onerror = () => resolve();
-        }
-      });
-    };
+    let delayTimer = null;
 
     const loadAllHomeAssets = async () => {
       if (IS_RIDER_APP) {
         await preloadImage('/logo.png');
         const remaining = Math.max(0, minDuration - (Date.now() - startTime));
-        setTimeout(() => {
+        delayTimer = setTimeout(() => {
           if (!isMounted) return;
           finishSplash();
         }, remaining);
         return;
       }
 
-      const urlsToLoad = new Set(STATIC_CATEGORY_IMAGES);
-
       try {
-        const [catRes, banRes, prodRes] = await Promise.allSettled([
-          categoriesAPI.getAll(),
-          bannersAPI.getActive(),
-          productsAPI.getAll('', '', '', true)
-        ]);
-
-        if (catRes.status === 'fulfilled' && Array.isArray(catRes.value?.data)) {
-          catRes.value.data.forEach((c) => {
-            const url = resolveAssetUrl(c.image);
-            if (url) urlsToLoad.add(url);
-          });
-        }
-
-        if (banRes.status === 'fulfilled' && Array.isArray(banRes.value?.data)) {
-          banRes.value.data.forEach((b) => {
-            const url = resolveAssetUrl(b.image);
-            if (url) urlsToLoad.add(url);
-          });
-        }
-
-        if (prodRes.status === 'fulfilled' && Array.isArray(prodRes.value?.data)) {
-          prodRes.value.data.slice(0, 16).forEach((p) => {
-            if (p.image) urlsToLoad.add(resolveAssetUrl(p.image));
-          });
-        }
-      } catch (e) {
-        // Silent fallback
+        await bootstrapHomeData({
+          onProgress: (pct, msg) => {
+            if (!isMounted) return;
+            setProgress((prev) => Math.max(prev, pct));
+            if (msg) setStatusMessage(msg);
+          },
+        });
+      } catch (err) {
+        console.warn('Splash preload warning:', err);
       }
-
-      const urlList = Array.from(urlsToLoad);
-      const total = urlList.length;
-      let loaded = 0;
-
-      // Preload images silently in parallel
-      const imagePromises = urlList.map((url) =>
-        preloadImage(url).then(() => {
-          if (!isMounted) return;
-          loaded += 1;
-          const pct = Math.min(95, Math.max(15, Math.round((loaded / total) * 95)));
-          setProgress(pct);
-
-          if (pct >= 50 && pct < 85) {
-            setStatusMessage('⚡ 10-Minute delivery ready in your area');
-          } else if (pct >= 85) {
-            setStatusMessage('Welcome to Progicart!');
-          }
-        })
-      );
-
-      await Promise.all(imagePromises);
 
       const elapsed = Date.now() - startTime;
       const remaining = Math.max(0, minDuration - elapsed);
 
-      setTimeout(() => {
+      delayTimer = setTimeout(() => {
         if (!isMounted) return;
         finishSplash();
       }, remaining);
@@ -160,6 +79,7 @@ export default function SplashScreen({ onFinish, minDuration = 1800, maxTimeout 
     return () => {
       isMounted = false;
       clearTimeout(safetyTimer);
+      if (delayTimer) clearTimeout(delayTimer);
     };
   }, [minDuration, maxTimeout, onFinish]);
 

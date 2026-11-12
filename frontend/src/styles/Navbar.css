@@ -356,6 +356,7 @@
     opacity: 0;
     transform: translateY(-6px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -811,6 +812,7 @@
     opacity: 0;
     transform: scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -907,6 +909,77 @@
   font-size: 12px;
   color: var(--danger);
   margin: 0;
+}
+
+.location-sheet-handle {
+  display: none;
+}
+
+.location-search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.location-search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.location-search-input {
+  width: 100%;
+  height: 42px;
+  padding: 0 36px 0 36px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: #F6F8F7;
+  font-size: 13.5px;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.location-search-input:focus {
+  border-color: var(--primary);
+  background: var(--white);
+}
+
+.location-search-clear {
+  position: absolute;
+  right: 10px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.location-searching-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: -8px 0 0;
+}
+
+.manage-saved-addr-link {
+  display: block;
+  text-align: center;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px dashed var(--primary);
+  background: var(--primary-soft);
+  color: var(--primary-dark);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.manage-saved-addr-link:hover {
+  background: var(--primary-light);
 }
 
 .modal-locations-group h4 {
@@ -1408,53 +1481,78 @@
 
   body.capacitor-native-app .location-trigger-btn {
     grid-area: location;
-    width: 100%;
-    background: var(--primary-soft);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 7px 10px;
-    gap: 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    width: fit-content;
+    max-width: 100%;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0 2px;
+    margin: -2px 0 0;
+    justify-content: flex-start;
   }
 
   body.capacitor-native-app .location-pin-wrap {
-    width: 22px;
-    height: 22px;
+    width: 16px;
+    height: 16px;
     background: transparent;
     border: none;
+    color: var(--primary);
+  }
+
+  body.capacitor-native-app .location-pin-wrap .pin-icon {
+    width: 15px;
+    height: 15px;
   }
 
   body.capacitor-native-app .location-text-col {
-    flex: 1;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
     min-width: 0;
     overflow: hidden;
   }
 
   body.capacitor-native-app .delivery-time-badge {
-    color: var(--primary-dark);
-    font-size: 14.5px;
+    color: var(--text-muted);
+    font-size: 12px;
     font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
   body.capacitor-native-app .selected-address-text {
     max-width: 100%;
-    color: var(--text-muted);
+    color: var(--text);
     font-size: 12.5px;
+    font-weight: 700;
   }
 
   body.capacitor-native-app .location-10min-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    margin-left: auto;
-    flex-shrink: 0;
-    background: var(--white);
-    border: 1px solid var(--primary-light);
-    color: var(--primary);
-    font-size: 10.5px;
-    font-weight: 700;
-    padding: 4px 9px;
-    border-radius: 999px;
-    white-space: nowrap;
+    display: none;
+  }
+
+  body.capacitor-native-app.header-scrolled-compact .progicart-brand-logo,
+  body.capacitor-native-app .site-header-wrapper.header-scrolled-compact .progicart-brand-logo,
+  body.capacitor-native-app .site-header-wrapper.header-scrolled-compact .nav-actions-group,
+  body.capacitor-native-app .site-header-wrapper.header-scrolled-compact .location-trigger-btn,
+  body.capacitor-native-app .site-header-wrapper.header-scrolled-compact .mobile-offer-banner {
+    display: none !important;
+  }
+
+  body.capacitor-native-app .site-header-wrapper.header-scrolled-compact .navbar {
+    padding: 4px 0 2px;
+    border-radius: 0 0 14px 14px;
+  }
+
+  body.capacitor-native-app .site-header-wrapper.header-scrolled-compact .navbar-container {
+    grid-template-columns: 1fr;
+    grid-template-areas: "search";
+    padding: 4px 12px 4px;
+    gap: 0;
   }
 
   body.capacitor-native-app .search-bar-container {
@@ -1591,21 +1689,22 @@
     grid-area: location;
     display: flex !important;
     align-items: center;
-    gap: 8px;
-    width: 100%;
-    padding: 7px 10px;
-    background: var(--primary-soft);
-    border: 1px solid var(--border);
-    border-radius: 12px;
+    gap: 5px;
+    width: fit-content;
+    padding: 0 2px;
+    background: transparent;
+    border: none;
+    border-radius: 0;
     min-width: 0;
     max-width: 100%;
-    margin: 0;
+    margin: -2px 0 0;
     text-align: left;
+    justify-content: flex-start;
   }
 
   .location-pin-wrap {
-    width: 22px;
-    height: 22px;
+    width: 16px;
+    height: 16px;
     background: transparent;
     border: none;
     color: var(--primary);
@@ -1613,23 +1712,26 @@
   }
 
   .location-pin-wrap .pin-icon {
-    width: 18px;
-    height: 18px;
+    width: 15px;
+    height: 15px;
   }
 
   .location-text-col {
     flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
     overflow: hidden;
   }
 
   .delivery-time-badge {
-    font-size: 14.5px;
+    font-size: 12px;
     font-weight: 600;
-    color: var(--primary-dark);
+    color: var(--text-muted);
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    flex-shrink: 0;
   }
 
   .selected-address-row {
@@ -1641,7 +1743,8 @@
 
   .selected-address-text {
     font-size: 12.5px;
-    color: var(--text-muted);
+    font-weight: 700;
+    color: var(--text);
     max-width: 100%;
     white-space: nowrap;
     overflow: hidden;
@@ -1653,20 +1756,26 @@
   }
 
   .location-10min-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    margin-left: auto;
-    flex-shrink: 0;
-    background: var(--white);
-    border: 1px solid var(--primary-light);
-    color: var(--primary);
-    font-size: 10.5px;
-    font-weight: 700;
-    padding: 4px 9px;
-    border-radius: 999px;
-    letter-spacing: 0.2px;
-    white-space: nowrap;
+    display: none;
+  }
+
+  .site-header-wrapper.header-scrolled-compact .progicart-brand-logo,
+  .site-header-wrapper.header-scrolled-compact .nav-actions-group,
+  .site-header-wrapper.header-scrolled-compact .location-trigger-btn,
+  .site-header-wrapper.header-scrolled-compact .mobile-offer-banner {
+    display: none !important;
+  }
+
+  .site-header-wrapper.header-scrolled-compact .navbar {
+    padding: 4px 0 2px;
+    border-radius: 0 0 14px 14px;
+  }
+
+  .site-header-wrapper.header-scrolled-compact .navbar-container {
+    grid-template-columns: 1fr;
+    grid-template-areas: "search";
+    padding: 4px 12px 4px;
+    gap: 0;
   }
 
   .nav-actions-group {
@@ -1865,6 +1974,25 @@
   }
 
   /* Location Modal Bottom Sheet on Mobile */
+  @keyframes slideUpSheet {
+    from {
+      transform: translateY(100%);
+    }
+
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideUpSheet {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+
   .modal-backdrop {
     padding: 0;
     align-items: flex-end;
@@ -1874,12 +2002,22 @@
     width: 100%;
     max-width: 100%;
     margin: auto 0 0 0;
-    border-radius: 20px 20px 0 0;
+    border-radius: 22px 22px 0 0;
     max-height: 85vh;
+    animation: slideUpSheet 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .location-sheet-handle {
+    display: block;
+    width: 38px;
+    height: 4px;
+    border-radius: 999px;
+    background: #D5DDD7;
+    margin: 10px auto 2px;
   }
 
   .location-modal-body {
-    padding: 16px;
+    padding: 14px 16px calc(20px + env(safe-area-inset-bottom, 0px));
     gap: 14px;
   }
 }
@@ -1913,7 +2051,7 @@
   }
 
   .delivery-time-badge {
-    font-size: 14px;
+    font-size: 11.5px;
   }
 
   .selected-address-text {
@@ -1925,8 +2063,11 @@
   }
 
   .location-10min-badge {
-    font-size: 10px;
-    padding: 3px 7px;
+    display: none;
+  }
+
+  .site-header-wrapper.header-scrolled-compact .navbar-container {
+    padding: 4px 10px 4px;
   }
 
   .profile-popover {
@@ -1940,4 +2081,76 @@
     font-size: 13px;
     max-width: calc(100% - 20px);
   }
+}
+
+/* Mobile Category / Catalog Header: Search bar only + top-right Wishlist button */
+body .site-header-wrapper.catalog-mobile-search-header {
+  background: var(--white);
+  box-shadow: 0 2px 8px rgba(23, 26, 24, 0.05);
+}
+
+body .site-header-wrapper.catalog-mobile-search-header .navbar {
+  background: var(--white) !important;
+  background-image: none !important;
+  border-radius: 0 !important;
+  border-bottom: 1px solid #eceff1 !important;
+  padding: 8px 0 !important;
+  box-shadow: none !important;
+}
+
+body .site-header-wrapper.catalog-mobile-search-header .navbar-container {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  grid-template-areas: "search actions" !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 0 10px !important;
+}
+
+body .site-header-wrapper.catalog-mobile-search-header .top-promo-banner,
+body .site-header-wrapper.catalog-mobile-search-header .progicart-brand-logo,
+body .site-header-wrapper.catalog-mobile-search-header .blinkit-brand-logo,
+body .site-header-wrapper.catalog-mobile-search-header .location-trigger-btn,
+body .site-header-wrapper.catalog-mobile-search-header .mobile-search-circle-btn,
+body .site-header-wrapper.catalog-mobile-search-header .notif-dropdown-wrapper,
+body .site-header-wrapper.catalog-mobile-search-header .blinkit-cart-pill-btn,
+body .site-header-wrapper.catalog-mobile-search-header .profile-dropdown-wrapper,
+body .site-header-wrapper.catalog-mobile-search-header .blinkit-login-btn,
+body .site-header-wrapper.catalog-mobile-search-header .mobile-offer-banner,
+body .site-header-wrapper.catalog-mobile-search-header .announcement-ticker-bar {
+  display: none !important;
+}
+
+body .site-header-wrapper.catalog-mobile-search-header .search-bar-container {
+  grid-area: search !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+}
+
+body .site-header-wrapper.catalog-mobile-search-header .nav-actions-group {
+  display: flex !important;
+  grid-area: actions !important;
+  gap: 0 !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+}
+
+body .site-header-wrapper.catalog-mobile-search-header .wishlist-header-btn {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--white);
+  border: 1px solid var(--border);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+body .site-header-wrapper.catalog-mobile-search-header .wishlist-header-btn:active {
+  background: #fff1f2;
+  color: #e11d48;
+  border-color: #fecdd3;
 }

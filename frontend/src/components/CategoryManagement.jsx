@@ -2,21 +2,54 @@ import React, { useEffect, useState } from 'react';
 import { adminCategoriesAPI } from '../api/api';
 import '../styles/Management.css';
 
+const API_ORIGIN = (
+  import.meta.env.VITE_API_URL || 'https://quick-cart-qnz6.onrender.com/api'
+).replace(/\/api\/?$/, '');
+
+const resolvePreviewUrl = (rawPath) => {
+  if (!rawPath) return '';
+  if (rawPath.startsWith('http://') || rawPath.startsWith('https://') || rawPath.startsWith('blob:')) return rawPath;
+  if (rawPath.startsWith('/uploads/')) return `${API_ORIGIN}${rawPath}`;
+  return rawPath.startsWith('/') ? rawPath : `/${rawPath}`;
+};
+
+const EMPTY_CATEGORY_FORM = {
+  name: '',
+  icon: '',
+  image: '',
+  description: '',
+  displayOrder: 0,
+  showOnHome: false,
+  homeTitle: '',
+  homeBannerImage: '',
+  homeBannerPosition: 'top',
+  homeBannerLink: '',
+};
+
+const buildCategoryFormData = (cat) => {
+  const fd = new FormData();
+  fd.append('name', cat.name || '');
+  fd.append('icon', cat.icon || '');
+  fd.append('description', cat.description || '');
+  fd.append('displayOrder', String(cat.displayOrder || 0));
+  fd.append('image', cat.image || '');
+  fd.append('showOnHome', String(Boolean(cat.showOnHome)));
+  fd.append('homeTitle', cat.homeTitle || '');
+  fd.append('homeBannerImage', cat.homeBannerImage || '');
+  fd.append('homeBannerPosition', cat.homeBannerPosition || 'top');
+  fd.append('homeBannerLink', cat.homeBannerLink || '');
+  return fd;
+};
+
 const CategoryManagement = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    icon: '',
-    image: '',
-    description: '',
-    displayOrder: 0,
-    showOnHome: false,
-    homeTitle: '',
-  });
+  const [formData, setFormData] = useState(EMPTY_CATEGORY_FORM);
   const [imageFile, setImageFile] = useState(null);
+  const [homeBannerFile, setHomeBannerFile] = useState(null);
   const [editingId, setEditingId] = useState(null);
+  const [updatingCategoryId, setUpdatingCategoryId] = useState(null);
   const [expandedCategory, setExpandedCategory] = useState(null);
   const [showSubcategoryForm, setShowSubcategoryForm] = useState(false);
   const [subcategoryData, setSubcategoryData] = useState({
@@ -45,30 +78,30 @@ const CategoryManagement = () => {
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
   };
 
   const handleFileChange = (e) => {
     setImageFile(e.target.files?.[0] || null);
   };
 
+  const handleHomeBannerFileChange = (e) => {
+    setHomeBannerFile(e.target.files?.[0] || null);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const payload = new FormData();
-      payload.append('name', formData.name);
-      payload.append('icon', formData.icon || '');
-      payload.append('description', formData.description || '');
-      payload.append('displayOrder', String(formData.displayOrder || 0));
-      payload.append('image', formData.image || '');
-      payload.append('showOnHome', String(Boolean(formData.showOnHome)));
-      payload.append('homeTitle', formData.homeTitle || '');
+      const payload = buildCategoryFormData(formData);
       if (imageFile) {
         payload.append('imageFile', imageFile);
+      }
+      if (homeBannerFile) {
+        payload.append('homeBannerFile', homeBannerFile);
       }
 
       if (editingId) {
@@ -78,13 +111,14 @@ const CategoryManagement = () => {
         await adminCategoriesAPI.create(payload);
         alert('Category created successfully!');
       }
-      setFormData({ name: '', icon: '', image: '', description: '', displayOrder: 0, showOnHome: false, homeTitle: '' });
+      setFormData(EMPTY_CATEGORY_FORM);
       setImageFile(null);
+      setHomeBannerFile(null);
       setEditingId(null);
       setShowForm(false);
       fetchCategories();
     } catch (error) {
-      alert('Error: ' + error.response?.data?.message || error.message);
+      alert('Error: ' + (error.response?.data?.message || error.message));
     }
   };
 
@@ -97,10 +131,80 @@ const CategoryManagement = () => {
       displayOrder: category.displayOrder || 0,
       showOnHome: Boolean(category.showOnHome),
       homeTitle: category.homeTitle || '',
+      homeBannerImage: category.homeBannerImage || '',
+      homeBannerPosition: category.homeBannerPosition || 'top',
+      homeBannerLink: category.homeBannerLink || '',
     });
     setImageFile(null);
+    setHomeBannerFile(null);
     setEditingId(category._id);
     setShowForm(true);
+  };
+
+  const handleToggleShowOnHome = async (category) => {
+    setUpdatingCategoryId(category._id);
+    try {
+      const payload = buildCategoryFormData({
+        ...category,
+        showOnHome: !category.showOnHome,
+      });
+      await adminCategoriesAPI.update(category._id, payload);
+      await fetchCategories();
+    } catch (error) {
+      alert('Error: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setUpdatingCategoryId(null);
+    }
+  };
+
+  const handleQuickBannerPositionChange = async (category, nextPosition) => {
+    setUpdatingCategoryId(category._id);
+    try {
+      const payload = buildCategoryFormData({
+        ...category,
+        homeBannerPosition: nextPosition,
+      });
+      await adminCategoriesAPI.update(category._id, payload);
+      await fetchCategories();
+    } catch (error) {
+      alert('Error: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setUpdatingCategoryId(null);
+    }
+  };
+
+  const handleQuickBannerUpload = async (category, file) => {
+    if (!file) return;
+    setUpdatingCategoryId(category._id);
+    try {
+      const payload = buildCategoryFormData({
+        ...category,
+        homeBannerPosition: category.homeBannerPosition === 'none' ? 'top' : (category.homeBannerPosition || 'top'),
+      });
+      payload.append('homeBannerFile', file);
+      await adminCategoriesAPI.update(category._id, payload);
+      await fetchCategories();
+    } catch (error) {
+      alert('Error uploading banner: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setUpdatingCategoryId(null);
+    }
+  };
+
+  const handleClearRowBanner = async (category) => {
+    setUpdatingCategoryId(category._id);
+    try {
+      const payload = buildCategoryFormData({
+        ...category,
+        homeBannerImage: '',
+      });
+      await adminCategoriesAPI.update(category._id, payload);
+      await fetchCategories();
+    } catch (error) {
+      alert('Error removing banner: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setUpdatingCategoryId(null);
+    }
   };
 
   const handleDelete = async (id) => {
@@ -110,15 +214,16 @@ const CategoryManagement = () => {
         alert('Category deleted successfully!');
         fetchCategories();
       } catch (error) {
-        alert('Error: ' + error.response?.data?.message || error.message);
+        alert('Error: ' + (error.response?.data?.message || error.message));
       }
     }
   };
 
   const handleCancel = () => {
     setShowForm(false);
-    setFormData({ name: '', icon: '', image: '', description: '', displayOrder: 0 });
+    setFormData(EMPTY_CATEGORY_FORM);
     setImageFile(null);
+    setHomeBannerFile(null);
     setEditingId(null);
   };
 
@@ -159,14 +264,7 @@ const CategoryManagement = () => {
       }
 
       // Build FormData with category info
-      const formDataToSend = new FormData();
-      formDataToSend.append('name', category.name);
-      formDataToSend.append('icon', category.icon || '');
-      formDataToSend.append('image', category.image || '');
-      formDataToSend.append('description', category.description || '');
-      formDataToSend.append('displayOrder', String(category.displayOrder || 0));
-      formDataToSend.append('showOnHome', String(Boolean(category.showOnHome)));
-      formDataToSend.append('homeTitle', category.homeTitle || '');
+      const formDataToSend = buildCategoryFormData(category);
       
       // Get the index of the subcategory in the updated list
       const subcategoryIndex = editingSubcategoryId 
@@ -213,14 +311,7 @@ const CategoryManagement = () => {
     try {
       const updatedSubcategories = category.subcategories.filter(s => s._id !== subcategoryId);
 
-      const formDataToSend = new FormData();
-      formDataToSend.append('name', category.name);
-      formDataToSend.append('icon', category.icon || '');
-      formDataToSend.append('image', category.image || '');
-      formDataToSend.append('description', category.description || '');
-      formDataToSend.append('displayOrder', String(category.displayOrder || 0));
-      formDataToSend.append('showOnHome', String(Boolean(category.showOnHome)));
-      formDataToSend.append('homeTitle', category.homeTitle || '');
+      const formDataToSend = buildCategoryFormData(category);
       formDataToSend.append('subcategories', JSON.stringify(updatedSubcategories));
 
       await adminCategoriesAPI.update(expandedCategory, formDataToSend);
@@ -305,8 +396,81 @@ const CategoryManagement = () => {
               checked={formData.showOnHome}
               onChange={handleInputChange}
             />
-            Show this category on Home
+            Show this category & all its products on Home Page
           </label>
+
+          <div className="category-banner-config-box">
+            <h4>Home Category Banner Layout (Optional)</h4>
+            <p className="category-banner-hint">
+              Choose whether this category displays a banner on top or left of its products on the Home Page.
+            </p>
+            <div className="category-banner-fields">
+              <div className="banner-field-group">
+                <label htmlFor="homeBannerPosition">Banner Position</label>
+                <select
+                  id="homeBannerPosition"
+                  name="homeBannerPosition"
+                  value={formData.homeBannerPosition}
+                  onChange={handleInputChange}
+                >
+                  <option value="top">Upper Banner (Banner on Top, Products Below)</option>
+                  <option value="left">Left Banner (Banner on Left, Products Beside)</option>
+                  <option value="none">No Banner (Products Only)</option>
+                </select>
+              </div>
+              <div className="banner-field-group">
+                <label htmlFor="homeBannerLink">Banner Click Link (optional)</label>
+                <input
+                  id="homeBannerLink"
+                  type="text"
+                  name="homeBannerLink"
+                  placeholder="/products?category=... (auto if blank)"
+                  value={formData.homeBannerLink}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="banner-field-group">
+                <label htmlFor="homeBannerImage">Home Banner Image URL</label>
+                <input
+                  id="homeBannerImage"
+                  type="text"
+                  name="homeBannerImage"
+                  placeholder="https://... or upload below"
+                  value={formData.homeBannerImage}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="banner-field-group">
+                <label htmlFor="homeBannerFile">Upload Home Banner Image</label>
+                <input
+                  id="homeBannerFile"
+                  type="file"
+                  name="homeBannerFile"
+                  accept="image/*"
+                  onChange={handleHomeBannerFileChange}
+                />
+              </div>
+            </div>
+            {(homeBannerFile || formData.homeBannerImage) && (
+              <div className="category-banner-preview-row">
+                <img
+                  src={homeBannerFile ? URL.createObjectURL(homeBannerFile) : resolvePreviewUrl(formData.homeBannerImage)}
+                  alt="Category banner preview"
+                  className="category-banner-preview-img"
+                />
+                <button
+                  type="button"
+                  className="btn-small-delete"
+                  onClick={() => {
+                    setHomeBannerFile(null);
+                    setFormData((prev) => ({ ...prev, homeBannerImage: '' }));
+                  }}
+                >
+                  Remove Banner
+                </button>
+              </div>
+            )}
+          </div>
           <div className="form-buttons">
             <button type="submit" className="btn-success">
               {editingId ? 'Update' : 'Create'} Category
@@ -328,6 +492,7 @@ const CategoryManagement = () => {
                 <th>Name</th>
                 <th>Icon</th>
                 <th>Image</th>
+                <th>Home Page Showcase</th>
                 <th>Description</th>
                 <th>Order</th>
                 <th>Actions</th>
@@ -340,6 +505,69 @@ const CategoryManagement = () => {
                     <td>{cat.name}</td>
                     <td>{cat.icon}</td>
                     <td>{cat.image ? '✓' : '✗'}</td>
+                    <td>
+                      <div className="home-showcase-cell">
+                        <button
+                          type="button"
+                          className={`home-toggle-btn ${cat.showOnHome ? 'is-on' : 'is-off'}`}
+                          disabled={updatingCategoryId === cat._id}
+                          onClick={() => handleToggleShowOnHome(cat)}
+                          title={cat.showOnHome ? 'Hide from Home Page' : 'Show all products on Home Page'}
+                        >
+                          {updatingCategoryId === cat._id
+                            ? 'Saving...'
+                            : cat.showOnHome
+                              ? '✓ On Home'
+                              : '+ Show on Home'}
+                        </button>
+                        <select
+                          className="home-pos-select"
+                          value={cat.homeBannerPosition || 'top'}
+                          disabled={updatingCategoryId === cat._id}
+                          onChange={(e) => handleQuickBannerPositionChange(cat, e.target.value)}
+                          aria-label={`Banner layout for ${cat.name}`}
+                        >
+                          <option value="top">Upper Banner</option>
+                          <option value="left">Left Banner</option>
+                          <option value="none">No Banner</option>
+                        </select>
+                        <div className="row-banner-controls">
+                          {cat.homeBannerImage && (
+                            <img
+                              src={resolvePreviewUrl(cat.homeBannerImage)}
+                              alt={`${cat.name} banner`}
+                              className="row-banner-thumb"
+                            />
+                          )}
+                          <label className={`row-banner-upload-btn ${cat.homeBannerImage ? 'has-banner' : ''}`}>
+                            <span>{cat.homeBannerImage ? 'Change Banner' : '+ Upload Banner'}</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              hidden
+                              disabled={updatingCategoryId === cat._id}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                e.target.value = '';
+                                if (file) handleQuickBannerUpload(cat, file);
+                              }}
+                            />
+                          </label>
+                          {cat.homeBannerImage && (
+                            <button
+                              type="button"
+                              className="row-banner-clear-btn"
+                              disabled={updatingCategoryId === cat._id}
+                              onClick={() => handleClearRowBanner(cat)}
+                              title="Remove Banner"
+                              aria-label="Remove Banner"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </td>
                     <td>{cat.description?.substring(0, 30)}...</td>
                     <td>{cat.displayOrder}</td>
                     <td>
@@ -360,7 +588,7 @@ const CategoryManagement = () => {
                   </tr>
                   {expandedCategory === cat._id && (
                     <tr className="subcategories-row">
-                      <td colSpan="6">
+                      <td colSpan="7">
                         <div className="subcategories-section">
                           <div className="subcategories-header">
                             <h4>Subcategories</h4>

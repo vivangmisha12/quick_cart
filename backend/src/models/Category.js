@@ -20,6 +20,10 @@ const categorySchema = new mongoose.Schema({
   displayOrder: Number,
   showOnHome: { type: Boolean, default: false },
   homeTitle: String,
+  homeBannerImage: { type: String, default: '' },
+  homeBannerImagePublicId: { type: String, default: '' },
+  homeBannerPosition: { type: String, enum: ['top', 'left', 'none'], default: 'top' },
+  homeBannerLink: { type: String, default: '' },
   subcategories: [subcategorySchema],
   createdAt: { type: Date, default: Date.now },
 });

@@ -5,14 +5,22 @@ const fs = require('fs/promises');
 
 const uploadToCloudinary = async (file, folder = 'quick-cart/categories') => {
   if (!file) return { url: '', publicId: '' };
+  let uploadedUrl = '';
+  let uploadedPublicId = '';
   try {
     const res = await cloudinary.uploader.upload(file.path, { folder });
-    return { url: res.secure_url, publicId: res.public_id };
+    uploadedUrl = res?.secure_url || '';
+    uploadedPublicId = res?.public_id || '';
+    return { url: uploadedUrl, publicId: uploadedPublicId };
   } catch (err) {
-    console.error('Cloudinary upload failed:', err.message);
-    return { url: '', publicId: '' };
+    console.error('Cloudinary upload failed, falling back to local upload:', err.message);
+    return file.filename
+      ? { url: `/uploads/${file.filename}`, publicId: '' }
+      : { url: '', publicId: '' };
   } finally {
-    if (file?.path) await fs.unlink(file.path).catch(() => {});
+    if (uploadedUrl && file?.path) {
+      await fs.unlink(file.path).catch(() => {});
+    }
   }
 };
 
@@ -54,6 +62,21 @@ const normalizeSubcategoryId = (id) => {
   return new mongoose.Types.ObjectId();
 };
 
+const parseBooleanField = (value, fallback = false) => {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'true' || normalized === '1') return true;
+    if (normalized === 'false' || normalized === '0' || normalized === '') return false;
+  }
+  return fallback;
+};
+
+const normalizeBannerPosition = (value, fallback = 'top') => {
+  const normalized = typeof value === 'string' ? value.trim().toLowerCase() : '';
+  return ['top', 'left', 'none'].includes(normalized) ? normalized : fallback;
+};
+
 // Get all categories
 exports.getAllCategories = async (req, res) => {
   try {
@@ -80,8 +103,21 @@ exports.getCategoryById = async (req, res) => {
 // Create category (admin only)
 exports.createCategory = async (req, res) => {
   try {
-    const { name, icon, image, description, displayOrder, showOnHome, homeTitle, subcategories } = req.body;
+    const {
+      name,
+      icon,
+      image,
+      description,
+      displayOrder,
+      showOnHome,
+      homeTitle,
+      homeBannerImage,
+      homeBannerPosition,
+      homeBannerLink,
+      subcategories,
+    } = req.body;
     const singleFile = extractSingleFile(req, 'imageFile');
+    const homeBannerFile = extractSingleFile(req, 'homeBannerFile');
     
     // Extract multiFiles - handle both multer.any() and multer.fields() formats
     let multiFiles = [];
@@ -91,7 +127,10 @@ exports.createCategory = async (req, res) => {
       multiFiles = req.files?.imageFiles || [];
     }
 
-    const { url, publicId } = await uploadToCloudinary(singleFile);
+    const [{ url, publicId }, bannerUpload] = await Promise.all([
+      uploadToCloudinary(singleFile),
+      uploadToCloudinary(homeBannerFile, 'quick-cart/category-banners'),
+    ]);
     const uploadedExtras = await Promise.all(multiFiles.map((f) => uploadToCloudinary(f)));
     const extraUrls = uploadedExtras.map((u) => u.url).filter(Boolean);
     const extraPublicIds = uploadedExtras.map((u) => u.publicId).filter(Boolean);
@@ -131,8 +170,12 @@ exports.createCategory = async (req, res) => {
       imagePublicIds: extraPublicIds,
       description,
       displayOrder,
-      showOnHome,
+      showOnHome: parseBooleanField(showOnHome, false),
       homeTitle,
+      homeBannerImage: bannerUpload.url || homeBannerImage || '',
+      homeBannerImagePublicId: bannerUpload.publicId || '',
+      homeBannerPosition: normalizeBannerPosition(homeBannerPosition, 'top'),
+      homeBannerLink: homeBannerLink || '',
       subcategories: parsedSubcategories,
     });
     await category.save();
@@ -152,7 +195,18 @@ exports.updateCategory = async (req, res) => {
     }
 
     const payload = { ...req.body };
+    if (payload.showOnHome !== undefined) {
+      payload.showOnHome = parseBooleanField(payload.showOnHome, Boolean(existing.showOnHome));
+    }
+    if (payload.homeBannerPosition !== undefined) {
+      payload.homeBannerPosition = normalizeBannerPosition(
+        payload.homeBannerPosition,
+        existing.homeBannerPosition || 'top'
+      );
+    }
+
     const singleFile = extractSingleFile(req, 'imageFile');
+    const homeBannerFile = extractSingleFile(req, 'homeBannerFile');
     
     // Extract multiFiles - handle both multer.any() and multer.fields() formats
     let multiFiles = [];
@@ -162,11 +216,22 @@ exports.updateCategory = async (req, res) => {
       multiFiles = req.files?.imageFiles || [];
     }
 
-    const { url, publicId } = await uploadToCloudinary(singleFile);
+    const [{ url, publicId }, bannerUpload] = await Promise.all([
+      uploadToCloudinary(singleFile),
+      uploadToCloudinary(homeBannerFile, 'quick-cart/category-banners'),
+    ]);
     if (url) {
       await deleteFromCloudinary(existing.imagePublicId);
       payload.image = url;
       payload.imagePublicId = publicId;
+    }
+    if (bannerUpload.url) {
+      await deleteFromCloudinary(existing.homeBannerImagePublicId);
+      payload.homeBannerImage = bannerUpload.url;
+      payload.homeBannerImagePublicId = bannerUpload.publicId;
+    } else if (payload.homeBannerImage === '' && existing.homeBannerImagePublicId) {
+      await deleteFromCloudinary(existing.homeBannerImagePublicId);
+      payload.homeBannerImagePublicId = '';
     }
 
     if (multiFiles.length) {
@@ -229,6 +294,7 @@ exports.deleteCategory = async (req, res) => {
     }
     await Category.findByIdAndDelete(req.params.id);
     await deleteFromCloudinary(category.imagePublicId);
+    await deleteFromCloudinary(category.homeBannerImagePublicId);
     if (category.imagePublicIds?.length) {
       await Promise.all(category.imagePublicIds.map(deleteFromCloudinary));
     }

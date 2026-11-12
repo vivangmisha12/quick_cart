@@ -3,7 +3,7 @@ import axios from 'axios';
 // Production API URL: connects directly to live Render backend 'https://quick-cart-qnz6.onrender.com/api'
 const API_URL = import.meta.env.VITE_API_URL || 'https://quick-cart-qnz6.onrender.com/api';
 
-const api = axios.create({ baseURL: API_URL });
+const api = axios.create({ baseURL: API_URL, timeout: 15000 });
 
 const rateLimitedGetUntil = new Map();
 let lastToastDispatchedAt = 0;

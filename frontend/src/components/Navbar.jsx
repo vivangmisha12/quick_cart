@@ -26,19 +26,22 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useLocationContext } from '../context/LocationContext';
+import { userAddressesAPI } from '../api/api';
 import TopCategoryStrip from './TopCategoryStrip';
 import '../styles/Navbar.css';
 
 const TRENDING_SEARCHES = ['Milk', 'Curd', 'Bread', 'Potato Chips', 'Cold Drinks', 'Chocolate', 'Onion'];
+const IS_INVALID_GATEWAY_ADDR = (street) => {
+  const s = (street || '').toLowerCase();
+  return s.includes('jalandhar') || s.includes('punjab') || s.includes('jandu singha');
+};
 
 const Navbar = () => {
   const { token, logout, user } = useAuth();
   const { totalItems, openCartDrawer } = useCart();
-  const { location, setLocation, detectLocation, locating, error: locationError } = useLocationContext();
+  const { location, setLocation, detectLocation, searchLocation, locating, error: locationError } = useLocationContext();
   const navigate = useNavigate();
   const routeLocation = useLocation();
-  const showCategoryTabs = routeLocation.pathname === '/' || routeLocation.pathname === '/products';
-
   const [search, setSearch] = useState('');
   const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -46,11 +49,17 @@ const Navbar = () => {
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showPromo, setShowPromo] = useState(true);
   const [savedAddresses, setSavedAddresses] = useState([]);
+  const [locationQuery, setLocationQuery] = useState('');
+  const [locationResults, setLocationResults] = useState([]);
+  const [searchingLocation, setSearchingLocation] = useState(false);
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
   const [isCompactViewport, setIsCompactViewport] = useState(() =>
     typeof window !== 'undefined'
       ? window.innerWidth <= 768 || document.body.classList.contains('capacitor-native-app')
       : false
   );
+  const isCatalogMobileHeader = isCompactViewport && routeLocation.pathname === '/products';
+  const showCategoryTabs = !isCatalogMobileHeader && (routeLocation.pathname === '/' || routeLocation.pathname === '/products');
 
   const profileRef = useRef(null);
   const searchRef = useRef(null);
@@ -68,21 +77,148 @@ const Navbar = () => {
     return () => mq.removeEventListener?.('change', syncViewport);
   }, []);
 
-  // Load user saved addresses
+  // Collapse top logo/location row when scrolling down on mobile, leaving Search + Categories
+  useEffect(() => {
+    if (!isCompactViewport) {
+      setIsHeaderCollapsed(false);
+      return;
+    }
+
+    let rafId = null;
+    const updateScrollState = () => {
+      rafId = null;
+      if (showSearchSuggestions || showLocationModal || showProfileDropdown || showNotifications) {
+        return;
+      }
+      const scrollY = window.scrollY;
+      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+      setIsHeaderCollapsed((prev) => {
+        if (!prev && scrollY > 110 && scrollable > 220) return true;
+        if (prev && scrollY < 24) return false;
+        return prev;
+      });
+    };
+
+    const handleScroll = () => {
+      if (rafId === null) {
+        rafId = window.requestAnimationFrame(updateScrollState);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      if (rafId !== null) window.cancelAnimationFrame(rafId);
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [isCompactViewport, showSearchSuggestions, showLocationModal, showProfileDropdown, showNotifications]);
+
+  // Auto-open bottom-sheet location popup on mobile/APK launch when no delivery location is set
+  useEffect(() => {
+    if (!isCompactViewport || location) {
+      return;
+    }
+    try {
+      if (!sessionStorage.getItem('progicart_loc_prompted')) {
+        sessionStorage.setItem('progicart_loc_prompted', '1');
+        const timer = setTimeout(() => {
+          setShowLocationModal(true);
+        }, 350);
+        return () => clearTimeout(timer);
+      }
+    } catch {
+      // Ignore sessionStorage restriction
+    }
+  }, [isCompactViewport, location]);
+
+  // Load user saved addresses from local cache + backend database
   useEffect(() => {
     if (!user?.id) {
       setSavedAddresses([]);
       return;
     }
-    const saved = localStorage.getItem(`savedAddresses_${user.id}`);
+
+    let cancelled = false;
+    const storageKey = `savedAddresses_${user.id}`;
+    const initialList = Array.isArray(user.addresses) ? user.addresses : [];
+
+    const saved = localStorage.getItem(storageKey);
     if (saved) {
       try {
-        setSavedAddresses(JSON.parse(saved));
-      } catch (err) {
-        setSavedAddresses([]);
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setSavedAddresses(parsed);
+        } else if (initialList.length > 0) {
+          setSavedAddresses(initialList);
+        }
+      } catch {
+        setSavedAddresses(initialList);
       }
+    } else if (initialList.length > 0) {
+      setSavedAddresses(initialList);
     }
-  }, [user?.id]);
+
+    if (token) {
+      userAddressesAPI
+        .getAll()
+        .then((res) => {
+          if (cancelled) return;
+          const dbAddresses = res.data?.addresses;
+          if (Array.isArray(dbAddresses) && dbAddresses.length > 0) {
+            const normalized = dbAddresses.map((addr, idx) => ({
+              ...addr,
+              id: String(addr.id || addr._id || `db_${idx}`),
+            }));
+            setSavedAddresses(normalized);
+            try {
+              localStorage.setItem(storageKey, JSON.stringify(normalized));
+            } catch {
+              // Ignore storage quota errors
+            }
+          }
+        })
+        .catch(() => {
+          // Keep cached addresses silently if offline/rate-limited
+        });
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, user?.addresses, token]);
+
+  // Debounced manual location search inside bottom-sheet modal
+  useEffect(() => {
+    if (!showLocationModal) {
+      setLocationQuery('');
+      setLocationResults([]);
+      return;
+    }
+    const clean = locationQuery.trim();
+    if (clean.length < 2) {
+      setLocationResults([]);
+      setSearchingLocation(false);
+      return;
+    }
+    let cancelled = false;
+    setSearchingLocation(true);
+    const timer = setTimeout(async () => {
+      try {
+        const results = await searchLocation(clean);
+        if (!cancelled) {
+          setLocationResults(Array.isArray(results) ? results : []);
+        }
+      } catch {
+        if (!cancelled) setLocationResults([]);
+      } finally {
+        if (!cancelled) setSearchingLocation(false);
+      }
+    }, 320);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [locationQuery, showLocationModal, searchLocation]);
 
   // Listen for real-time address updates
   useEffect(() => {
@@ -242,7 +378,7 @@ const Navbar = () => {
   };
 
   return (
-    <header className="site-header-wrapper">
+    <header className={`site-header-wrapper ${isCompactViewport && isHeaderCollapsed && !isCatalogMobileHeader ? 'header-scrolled-compact' : ''} ${isCatalogMobileHeader ? 'catalog-mobile-search-header' : ''}`}>
       {/* Top Green Textured Announcement Header */}
       {showPromo && (
         <div className="top-promo-banner">
@@ -293,16 +429,20 @@ const Navbar = () => {
               <MapPin size={18} strokeWidth={2} className="pin-icon" />
             </div>
             <div className="location-text-col">
-              <span className="delivery-time-badge">Delivery in 10 minutes</span>
+              <span className="delivery-time-badge">
+                {isCompactViewport ? 'Deliver to' : 'Delivery in 10 minutes'}
+              </span>
               <div className="selected-address-row">
-                <span className="selected-address-text">{location || 'Gomti Nagar, Lucknow'}</span>
+                <span className="selected-address-text">{location || 'Select delivery location'}</span>
                 <ChevronDown size={14} className="caret-icon" />
               </div>
             </div>
-            <span className="location-10min-badge">
-              <Zap size={10} fill="currentColor" aria-hidden="true" />
-              <span>10 MIN DELIVERY</span>
-            </span>
+            {!isCompactViewport && (
+              <span className="location-10min-badge">
+                <Zap size={10} fill="currentColor" aria-hidden="true" />
+                <span>10 MIN DELIVERY</span>
+              </span>
+            )}
           </button>
 
           {/* Search Bar */}
@@ -572,8 +712,8 @@ const Navbar = () => {
         </div>
       </nav>
 
-      {/* Upper Icon Category Tabs on Mobile/App (right under Search Bar) */}
-      <TopCategoryStrip />
+      {/* Upper Icon Category Tabs on Mobile/App (right under Search Bar, hidden on mobile catalog search-only header) */}
+      {!isCatalogMobileHeader && <TopCategoryStrip />}
 
       {/* Mobile Dark Emerald Offer Pill Banner */}
       {showCategoryTabs && (
@@ -599,10 +739,11 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Instant 1-Click Location Modal */}
+      {/* Instant 1-Click Location Bottom Sheet */}
       {showLocationModal && (
         <div className="modal-backdrop" onClick={() => setShowLocationModal(false)}>
           <div className="location-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="location-sheet-handle" aria-hidden="true" />
             <div className="location-modal-header">
               <h3>Select Delivery Location</h3>
               <button 
@@ -616,6 +757,55 @@ const Navbar = () => {
             </div>
 
             <div className="location-modal-body">
+              {/* Quick Area / Pincode Search */}
+              <div className="location-search-box">
+                <Search size={16} className="location-search-icon" />
+                <input
+                  type="text"
+                  value={locationQuery}
+                  onChange={(e) => setLocationQuery(e.target.value)}
+                  placeholder="Search area, street name or city..."
+                  className="location-search-input"
+                  aria-label="Search delivery area"
+                />
+                {locationQuery && (
+                  <button
+                    type="button"
+                    className="location-search-clear"
+                    onClick={() => setLocationQuery('')}
+                    aria-label="Clear location search"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+
+              {searchingLocation && (
+                <p className="location-searching-hint">Searching nearby areas...</p>
+              )}
+
+              {locationResults.length > 0 && (
+                <div className="modal-locations-group">
+                  <h4>Search Results</h4>
+                  <div className="address-pills-list">
+                    {locationResults.map((item, idx) => (
+                      <div
+                        key={`${item.display}_${idx}`}
+                        className={`address-select-row ${location === item.display ? 'active' : ''}`}
+                        onClick={() => handleSelectLocation(item.display)}
+                      >
+                        <MapPin size={16} />
+                        <div className="addr-info">
+                          <span className="addr-tag">{item.street || item.city || 'Area'}</span>
+                          <span className="addr-str">{item.display}</span>
+                        </div>
+                        {location === item.display && <Check size={16} className="check-icon" />}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* 1-Click GPS Detect Button: Pure GPS tracking */}
               <button 
                 type="button"
@@ -626,7 +816,7 @@ const Navbar = () => {
                 <Crosshair size={22} className={locating ? 'spin-icon' : ''} />
                 <div className="detect-text-col">
                   <strong>{locating ? 'Detecting your real-time GPS location…' : 'Use Current Location (GPS)'}</strong>
-                  <span>Auto-detect exact coordinates & return to shopping</span>
+                  <span>Auto-detect your area for quick delivery</span>
                 </div>
               </button>
 
@@ -635,22 +825,14 @@ const Navbar = () => {
               )}
 
               {/* Saved Addresses if logged in */}
-              {savedAddresses.filter(a => 
-                !a.street?.toLowerCase().includes('jalandhar') && 
-                !a.street?.toLowerCase().includes('punjab') &&
-                !a.street?.toLowerCase().includes('jandu singha')
-              ).length > 0 && (
+              {savedAddresses.filter((a) => !IS_INVALID_GATEWAY_ADDR(a.street)).length > 0 && (
                 <div className="modal-locations-group">
                   <h4>My Saved Addresses</h4>
                   <div className="address-pills-list">
                     {savedAddresses
-                      .filter(a => 
-                        !a.street?.toLowerCase().includes('jalandhar') && 
-                        !a.street?.toLowerCase().includes('punjab') &&
-                        !a.street?.toLowerCase().includes('jandu singha')
-                      )
+                      .filter((a) => !IS_INVALID_GATEWAY_ADDR(a.street))
                       .map((addr) => {
-                        const full = addr.street?.includes(addr.city) ? addr.street : `${addr.street}, ${addr.city}`;
+                        const full = addr.street?.includes(addr.city) || !addr.city ? addr.street : `${addr.street}, ${addr.city}`;
                         const isSelected = location === full;
                         return (
                           <div 
@@ -676,6 +858,16 @@ const Navbar = () => {
                       })}
                   </div>
                 </div>
+              )}
+
+              {token && (
+                <Link
+                  to="/addresses"
+                  className="manage-saved-addr-link"
+                  onClick={() => setShowLocationModal(false)}
+                >
+                  + Add or Manage Saved Addresses
+                </Link>
               )}
             </div>
           </div>
