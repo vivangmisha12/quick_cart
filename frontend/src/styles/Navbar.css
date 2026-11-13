@@ -2368,3 +2368,334 @@ body .site-header-wrapper.catalog-mobile-search-header .wishlist-header-btn:acti
   color: #e11d48;
   border-color: #fecdd3;
 }
+
+/* ==========================================================================
+   MOBILE SPLIT HEADER ARCHITECTURE
+   - Top Header (Logo + Location + Actions + 15% Off Banner): Scrolls with page
+   - Sticky Header (Search + Categories): Sticks at top: 0 with 120fps hardware acceleration
+   ========================================================================== */
+
+/* Default Desktop Mode */
+.mobile-header-top-scrollable {
+  display: none !important;
+}
+
+.site-header-sticky-nav {
+  display: none !important;
+}
+
+.desktop-header-wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  width: 100%;
+  background: #ffffff;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Mobile Viewports (< 768px) and Capacitor Native Mobile App */
+@media (max-width: 768px) {
+  .desktop-header-wrapper {
+    display: none !important;
+  }
+
+  .mobile-header-top-scrollable {
+    display: flex !important;
+    flex-direction: column;
+    width: 100%;
+    background: #ffffff;
+    padding: 6px 12px 2px;
+    gap: 6px;
+    position: relative;
+    z-index: 10;
+    box-sizing: border-box;
+  }
+
+  .mobile-header-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .mobile-header-top-row .progicart-brand-logo {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    text-decoration: none;
+    border: none;
+    padding: 0;
+  }
+
+  .mobile-header-top-row .brand-logo-img {
+    height: 26px;
+    max-width: 105px;
+    width: auto;
+    object-fit: contain;
+  }
+
+  .mobile-header-top-row .location-trigger-btn {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 4px;
+    background: transparent;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .mobile-header-top-row .location-pin-wrap {
+    width: 16px;
+    height: 16px;
+    color: #168A32;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobile-header-top-row .location-text-col {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .mobile-header-top-row .delivery-time-badge {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #168A32;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    line-height: 1.1;
+  }
+
+  .mobile-header-top-row .selected-address-row {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .mobile-header-top-row .selected-address-text {
+    font-size: 12px;
+    font-weight: 700;
+    color: #171A18;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 125px;
+  }
+
+  .mobile-header-top-row .caret-icon {
+    flex-shrink: 0;
+    color: #4B5563;
+  }
+
+  .mobile-header-top-row .nav-actions-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .mobile-cart-round-btn {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 50% !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    background: #EAF8ED !important;
+    border: 1px solid rgba(22, 138, 50, 0.25) !important;
+    color: #168A32 !important;
+    position: relative;
+    cursor: pointer;
+  }
+
+  .mobile-cart-round-btn .cart-pill-icon {
+    color: #168A32;
+  }
+
+  .mobile-cart-round-btn .cart-desktop-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #168A32;
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 800;
+    min-width: 17px;
+    height: 17px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #ffffff;
+  }
+
+  .mobile-login-round-btn {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 50% !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    background: #F3F4F6 !important;
+    border: 1px solid #E5E7EB !important;
+    color: #374151 !important;
+    text-decoration: none;
+  }
+
+  .mobile-header-top-row .profile-circle {
+    width: 36px;
+    height: 36px;
+    background: #F3F4F6;
+    border: 1px solid #E5E7EB;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #374151;
+  }
+
+  /* 15% OFF Mobile Offer Banner - Scrolls away naturally! */
+  .mobile-offer-banner {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(90deg, #075C28, #168A32);
+    color: #ffffff;
+    border-radius: 999px;
+    padding: 7px 12px;
+    margin: 2px 0 3px;
+    font-size: 11.5px;
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: 0 1px 4px rgba(7, 92, 40, 0.16);
+    box-sizing: border-box;
+  }
+
+  .mobile-offer-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .mobile-offer-left span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mobile-offer-icon,
+  .mobile-offer-arrow {
+    flex-shrink: 0;
+  }
+
+  /* Sticky Search + Categories Header - Smooth 120fps lock at top: 0 */
+  .site-header-sticky-nav {
+    display: flex !important;
+    flex-direction: column;
+    width: 100%;
+    position: sticky;
+    top: 0;
+    z-index: 999;
+    background: #ffffff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    box-sizing: border-box;
+  }
+
+  .mobile-sticky-search-wrap {
+    padding: 6px 12px 4px;
+    width: 100%;
+    background: #ffffff;
+    box-sizing: border-box;
+  }
+
+  .mobile-sticky-search-wrap .search-bar-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+
+  .mobile-sticky-search-wrap .search-form {
+    height: 40px;
+    background: #F3F5F4;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+  }
+
+  .mobile-sticky-search-wrap .search-input {
+    height: 40px;
+    background: transparent;
+    border: none;
+    padding: 0 38px;
+    font-size: 13.5px;
+  }
+
+  .mobile-sticky-search-wrap .search-icon-left {
+    left: 12px;
+  }
+
+  .mobile-sticky-search-wrap .mobile-mic-btn,
+  .mobile-sticky-search-wrap .search-clear-btn {
+    right: 10px;
+  }
+
+  /* Catalog mobile search header (/products) */
+  .catalog-mobile-search-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 6px 12px;
+    box-sizing: border-box;
+  }
+
+  .catalog-mobile-search-row .search-bar-container {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+  }
+
+  .catalog-mobile-search-row .wishlist-header-btn {
+    display: flex !important;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+    background: #F3F5F4;
+    border: 1px solid var(--border);
+    color: var(--text);
+    flex-shrink: 0;
+    text-decoration: none;
+  }
+}
+
+body.capacitor-native-app .desktop-header-wrapper {
+  display: none !important;
+}
+
+body.capacitor-native-app .mobile-header-top-scrollable {
+  display: flex !important;
+}
+
+body.capacitor-native-app .site-header-sticky-nav {
+  display: flex !important;
+}

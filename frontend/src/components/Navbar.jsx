@@ -70,7 +70,6 @@ const Navbar = () => {
       : false
   );
   const isCatalogMobileHeader = isCompactViewport && routeLocation.pathname === '/products';
-  const showCategoryTabs = !isCatalogMobileHeader && (routeLocation.pathname === '/' || routeLocation.pathname === '/products');
 
   const profileRef = useRef(null);
   const searchRef = useRef(null);
@@ -454,367 +453,453 @@ const Navbar = () => {
     navigate('/');
   };
 
-  return (
-    <header className={`site-header-wrapper ${isCatalogMobileHeader ? 'catalog-mobile-search-header' : ''}`}>
-      {/* Top Green Textured Announcement Header */}
-      {showPromo && (
-        <div className="top-promo-banner">
-          <div className="top-promo-content">
-            <span className="promo-pill">
-              <Zap size={11} strokeWidth={2.4} fill="currentColor" aria-hidden="true" />
-              <span>10 MIN DELIVERY</span>
-            </span>
-            <span className="promo-divider" aria-hidden="true">|</span>
-            <span className="promo-text">Fresh groceries at your doorstep</span>
-            <span className="promo-divider" aria-hidden="true">|</span>
-            <span className="promo-text">Free delivery on orders above ₹499</span>
-            <span className="promo-divider" aria-hidden="true">|</span>
-            <span className="promo-offer">
-              <Gift size={14} strokeWidth={2.2} className="promo-gift-icon" aria-hidden="true" />
-              <span>
-                Get 15% off on first 3 orders with code <strong className="promo-code-text">WELCOME15</strong>
-              </span>
-            </span>
-          </div>
+  const renderSearchBar = () => (
+    <div className="search-bar-container" ref={searchRef}>
+      <form className="search-form" onSubmit={handleSearchSubmit}>
+        <Search size={16} strokeWidth={2} className="search-icon-left" />
+        <input
+          ref={searchInputRef}
+          type="text"
+          placeholder={isCompactViewport ? 'Search for atta, dal, milk and more...' : 'Search for groceries, dairy, snacks and more...'}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onFocus={() => setShowSearchSuggestions(true)}
+          className="search-input"
+          aria-label="Search products"
+        />
+        {!search ? (
           <button
             type="button"
-            className="close-promo"
-            onClick={() => setShowPromo(false)}
-            aria-label="Dismiss banner"
+            className="mobile-mic-btn"
+            onClick={handleVoiceSearch}
+            aria-label="Voice search"
+          >
+            <Mic size={16} strokeWidth={1.9} />
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="search-clear-btn"
+            onClick={() => setSearch('')}
+            aria-label="Clear search"
           >
             <X size={15} strokeWidth={2.2} />
           </button>
+        )}
+      </form>
+
+      {/* Quick Suggestions Popup */}
+      {showSearchSuggestions && (
+        <div className="search-suggestions-dropdown">
+          <div className="suggestion-section-title">
+            <TrendingUp size={13} strokeWidth={2.2} className="suggestion-title-icon" />
+            <span>Popular Searches</span>
+          </div>
+          <div className="trending-tags-grid">
+            {TRENDING_SEARCHES.map((item) => (
+              <button
+                key={item}
+                type="button"
+                className="trending-tag-pill"
+                onClick={() => handleQuickSearch(item)}
+              >
+                <Search size={12} strokeWidth={2} />
+                {item}
+              </button>
+            ))}
+          </div>
         </div>
       )}
+    </div>
+  );
 
-      {/* Main Navbar */}
-      <nav className="navbar">
-        <div className="navbar-container">
-          {/* Progicart Logo */}
-          <Link to="/" className="progicart-brand-logo" aria-label="Progicart Home">
-            <img src="/logo.png" alt="Progicart" className="brand-logo-img" />
-          </Link>
-
-          {/* Delivery Location Trigger Button */}
-          <button
-            type="button"
-            className="location-trigger-btn"
-            onClick={() => setShowLocationModal(true)}
-            aria-label="Select delivery address"
-          >
-            <div className="location-pin-wrap">
-              <MapPin size={18} strokeWidth={2} className="pin-icon" />
-            </div>
-            <div className="location-text-col">
-              <span className="delivery-time-badge">
-                {isCompactViewport ? 'Deliver to' : 'Delivery in 10 minutes'}
-              </span>
-              <div className="selected-address-row">
-                <span className="selected-address-text">{location || 'Select delivery location'}</span>
-                <ChevronDown size={14} className="caret-icon" />
-              </div>
-            </div>
-            {!isCompactViewport && (
-              <span className="location-10min-badge">
-                <Zap size={10} fill="currentColor" aria-hidden="true" />
-                <span>10 MIN DELIVERY</span>
-              </span>
-            )}
-          </button>
-
-          {/* Search Bar */}
-          <div className="search-bar-container" ref={searchRef}>
-            <form className="search-form" onSubmit={handleSearchSubmit}>
-              <Search size={16} strokeWidth={2} className="search-icon-left" />
-              <input
-                ref={searchInputRef}
-                type="text"
-                placeholder={isCompactViewport ? 'Search for atta, dal, milk and more...' : 'Search for groceries, dairy, snacks and more...'}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onFocus={() => setShowSearchSuggestions(true)}
-                className="search-input"
-                aria-label="Search products"
-              />
-              {!search ? (
-                <button
-                  type="button"
-                  className="mobile-mic-btn"
-                  onClick={handleVoiceSearch}
-                  aria-label="Voice search"
-                >
-                  <Mic size={16} strokeWidth={1.9} />
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="search-clear-btn"
-                  onClick={() => setSearch('')}
-                  aria-label="Clear search"
-                >
-                  <X size={15} strokeWidth={2.2} />
-                </button>
-              )}
-            </form>
-
-            {/* Quick Suggestions Popup */}
-            {showSearchSuggestions && (
-              <div className="search-suggestions-dropdown">
-                <div className="suggestion-section-title">
-                  <TrendingUp size={13} strokeWidth={2.2} className="suggestion-title-icon" />
-                  <span>Popular Searches</span>
-                </div>
-                <div className="trending-tags-grid">
-                  {TRENDING_SEARCHES.map((item) => (
-                    <button
-                      key={item}
-                      type="button"
-                      className="trending-tag-pill"
-                      onClick={() => handleQuickSearch(item)}
-                    >
-                      <Search size={12} strokeWidth={2} />
-                      {item}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Right Action Icons */}
-          <div className="nav-actions-group">
-            {/* Search Circle Button (Mobile Header Row 1) */}
-            <button
-              type="button"
-              className="header-circle-btn mobile-search-circle-btn"
-              onClick={() => {
-                searchInputRef.current?.focus();
-                setShowSearchSuggestions(true);
-              }}
-              aria-label="Focus product search"
-            >
-              <Search size={17} strokeWidth={1.9} />
-            </button>
-
-            {/* Wishlist Heart Circle (Desktop Web View) */}
-            <Link
-              to="/wishlist"
-              className="header-circle-btn wishlist-header-btn"
-              aria-label="Saved Wishlist"
-              title="Saved Wishlist"
-            >
-              <Heart size={18} strokeWidth={1.85} />
-            </Link>
-
-            {/* Notifications & Delivery Area Bell (Desktop Web View) */}
-            <div className="notif-dropdown-wrapper" ref={notifRef}>
-              <button
-                type="button"
-                className="header-circle-btn notif-btn"
-                onClick={() => setShowNotifications((prev) => !prev)}
-                aria-label="Notifications and delivery info"
-                aria-expanded={showNotifications}
-              >
-                <Bell size={18} strokeWidth={1.85} />
-                <span className="notif-active-dot" aria-hidden="true" />
-              </button>
-
-              {showNotifications && (
-                <div className="notif-popover">
-                  <div className="notif-popover-head">
-                    <span>Updates &amp; Delivery</span>
-                  </div>
-                  <button
-                    type="button"
-                    className="notif-location-card"
-                    onClick={() => {
-                      setShowNotifications(false);
-                      setShowLocationModal(true);
-                    }}
-                  >
-                    <MapPin size={16} className="notif-pin-icon" />
-                    <div className="notif-location-text">
-                      <strong>Delivery in 10 mins</strong>
-                      <span>{location || 'Gomti Nagar, Lucknow'}</span>
-                    </div>
-                    <span className="notif-change-tag">Change</span>
-                  </button>
-                  <div className="popover-divider" />
-                  <Link
-                    to="/products?sort=discount"
-                    className="popover-menu-item"
-                    onClick={() => setShowNotifications(false)}
-                  >
-                    <Tag size={15} />
-                    <span>Explore Today&apos;s Deals</span>
-                  </Link>
-                  <Link
-                    to="/wishlist"
-                    className="popover-menu-item"
-                    onClick={() => setShowNotifications(false)}
-                  >
-                    <Heart size={15} />
-                    <span>Saved Wishlist</span>
-                  </Link>
-                </div>
-              )}
-            </div>
-
-            {/* Emerald My Cart Pill (Desktop) / Cart Circle with Green Badge (Mobile) */}
-            <button
-              type="button"
-              className={`blinkit-cart-pill-btn ${totalItems > 0 ? 'has-items' : ''}`}
-              onClick={openCartDrawer}
-              aria-label="Open Cart"
-            >
-              <ShoppingCart size={17} strokeWidth={2} className="cart-pill-icon" />
-              <span className="cart-desktop-label">My Cart</span>
-              {totalItems > 0 && (
-                <span className="cart-desktop-badge">{totalItems}</span>
-              )}
-            </button>
-
-            {/* Auth / Profile User Icon + Chevron */}
-            {token ? (
-              <div className="profile-dropdown-wrapper" ref={profileRef}>
-                <button
-                  type="button"
-                  className="nav-action-link profile-trigger"
-                  onClick={() => setShowProfileDropdown(!showProfileDropdown)}
-                  aria-label="User menu"
-                  aria-expanded={showProfileDropdown}
-                >
-                  <div className="nav-icon-circle profile-circle">
-                    <User size={18} strokeWidth={2} />
-                  </div>
-                  <ChevronDown size={14} className="profile-chevron-desktop" />
-                  <span className="nav-action-label">{user?.name ? user.name.split(' ')[0] : 'Profile'}</span>
-                </button>
-
-                {showProfileDropdown && (
-                  <div className="profile-popover">
-                    <div className="profile-popover-header">
-                      <p className="user-fullname">{user?.name || 'Customer'}</p>
-                      <p className="user-email-text">{user?.email}</p>
-                      {user?.isAdmin && (
-                        <span className="admin-chip">Admin Access</span>
-                      )}
-                      {(user?.isDeliveryPartner || user?.role === 'delivery_partner') && (
-                        <span className="admin-chip" style={{ background: '#fff3cd', color: '#856404' }}>Rider Fleet</span>
-                      )}
-                    </div>
-                    <div className="popover-divider" />
-                    <button
-                      type="button"
-                      className="popover-menu-item popover-location-trigger"
-                      onClick={() => {
-                        setShowProfileDropdown(false);
-                        setShowLocationModal(true);
-                      }}
-                    >
-                      <MapPin size={16} color="#168A32" />
-                      <span className="popover-loc-truncate">{location || 'Select Location'}</span>
-                    </button>
-                    {user?.isAdmin && (
-                      <Link
-                        to="/admin"
-                        className="popover-menu-item"
-                        onClick={() => setShowProfileDropdown(false)}
-                      >
-                        <ShieldAlert size={16} color="#168A32" />
-                        <span>Admin Panel</span>
-                      </Link>
-                    )}
-                    {(user?.isDeliveryPartner || user?.role === 'delivery_partner') && (
-                      <Link
-                        to="/delivery"
-                        className="popover-menu-item"
-                        onClick={() => setShowProfileDropdown(false)}
-                      >
-                        <Bike size={16} color="#168A32" />
-                        <span>Rider Console</span>
-                      </Link>
-                    )}
-                    <Link
-                      to="/orders"
-                      className="popover-menu-item"
-                      onClick={() => setShowProfileDropdown(false)}
-                    >
-                      <ClipboardList size={16} />
-                      <span>My Orders</span>
-                    </Link>
-                    <Link
-                      to="/wishlist"
-                      className="popover-menu-item"
-                      onClick={() => setShowProfileDropdown(false)}
-                    >
-                      <Heart size={16} />
-                      <span>My Wishlist</span>
-                    </Link>
-                    <Link
-                      to="/addresses"
-                      className="popover-menu-item"
-                      onClick={() => setShowProfileDropdown(false)}
-                    >
-                      <MapPin size={16} />
-                      <span>Saved Addresses</span>
-                    </Link>
-                    <Link
-                      to="/profile"
-                      className="popover-menu-item"
-                      onClick={() => setShowProfileDropdown(false)}
-                    >
-                      <User size={16} />
-                      <span>Account Settings</span>
-                    </Link>
-                    <div className="popover-divider" />
-                    <button
-                      type="button"
-                      onClick={handleLogout}
-                      className="popover-menu-item logout-action"
-                    >
-                      <LogOut size={16} />
-                      <span>Log Out</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <Link to="/login" className="blinkit-login-btn" aria-label="Login">
-                <User size={16} strokeWidth={1.9} className="login-user-icon-mobile" />
-                <span className="login-text-label">Login</span>
-              </Link>
-            )}
-          </div>
-        </div>
-      </nav>
-
-      {/* Upper Icon Category Tabs on Mobile/App (right under Search Bar, hidden on mobile catalog search-only header) */}
-      {!isCatalogMobileHeader && <TopCategoryStrip />}
-
-      {/* Mobile Dark Emerald Offer Pill Banner */}
-      {showCategoryTabs && (
-        <Link to="/products?sort=discount" className="mobile-offer-banner">
-          <div className="mobile-offer-left">
-            <BadgePercent size={17} strokeWidth={1.9} className="mobile-offer-icon" aria-hidden="true" />
-            <span>
-              15% off first 3 orders with code <strong>WELCOME15</strong>
-            </span>
-          </div>
-          <ChevronRight size={16} strokeWidth={2.2} className="mobile-offer-arrow" aria-hidden="true" />
+  const renderProfileDropdown = () => (
+    <div className="profile-popover">
+      <div className="profile-popover-header">
+        <p className="user-fullname">{user?.name || 'Customer'}</p>
+        <p className="user-email-text">{user?.email}</p>
+        {user?.isAdmin && (
+          <span className="admin-chip">Admin Access</span>
+        )}
+        {(user?.isDeliveryPartner || user?.role === 'delivery_partner') && (
+          <span className="admin-chip" style={{ background: '#fff3cd', color: '#856404' }}>Rider Fleet</span>
+        )}
+      </div>
+      <div className="popover-divider" />
+      <button
+        type="button"
+        className="popover-menu-item popover-location-trigger"
+        onClick={() => {
+          setShowProfileDropdown(false);
+          setShowLocationModal(true);
+        }}
+      >
+        <MapPin size={16} color="#168A32" />
+        <span className="popover-loc-truncate">{location || 'Select Location'}</span>
+      </button>
+      {user?.isAdmin && (
+        <Link
+          to="/admin"
+          className="popover-menu-item"
+          onClick={() => setShowProfileDropdown(false)}
+        >
+          <ShieldAlert size={16} color="#168A32" />
+          <span>Admin Panel</span>
         </Link>
       )}
+      {(user?.isDeliveryPartner || user?.role === 'delivery_partner') && (
+        <Link
+          to="/delivery"
+          className="popover-menu-item"
+          onClick={() => setShowProfileDropdown(false)}
+        >
+          <Bike size={16} color="#168A32" />
+          <span>Rider Console</span>
+        </Link>
+      )}
+      <Link
+        to="/orders"
+        className="popover-menu-item"
+        onClick={() => setShowProfileDropdown(false)}
+      >
+        <ClipboardList size={16} />
+        <span>My Orders</span>
+      </Link>
+      <Link
+        to="/wishlist"
+        className="popover-menu-item"
+        onClick={() => setShowProfileDropdown(false)}
+      >
+        <Heart size={16} />
+        <span>My Wishlist</span>
+      </Link>
+      <Link
+        to="/addresses"
+        className="popover-menu-item"
+        onClick={() => setShowProfileDropdown(false)}
+      >
+        <MapPin size={16} />
+        <span>Saved Addresses</span>
+      </Link>
+      <Link
+        to="/profile"
+        className="popover-menu-item"
+        onClick={() => setShowProfileDropdown(false)}
+      >
+        <User size={16} />
+        <span>Account Settings</span>
+      </Link>
+      <div className="popover-divider" />
+      <button
+        type="button"
+        onClick={handleLogout}
+        className="popover-menu-item logout-action"
+      >
+        <LogOut size={16} />
+        <span>Log Out</span>
+      </button>
+    </div>
+  );
 
-      {/* Editorial Sub-header Info Bar (hidden inside mobile app or when category tabs sit directly under search) */}
-      <div className={`announcement-ticker-bar ${showCategoryTabs ? 'hide-on-compact' : ''}`}>
-        <div className="announcement-inner">
-          <span><strong>10-min express delivery</strong> active in your area</span>
-          <span className="ticker-dot" aria-hidden="true">•</span>
-          <span>15% off first 3 orders with code <strong>WELCOME15</strong></span>
-          <span className="ticker-dot" aria-hidden="true">•</span>
-          <span>Handpicked farm-fresh produce &amp; daily essentials</span>
-        </div>
-      </div>
+  return (
+    <>
+      {/* =========================================================================
+          DESKTOP HEADER (Screen >= 769px)
+          ========================================================================= */}
+      {!isCompactViewport && (
+        <header className="site-header-wrapper desktop-header-wrapper">
+          {/* Top Green Textured Announcement Header */}
+          {showPromo && (
+            <div className="top-promo-banner">
+              <div className="top-promo-content">
+                <span className="promo-pill">
+                  <Zap size={11} strokeWidth={2.4} fill="currentColor" aria-hidden="true" />
+                  <span>10 MIN DELIVERY</span>
+                </span>
+                <span className="promo-divider" aria-hidden="true">|</span>
+                <span className="promo-text">Fresh groceries at your doorstep</span>
+                <span className="promo-divider" aria-hidden="true">|</span>
+                <span className="promo-text">Free delivery on orders above ₹499</span>
+                <span className="promo-divider" aria-hidden="true">|</span>
+                <span className="promo-offer">
+                  <Gift size={14} strokeWidth={2.2} className="promo-gift-icon" aria-hidden="true" />
+                  <span>
+                    Get 15% off on first 3 orders with code <strong className="promo-code-text">WELCOME15</strong>
+                  </span>
+                </span>
+              </div>
+              <button
+                type="button"
+                className="close-promo"
+                onClick={() => setShowPromo(false)}
+                aria-label="Dismiss banner"
+              >
+                <X size={15} strokeWidth={2.2} />
+              </button>
+            </div>
+          )}
+
+          {/* Main Desktop Navbar */}
+          <nav className="navbar">
+            <div className="navbar-container">
+              {/* Progicart Logo */}
+              <Link to="/" className="progicart-brand-logo" aria-label="Progicart Home">
+                <img src="/logo.png" alt="Progicart" className="brand-logo-img" />
+              </Link>
+
+              {/* Delivery Location Trigger Button */}
+              <button
+                type="button"
+                className="location-trigger-btn"
+                onClick={() => setShowLocationModal(true)}
+                aria-label="Select delivery address"
+              >
+                <div className="location-pin-wrap">
+                  <MapPin size={18} strokeWidth={2} className="pin-icon" />
+                </div>
+                <div className="location-text-col">
+                  <span className="delivery-time-badge">Delivery in 10 minutes</span>
+                  <div className="selected-address-row">
+                    <span className="selected-address-text">{location || 'Select delivery location'}</span>
+                    <ChevronDown size={14} className="caret-icon" />
+                  </div>
+                </div>
+                <span className="location-10min-badge">
+                  <Zap size={10} fill="currentColor" aria-hidden="true" />
+                  <span>10 MIN DELIVERY</span>
+                </span>
+              </button>
+
+              {/* Desktop Search Bar */}
+              {renderSearchBar()}
+
+              {/* Right Action Icons */}
+              <div className="nav-actions-group">
+                <Link
+                  to="/wishlist"
+                  className="header-circle-btn wishlist-header-btn"
+                  aria-label="Saved Wishlist"
+                  title="Saved Wishlist"
+                >
+                  <Heart size={18} strokeWidth={1.85} />
+                </Link>
+
+                {/* Notifications & Delivery Area Bell */}
+                <div className="notif-dropdown-wrapper" ref={notifRef}>
+                  <button
+                    type="button"
+                    className="header-circle-btn notif-btn"
+                    onClick={() => setShowNotifications((prev) => !prev)}
+                    aria-label="Notifications and delivery info"
+                    aria-expanded={showNotifications}
+                  >
+                    <Bell size={18} strokeWidth={1.85} />
+                    <span className="notif-active-dot" aria-hidden="true" />
+                  </button>
+
+                  {showNotifications && (
+                    <div className="notif-popover">
+                      <div className="notif-popover-head">
+                        <span>Updates &amp; Delivery</span>
+                      </div>
+                      <button
+                        type="button"
+                        className="notif-location-card"
+                        onClick={() => {
+                          setShowNotifications(false);
+                          setShowLocationModal(true);
+                        }}
+                      >
+                        <MapPin size={16} className="notif-pin-icon" />
+                        <div className="notif-location-text">
+                          <strong>Delivery in 10 mins</strong>
+                          <span>{location || 'Gomti Nagar, Lucknow'}</span>
+                        </div>
+                        <span className="notif-change-tag">Change</span>
+                      </button>
+                      <div className="popover-divider" />
+                      <Link
+                        to="/products?sort=discount"
+                        className="popover-menu-item"
+                        onClick={() => setShowNotifications(false)}
+                      >
+                        <Tag size={15} />
+                        <span>Explore Today&apos;s Deals</span>
+                      </Link>
+                      <Link
+                        to="/wishlist"
+                        className="popover-menu-item"
+                        onClick={() => setShowNotifications(false)}
+                      >
+                        <Heart size={15} />
+                        <span>Saved Wishlist</span>
+                      </Link>
+                    </div>
+                  )}
+                </div>
+
+                {/* Emerald My Cart Pill */}
+                <button
+                  type="button"
+                  className={`blinkit-cart-pill-btn ${totalItems > 0 ? 'has-items' : ''}`}
+                  onClick={openCartDrawer}
+                  aria-label="Open Cart"
+                >
+                  <ShoppingCart size={17} strokeWidth={2} className="cart-pill-icon" />
+                  <span className="cart-desktop-label">My Cart</span>
+                  {totalItems > 0 && (
+                    <span className="cart-desktop-badge">{totalItems}</span>
+                  )}
+                </button>
+
+                {/* Profile User Icon */}
+                {token ? (
+                  <div className="profile-dropdown-wrapper" ref={profileRef}>
+                    <button
+                      type="button"
+                      className="nav-action-link profile-trigger"
+                      onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                      aria-label="User menu"
+                      aria-expanded={showProfileDropdown}
+                    >
+                      <div className="nav-icon-circle profile-circle">
+                        <User size={18} strokeWidth={2} />
+                      </div>
+                      <ChevronDown size={14} className="profile-chevron-desktop" />
+                      <span className="nav-action-label">{user?.name ? user.name.split(' ')[0] : 'Profile'}</span>
+                    </button>
+                    {showProfileDropdown && renderProfileDropdown()}
+                  </div>
+                ) : (
+                  <Link to="/login" className="blinkit-login-btn" aria-label="Login">
+                    <User size={16} strokeWidth={1.9} className="login-user-icon-mobile" />
+                    <span className="login-text-label">Login</span>
+                  </Link>
+                )}
+              </div>
+            </div>
+          </nav>
+
+          {/* Desktop Announcement Ticker */}
+          <div className="announcement-ticker-bar">
+            <div className="announcement-inner">
+              <span><strong>10-min express delivery</strong> active in your area</span>
+              <span className="ticker-dot" aria-hidden="true">•</span>
+              <span>15% off first 3 orders with code <strong>WELCOME15</strong></span>
+              <span className="ticker-dot" aria-hidden="true">•</span>
+              <span>Handpicked farm-fresh produce &amp; daily essentials</span>
+            </div>
+          </div>
+        </header>
+      )}
+
+      {/* =========================================================================
+          MOBILE HEADER (Mobile View / Capacitor Native App)
+          - Top row & 15% off banner: Scroll away naturally with the page
+          - Search bar & Categories strip: Stick fixed to the top at 120fps with ZERO lag
+          ========================================================================= */}
+      {isCompactViewport && (
+        <>
+          {/* Scrollable Top Row: Logo, Location, Cart/Profile & 15% Off Banner */}
+          {!isCatalogMobileHeader && (
+            <div className="mobile-header-top-scrollable">
+              <div className="mobile-header-top-row">
+                <Link to="/" className="progicart-brand-logo" aria-label="Progicart Home">
+                  <img src="/logo.png" alt="Progicart" className="brand-logo-img" />
+                </Link>
+
+                <button
+                  type="button"
+                  className="location-trigger-btn"
+                  onClick={() => setShowLocationModal(true)}
+                  aria-label="Select delivery address"
+                >
+                  <div className="location-pin-wrap">
+                    <MapPin size={16} strokeWidth={2} className="pin-icon" />
+                  </div>
+                  <div className="location-text-col">
+                    <span className="delivery-time-badge">Deliver to</span>
+                    <div className="selected-address-row">
+                      <span className="selected-address-text">{location || 'Select delivery location'}</span>
+                      <ChevronDown size={13} className="caret-icon" />
+                    </div>
+                  </div>
+                </button>
+
+                <div className="nav-actions-group">
+                  <button
+                    type="button"
+                    className={`blinkit-cart-pill-btn mobile-cart-round-btn ${totalItems > 0 ? 'has-items' : ''}`}
+                    onClick={openCartDrawer}
+                    aria-label="Open Cart"
+                  >
+                    <ShoppingCart size={17} strokeWidth={2} className="cart-pill-icon" />
+                    {totalItems > 0 && (
+                      <span className="cart-desktop-badge">{totalItems}</span>
+                    )}
+                  </button>
+
+                  {token ? (
+                    <div className="profile-dropdown-wrapper" ref={profileRef}>
+                      <button
+                        type="button"
+                        className="nav-action-link profile-trigger"
+                        onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                        aria-label="User menu"
+                        aria-expanded={showProfileDropdown}
+                      >
+                        <div className="nav-icon-circle profile-circle">
+                          <User size={17} strokeWidth={2} />
+                        </div>
+                      </button>
+                      {showProfileDropdown && renderProfileDropdown()}
+                    </div>
+                  ) : (
+                    <Link to="/login" className="blinkit-login-btn mobile-login-round-btn" aria-label="Login">
+                      <User size={16} strokeWidth={1.9} className="login-user-icon-mobile" />
+                    </Link>
+                  )}
+                </div>
+              </div>
+
+              {/* 15% OFF Offer Banner (Scrolls away naturally without hanging!) */}
+              <Link to="/products?sort=discount" className="mobile-offer-banner">
+                <div className="mobile-offer-left">
+                  <BadgePercent size={16} strokeWidth={2} className="mobile-offer-icon" aria-hidden="true" />
+                  <span>
+                    15% off first 3 orders with code <strong>WELCOME15</strong>
+                  </span>
+                </div>
+                <ChevronRight size={15} strokeWidth={2.4} className="mobile-offer-arrow" aria-hidden="true" />
+              </Link>
+            </div>
+          )}
+
+          {/* Sticky Header: Search Bar + Categories Strip (Sticks cleanly at top: 0) */}
+          <header className={`site-header-sticky-nav ${isCatalogMobileHeader ? 'catalog-mobile-search-header' : ''}`}>
+            {isCatalogMobileHeader ? (
+              <div className="catalog-mobile-search-row">
+                {renderSearchBar()}
+                <Link
+                  to="/wishlist"
+                  className="header-circle-btn wishlist-header-btn"
+                  aria-label="Saved Wishlist"
+                  title="Saved Wishlist"
+                >
+                  <Heart size={18} strokeWidth={1.85} />
+                </Link>
+              </div>
+            ) : (
+              <>
+                <div className="mobile-sticky-search-wrap">
+                  {renderSearchBar()}
+                </div>
+                <TopCategoryStrip />
+              </>
+            )}
+          </header>
+        </>
+      )}
 
       {/* Instant 1-Click Location Bottom Sheet */}
       {showLocationModal && (
@@ -1118,7 +1203,7 @@ const Navbar = () => {
           </div>
         </div>
       )}
-    </header>
+    </>
   );
 };
 
