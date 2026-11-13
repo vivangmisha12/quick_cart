@@ -149,25 +149,23 @@ const PullToRefresh = () => {
     <div
       className="pull-to-refresh-layer"
       style={{
-        transform: `translate(-50%, ${Math.max(8, pullDistance - 24)}px)`,
-        opacity: refreshing ? 1 : Math.min(1, progress * 1.15),
+        transform: `translate(-50%, ${Math.max(14, pullDistance)}px)`,
+        opacity: refreshing ? 1 : Math.min(1, progress * 1.2),
       }}
       aria-live="polite"
+      aria-label={refreshing ? 'Refreshing' : 'Pull to refresh'}
     >
-      <div className={`pull-to-refresh-pill ${ready ? 'is-ready' : ''} ${refreshing ? 'is-refreshing' : ''}`}>
+      <div className={`pull-to-refresh-circle ${ready ? 'is-ready' : ''} ${refreshing ? 'is-refreshing' : ''}`}>
         <RefreshCw
-          size={15}
+          size={20}
           strokeWidth={2.4}
           className="ptr-spinner-icon"
           style={
             !refreshing
-              ? { transform: `rotate(${Math.round(progress * 260)}deg)` }
+              ? { transform: `rotate(${Math.round(progress * 300)}deg)` }
               : undefined
           }
         />
-        <span>
-          {refreshing ? 'Refreshing...' : ready ? 'Release to refresh' : 'Pull to refresh'}
-        </span>
       </div>
     </div>
   );
