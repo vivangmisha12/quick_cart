@@ -19,7 +19,9 @@ const syncAddressesCache = (userId, addresses = []) => {
       localStorage.setItem(`savedAddresses_${userId}`, JSON.stringify(normalized));
       window.dispatchEvent(new CustomEvent('addressesUpdated', { detail: normalized }));
     }
-  } catch (e) {}
+  } catch {
+    // Ignore storage sync errors
+  }
 };
 
 const normalizeUser = (profile) => {
@@ -51,6 +53,20 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(false);
   const [token, setToken] = useState(localStorage.getItem('token') || null);
+
+  // Global Auth Modal controls
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalConfig, setAuthModalConfig] = useState(null);
+
+  const openAuthModal = (config = {}) => {
+    setAuthModalConfig(config);
+    setIsAuthModalOpen(true);
+  };
+
+  const closeAuthModal = () => {
+    setIsAuthModalOpen(false);
+    setAuthModalConfig(null);
+  };
 
   useEffect(() => {
     const hydrateUser = async () => {
@@ -149,7 +165,20 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, token, register, registerDelivery, login, updateUser, logout }}
+      value={{
+        user,
+        loading,
+        token,
+        register,
+        registerDelivery,
+        login,
+        updateUser,
+        logout,
+        isAuthModalOpen,
+        authModalConfig,
+        openAuthModal,
+        closeAuthModal,
+      }}
     >
       {children}
     </AuthContext.Provider>

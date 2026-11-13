@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { 
   SlidersHorizontal, 
   X, 
@@ -11,8 +11,6 @@ import {
   Lock
 } from 'lucide-react';
 import { productsAPI, categoriesAPI } from '../api/api';
-import { useAuth } from '../context/AuthContext';
-import { useCart } from '../context/CartContext';
 import ProductCard from '../components/ProductCard';
 import ProductSkeleton from '../components/ProductSkeleton';
 import LazyImage from '../components/LazyImage';
@@ -48,17 +46,6 @@ const Products = () => {
   const [mobileShowCategories, setMobileShowCategories] = useState(false);
   const [loading, setLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const { user, login } = useAuth();
-  const { addToCart } = useCart();
-  const navigate = useNavigate();
-
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [pendingProductId, setPendingProductId] = useState(null);
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  const [loginError, setLoginError] = useState('');
-  const [loginLoading, setLoginLoading] = useState(false);
 
   useEffect(() => {
     fetchCategories();
@@ -136,38 +123,6 @@ const Products = () => {
     setTrendingOnly(false);
     setSortBy('relevance');
     setSearchParams({});
-  };
-
-  const requireLoginHandler = (productId) => {
-    if (!user) {
-      setPendingProductId(productId);
-      setShowLoginModal(true);
-      return false;
-    }
-    return true;
-  };
-
-  const handleLoginSubmit = async (e) => {
-    e.preventDefault();
-    setLoginError('');
-    setLoginLoading(true);
-
-    try {
-      const response = await login(loginEmail, loginPassword);
-      if (response?.user?.isAdmin) {
-        navigate('/admin', { replace: true });
-        return;
-      }
-      if (pendingProductId) {
-        await addToCart(pendingProductId, 1);
-      }
-      setShowLoginModal(false);
-      setPendingProductId(null);
-    } catch (err) {
-      setLoginError(err.message || 'Login failed. Please try again.');
-    } finally {
-      setLoginLoading(false);
-    }
   };
 
   // Process Filtering & Sorting
@@ -271,7 +226,7 @@ const Products = () => {
   );
 
   return (
-    <div className={`products-catalog-page ${showLoginModal ? 'modal-blur-active' : ''}`}>
+    <div className="products-catalog-page">
       {/* Mobile Sidebar Toggle Header */}
       <div className="mobile-catalog-header">
         <button 
@@ -557,62 +512,12 @@ const Products = () => {
                 <ProductCard 
                   key={prod._id}
                   product={prod}
-                  onRequireLogin={requireLoginHandler}
                 />
               ))}
             </div>
           )}
         </main>
       </div>
-
-      {/* Auth Modal */}
-      {showLoginModal && (
-        <div className="login-modal-backdrop" role="dialog" aria-modal="true">
-          <div className="login-modal-card">
-            <button className="login-modal-close" onClick={() => setShowLoginModal(false)} aria-label="Close">
-              <X size={20} />
-            </button>
-            <div className="login-modal-top">
-              <div className="login-secure-chip">
-                <Lock size={12} />
-                <span>100% Secure Checkout</span>
-              </div>
-              <h3>Sign In to Progicart</h3>
-              <p>Add products to your cart & get instant delivery.</p>
-            </div>
-
-            {loginError && <div className="login-err-banner">{loginError}</div>}
-
-            <form onSubmit={handleLoginSubmit} className="login-form-box">
-              <div className="input-group">
-                <label>Email Address</label>
-                <input
-                  type="email"
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  required
-                />
-              </div>
-
-              <div className="input-group">
-                <label>Password</label>
-                <input
-                  type="password"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                />
-              </div>
-
-              <button type="submit" className="login-submit-btn" disabled={loginLoading}>
-                {loginLoading ? 'Signing in…' : 'Login & Continue'}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

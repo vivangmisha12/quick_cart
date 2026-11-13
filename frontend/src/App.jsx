@@ -14,6 +14,7 @@ import MobileBottomNav from './components/MobileBottomNav';
 import SplashScreen from './components/SplashScreen';
 import RateLimitBanner from './components/RateLimitBanner';
 import PullToRefresh from './components/PullToRefresh';
+import AuthModal from './components/AuthModal';
 
 // Pages
 import Home from './pages/Home';
@@ -79,6 +80,7 @@ const RiderAppContent = () => {
     <>
       <RateLimitBanner />
       <PullToRefresh />
+      <AuthModal />
       {showSplash && (
         <SplashScreen
           onFinish={() => setShowSplash(false)}
@@ -148,6 +150,7 @@ const AppContent = () => {
     <>
       <RateLimitBanner />
       <PullToRefresh />
+      <AuthModal />
       {showSplash && (
         <SplashScreen 
           onFinish={() => setShowSplash(false)} 

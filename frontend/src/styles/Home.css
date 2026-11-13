@@ -13,11 +13,6 @@
   box-sizing: border-box;
 }
 
-.modal-blur-active {
-  filter: blur(4px);
-  pointer-events: none;
-  user-select: none;
-}
 
 /* Hero Carousel */
 .hero-carousel-section {

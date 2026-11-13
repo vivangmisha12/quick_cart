@@ -17,8 +17,6 @@ import {
   getCachedHomeBootstrap,
   bootstrapHomeData,
 } from '../utils/homeBootstrap';
-import { useCart } from '../context/CartContext';
-import { useAuth } from '../context/AuthContext';
 import ProductCard from '../components/ProductCard';
 import ProductSkeleton from '../components/ProductSkeleton';
 import LazyImage from '../components/LazyImage';
@@ -40,16 +38,7 @@ const Home = () => {
   const sliderRefs = useRef([]);
   const heroTouchStartX = useRef(null);
 
-  const { addToCart } = useCart();
-  const { user, login } = useAuth();
   const navigate = useNavigate();
-
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [pendingProductId, setPendingProductId] = useState(null);
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
-  const [loginError, setLoginError] = useState('');
-  const [loginLoading, setLoginLoading] = useState(false);
 
   const isDarkBg = (bg) => {
     if (!bg || typeof bg !== 'string') return false;
@@ -177,41 +166,6 @@ const Home = () => {
     }
   };
 
-  const requireLoginHandler = (productId) => {
-    if (!user) {
-      setPendingProductId(productId);
-      setShowLoginModal(true);
-      return false;
-    }
-    return true;
-  };
-
-  const closeLoginModal = () => {
-    if (loginLoading) return;
-    setShowLoginModal(false);
-    setPendingProductId(null);
-    setLoginError('');
-  };
-
-  const handleLoginSubmit = async (e) => {
-    e.preventDefault();
-    setLoginError('');
-    setLoginLoading(true);
-
-    try {
-      await login(loginEmail, loginPassword);
-      if (pendingProductId) {
-        await addToCart(pendingProductId, 1);
-      }
-      setShowLoginModal(false);
-      setPendingProductId(null);
-    } catch (err) {
-      setLoginError(err.message || 'Login failed. Please try again.');
-    } finally {
-      setLoginLoading(false);
-    }
-  };
-
   const resolveImagePath = (rawPath) => resolveAssetUrl(rawPath);
 
   const getBannerImageUrl = (banner) => {
@@ -276,7 +230,7 @@ const Home = () => {
   };
 
   return (
-    <div className={`home-page-wrapper ${showLoginModal ? 'modal-blur-active' : ''}`}>
+    <div className="home-page-wrapper">
       {/* Hero Carousel Section */}
       <section className="hero-carousel-section">
         {loading ? (
@@ -731,7 +685,6 @@ const Home = () => {
                         <ProductCard
                           key={prod._id}
                           product={prod}
-                          onRequireLogin={requireLoginHandler}
                         />
                       ))}
                     </div>
@@ -762,69 +715,6 @@ const Home = () => {
             </section>
           );
         })
-      )}
-
-      {/* Auth Modal Triggered on Action */}
-      {showLoginModal && (
-        <div className="login-modal-backdrop" role="dialog" aria-modal="true">
-          <div className="login-modal-card">
-            <button className="login-modal-close" onClick={closeLoginModal} aria-label="Close">
-              <X size={20} />
-            </button>
-            <div className="login-modal-top">
-              <div className="login-secure-chip">
-                <Lock size={12} />
-                <span>100% Secure Checkout</span>
-              </div>
-              <h3>Welcome to Progicart</h3>
-              <p>Sign in to add items to your cart & get lightning delivery.</p>
-            </div>
-
-            {loginError && <div className="login-err-banner">{loginError}</div>}
-
-            <form onSubmit={handleLoginSubmit} className="login-form-box">
-              <div className="input-group">
-                <label>Email Address</label>
-                <input
-                  type="email"
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  required
-                />
-              </div>
-
-              <div className="input-group">
-                <label>Password</label>
-                <input
-                  type="password"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  placeholder="••••••••"
-                  required
-                />
-              </div>
-
-              <button type="submit" className="login-submit-btn" disabled={loginLoading}>
-                {loginLoading ? 'Signing in…' : 'Login & Continue'}
-              </button>
-            </form>
-
-            <div className="login-bottom-link">
-              <span>Don't have an account?</span>
-              <button
-                type="button"
-                className="link-btn"
-                onClick={() => {
-                  closeLoginModal();
-                  navigate('/register');
-                }}
-              >
-                Register here
-              </button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );

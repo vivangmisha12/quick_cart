@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { 
   Heart, 
   Clock, 
@@ -25,38 +25,62 @@ const ProductDetails = () => {
   const [loading, setLoading] = useState(true);
   const { addToCart, getProductQuantity, updateCartItem, removeFromCart, openCartDrawer } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
-  const { user } = useAuth();
-  const navigate = useNavigate();
+  const { user, openAuthModal } = useAuth();
 
   useEffect(() => {
+    let isMounted = true;
+    const fetchProduct = async () => {
+      setLoading(true);
+      try {
+        const res = await productsAPI.getById(id);
+        if (isMounted) setProduct(res.data);
+      } catch (error) {
+        console.error('Error fetching product:', error);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
     fetchProduct();
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [id]);
 
-  const fetchProduct = async () => {
-    setLoading(true);
-    try {
-      const res = await productsAPI.getById(id);
-      setProduct(res.data);
-    } catch (error) {
-      console.error('Error fetching product:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
 
   const qty = product ? getProductQuantity(product._id) : 0;
   const isWish = product ? isInWishlist(product._id) : false;
 
   const handleAddToCart = () => {
     if (!user) {
-      navigate('/login');
+      if (openAuthModal) {
+        openAuthModal({
+          title: 'Sign in to Shop',
+          subtitle: 'Log in to add this item to your cart & get lightning 10-min delivery.',
+          onSuccess: () => {
+            addToCart(product, 1);
+            openCartDrawer();
+          },
+        });
+      }
       return;
     }
     addToCart(product, 1);
+    openCartDrawer();
   };
 
   const handleIncrement = () => {
+    if (!user) {
+      if (openAuthModal) {
+        openAuthModal({
+          title: 'Sign in to Shop',
+          subtitle: 'Log in to add this item to your cart & get lightning 10-min delivery.',
+          onSuccess: () => addToCart(product, 1),
+        });
+      }
+      return;
+    }
     addToCart(product, 1);
   };
 
@@ -69,6 +93,16 @@ const ProductDetails = () => {
   };
 
   const handleWishlistToggle = () => {
+    if (!user) {
+      if (openAuthModal) {
+        openAuthModal({
+          title: 'Sign in for Wishlist',
+          subtitle: 'Log in to save your favorite groceries to your wishlist.',
+          onSuccess: () => addToWishlist(product),
+        });
+      }
+      return;
+    }
     if (isWish) {
       removeFromWishlist(product._id);
     } else {

@@ -8,7 +8,7 @@ import '../styles/CartDrawer.css';
 
 const CartDrawer = () => {
   const { cart, totalItems, isCartDrawerOpen, closeCartDrawer, updateCartItem, removeFromCart } = useCart();
-  const { user } = useAuth();
+  const { user, openAuthModal } = useAuth();
   const navigate = useNavigate();
   const [tip, setTip] = useState(0);
 
@@ -28,7 +28,15 @@ const CartDrawer = () => {
   const handleCheckout = () => {
     closeCartDrawer();
     if (!user) {
-      navigate('/login');
+      if (openAuthModal) {
+        openAuthModal({
+          title: 'Sign in to Checkout',
+          subtitle: 'Log in to place your order with 10-minute lightning delivery.',
+          onSuccess: () => navigate('/checkout'),
+        });
+      } else {
+        navigate('/login');
+      }
     } else {
       navigate('/checkout');
     }
@@ -36,8 +44,8 @@ const CartDrawer = () => {
 
   return (
     <div className="cart-drawer-overlay" onClick={closeCartDrawer}>
-      <div 
-        className="cart-drawer" 
+      <div
+        className="cart-drawer"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-label="Shopping Cart"
@@ -67,7 +75,7 @@ const CartDrawer = () => {
             </div>
             <h4>Your cart is empty</h4>
             <p>Looks like you haven't added anything to your cart yet</p>
-            <button 
+            <button
               className="start-shopping-btn"
               onClick={() => {
                 closeCartDrawer();
@@ -94,8 +102,8 @@ const CartDrawer = () => {
                   <span className="milestone-target">₹{deliveryThreshold}</span>
                 </div>
                 <div className="milestone-progress-bar">
-                  <div 
-                    className="milestone-progress-fill" 
+                  <div
+                    className="milestone-progress-fill"
                     style={{ width: `${progressPercent}%` }}
                   />
                 </div>
@@ -134,7 +142,7 @@ const CartDrawer = () => {
 
                         {/* Quantity Stepper */}
                         <div className="drawer-qty-stepper">
-                          <button 
+                          <button
                             className="qty-step-btn"
                             onClick={() => {
                               if (item.quantity > 1) {
@@ -148,7 +156,7 @@ const CartDrawer = () => {
                             −
                           </button>
                           <span className="qty-step-val">{item.quantity}</span>
-                          <button 
+                          <button
                             className="qty-step-btn"
                             onClick={() => updateCartItem(id, item.quantity + 1)}
                             aria-label="Increase quantity"

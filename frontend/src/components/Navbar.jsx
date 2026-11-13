@@ -1,27 +1,28 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { 
+import {
   Tag,
   Bell,
   Zap,
   Gift,
-  Heart, 
-  ShoppingCart, 
-  User, 
-  MapPin, 
-  Search, 
+  Heart,
+  ShoppingCart,
+  User,
+  MapPin,
+  Search,
   Mic,
   BadgePercent,
   ChevronRight,
-  ChevronDown, 
-  Crosshair, 
-  X, 
-  Check, 
+  ChevronDown,
+  Crosshair,
+  X,
+  Check,
   TrendingUp,
   ClipboardList,
   LogOut,
   ShieldAlert,
-  Bike
+  Bike,
+  Plus
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
@@ -37,7 +38,7 @@ const IS_INVALID_GATEWAY_ADDR = (street) => {
 };
 
 const Navbar = () => {
-  const { token, logout, user } = useAuth();
+  const { token, logout, user, openAuthModal } = useAuth();
   const { totalItems, openCartDrawer } = useCart();
   const { location, setLocation, detectLocation, searchLocation, locating, error: locationError } = useLocationContext();
   const navigate = useNavigate();
@@ -52,6 +53,17 @@ const Navbar = () => {
   const [locationQuery, setLocationQuery] = useState('');
   const [locationResults, setLocationResults] = useState([]);
   const [searchingLocation, setSearchingLocation] = useState(false);
+
+  // In-modal Quick Add Address state
+  const [showAddAddressForm, setShowAddAddressForm] = useState(false);
+  const [newAddrLabel, setNewAddrLabel] = useState('Home');
+  const [newAddrHouseNo, setNewAddrHouseNo] = useState('');
+  const [newAddrArea, setNewAddrArea] = useState('');
+  const [newAddrLandmark, setNewAddrLandmark] = useState('');
+  const [newAddrCity, setNewAddrCity] = useState('Lucknow');
+  const [newAddrZipcode, setNewAddrZipcode] = useState('');
+  const [savingAddress, setSavingAddress] = useState(false);
+  const [addressSaveError, setAddressSaveError] = useState('');
   const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
   const [isCompactViewport, setIsCompactViewport] = useState(() =>
     typeof window !== 'undefined'
@@ -333,6 +345,20 @@ const Navbar = () => {
 
   // Instant 1-Click GPS Geolocation Detection: detects, updates context, closes modal, and returns to Homepage!
   const handleDetectGPS = async () => {
+    if (!user) {
+      setShowLocationModal(false);
+      if (openAuthModal) {
+        openAuthModal({
+          title: 'Sign in for Delivery',
+          subtitle: 'Please sign in to detect and save your delivery address.',
+          onSuccess: () => {
+            setShowLocationModal(true);
+          },
+        });
+      }
+      return;
+    }
+
     try {
       const res = await detectLocation();
       const detectedAddress = res?.display || location || 'Husainabad, Lucknow';
@@ -366,9 +392,96 @@ const Navbar = () => {
 
   // 1-Click Saved Address Selector
   const handleSelectLocation = (loc) => {
+    if (!user) {
+      setShowLocationModal(false);
+      if (openAuthModal) {
+        openAuthModal({
+          title: 'Sign in for Delivery',
+          subtitle: 'Please sign in to set your delivery address & get 10-minute delivery.',
+          onSuccess: () => {
+            setLocation(loc);
+            navigate('/');
+          },
+        });
+      }
+      return;
+    }
     setLocation(loc);
     setShowLocationModal(false);
     navigate('/');
+  };
+
+  const handleAutoFillWithGPS = async () => {
+    try {
+      const res = await detectLocation();
+      if (res) {
+        if (res.street) setNewAddrArea(res.street);
+        else if (res.display) setNewAddrArea(res.display);
+        if (res.city) setNewAddrCity(res.city);
+        if (res.zipcode) setNewAddrZipcode(res.zipcode);
+      }
+    } catch (e) {
+      console.warn('Auto-fill GPS warning:', e);
+    }
+  };
+
+  const handleSaveNewAddress = async (e) => {
+    e.preventDefault();
+    if (!newAddrArea.trim() || !newAddrCity.trim()) {
+      setAddressSaveError('Please enter area/street and city.');
+      return;
+    }
+    setSavingAddress(true);
+    setAddressSaveError('');
+
+    const houseNo = newAddrHouseNo.trim();
+    const area = newAddrArea.trim();
+    const landmark = newAddrLandmark.trim();
+    const fullStreet = [houseNo, area, landmark ? `(Near ${landmark})` : '']
+      .filter(Boolean)
+      .join(', ');
+
+    const payload = {
+      label: newAddrLabel || 'Home',
+      houseNo,
+      area,
+      landmark,
+      street: fullStreet || area,
+      city: newAddrCity.trim() || 'Lucknow',
+      state: 'Uttar Pradesh',
+      zipcode: newAddrZipcode.trim(),
+      isDefault: true,
+    };
+
+    try {
+      let apiAddresses = null;
+      try {
+        const res = await userAddressesAPI.save(payload);
+        apiAddresses = res.data?.addresses;
+      } catch (err) {
+        console.warn('Backend address save error:', err);
+      }
+
+      const updated = Array.isArray(apiAddresses) && apiAddresses.length > 0
+        ? apiAddresses
+        : [{ ...payload, id: Date.now().toString() }, ...savedAddresses];
+
+      setSavedAddresses(updated);
+      if (user?.id) {
+        localStorage.setItem(`savedAddresses_${user.id}`, JSON.stringify(updated));
+      }
+      window.dispatchEvent(new CustomEvent('addressesUpdated', { detail: updated }));
+
+      const fullDisplay = `${payload.street}, ${payload.city}`;
+      setLocation(fullDisplay);
+      setShowAddAddressForm(false);
+      setShowLocationModal(false);
+      navigate('/');
+    } catch (err) {
+      setAddressSaveError(err.message || 'Failed to save address');
+    } finally {
+      setSavingAddress(false);
+    }
   };
 
   const handleLogout = () => {
@@ -399,10 +512,10 @@ const Navbar = () => {
               </span>
             </span>
           </div>
-          <button 
+          <button
             type="button"
-            className="close-promo" 
-            onClick={() => setShowPromo(false)} 
+            className="close-promo"
+            onClick={() => setShowPromo(false)}
             aria-label="Dismiss banner"
           >
             <X size={15} strokeWidth={2.2} />
@@ -419,7 +532,7 @@ const Navbar = () => {
           </Link>
 
           {/* Delivery Location Trigger Button */}
-          <button 
+          <button
             type="button"
             className="location-trigger-btn"
             onClick={() => setShowLocationModal(true)}
@@ -469,8 +582,8 @@ const Navbar = () => {
                   <Mic size={16} strokeWidth={1.9} />
                 </button>
               ) : (
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="search-clear-btn"
                   onClick={() => setSearch('')}
                   aria-label="Clear search"
@@ -639,8 +752,8 @@ const Navbar = () => {
                       <span className="popover-loc-truncate">{location || 'Select Location'}</span>
                     </button>
                     {user?.isAdmin && (
-                      <Link 
-                        to="/admin" 
+                      <Link
+                        to="/admin"
                         className="popover-menu-item"
                         onClick={() => setShowProfileDropdown(false)}
                       >
@@ -649,8 +762,8 @@ const Navbar = () => {
                       </Link>
                     )}
                     {(user?.isDeliveryPartner || user?.role === 'delivery_partner') && (
-                      <Link 
-                        to="/delivery" 
+                      <Link
+                        to="/delivery"
                         className="popover-menu-item"
                         onClick={() => setShowProfileDropdown(false)}
                       >
@@ -658,32 +771,32 @@ const Navbar = () => {
                         <span>Rider Console</span>
                       </Link>
                     )}
-                    <Link 
-                      to="/orders" 
+                    <Link
+                      to="/orders"
                       className="popover-menu-item"
                       onClick={() => setShowProfileDropdown(false)}
                     >
                       <ClipboardList size={16} />
                       <span>My Orders</span>
                     </Link>
-                    <Link 
-                      to="/wishlist" 
+                    <Link
+                      to="/wishlist"
                       className="popover-menu-item"
                       onClick={() => setShowProfileDropdown(false)}
                     >
                       <Heart size={16} />
                       <span>My Wishlist</span>
                     </Link>
-                    <Link 
-                      to="/addresses" 
+                    <Link
+                      to="/addresses"
                       className="popover-menu-item"
                       onClick={() => setShowProfileDropdown(false)}
                     >
                       <MapPin size={16} />
                       <span>Saved Addresses</span>
                     </Link>
-                    <Link 
-                      to="/profile" 
+                    <Link
+                      to="/profile"
                       className="popover-menu-item"
                       onClick={() => setShowProfileDropdown(false)}
                     >
@@ -691,9 +804,9 @@ const Navbar = () => {
                       <span>Account Settings</span>
                     </Link>
                     <div className="popover-divider" />
-                    <button 
+                    <button
                       type="button"
-                      onClick={handleLogout} 
+                      onClick={handleLogout}
                       className="popover-menu-item logout-action"
                     >
                       <LogOut size={16} />
@@ -746,8 +859,8 @@ const Navbar = () => {
             <div className="location-sheet-handle" aria-hidden="true" />
             <div className="location-modal-header">
               <h3>Select Delivery Location</h3>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="modal-close-icon"
                 onClick={() => setShowLocationModal(false)}
                 aria-label="Close"
@@ -757,6 +870,37 @@ const Navbar = () => {
             </div>
 
             <div className="location-modal-body">
+              {/* Unauthenticated Login Notice */}
+              {!user && (
+                <div className="location-auth-banner">
+                  <div className="loc-auth-left">
+                    <div className="loc-auth-icon-wrap">
+                      <Zap size={18} color="#168A32" />
+                    </div>
+                    <div className="loc-auth-text-col">
+                      <h4>Sign in to deliver here</h4>
+                      <p>Log in to save multiple addresses and enjoy lightning 10-minute delivery.</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="loc-auth-login-btn"
+                    onClick={() => {
+                      setShowLocationModal(false);
+                      if (openAuthModal) {
+                        openAuthModal({
+                          title: 'Sign in for Delivery',
+                          subtitle: 'Log in to set your address & get 10-minute instant delivery.',
+                          onSuccess: () => setShowLocationModal(true),
+                        });
+                      }
+                    }}
+                  >
+                    Sign In
+                  </button>
+                </div>
+              )}
+
               {/* Quick Area / Pincode Search */}
               <div className="location-search-box">
                 <Search size={16} className="location-search-icon" />
@@ -807,7 +951,7 @@ const Navbar = () => {
               )}
 
               {/* 1-Click GPS Detect Button: Pure GPS tracking */}
-              <button 
+              <button
                 type="button"
                 className="detect-location-btn"
                 onClick={handleDetectGPS}
@@ -824,10 +968,141 @@ const Navbar = () => {
                 <p className="location-err-text">{locationError}</p>
               )}
 
-              {/* Saved Addresses if logged in */}
-              {savedAddresses.filter((a) => !IS_INVALID_GATEWAY_ADDR(a.street)).length > 0 && (
+              {/* Add New Address Action Bar */}
+              <div className="modal-add-addr-header-row">
+                <h4>{user ? 'My Saved Addresses' : 'Delivery Addresses'}</h4>
+                <button
+                  type="button"
+                  className="quick-add-addr-btn"
+                  onClick={() => {
+                    if (!user) {
+                      setShowLocationModal(false);
+                      if (openAuthModal) {
+                        openAuthModal({
+                          title: 'Sign in to add address',
+                          subtitle: 'Please sign in to save delivery addresses to your account.',
+                          onSuccess: () => {
+                            setShowLocationModal(true);
+                            setShowAddAddressForm(true);
+                          },
+                        });
+                      }
+                      return;
+                    }
+                    setShowAddAddressForm(!showAddAddressForm);
+                    setAddressSaveError('');
+                  }}
+                >
+                  <Plus size={15} strokeWidth={2.4} />
+                  <span>{showAddAddressForm ? 'Cancel Form' : 'Add New Address'}</span>
+                </button>
+              </div>
+
+              {/* In-Modal Quick Add Address Form */}
+              {showAddAddressForm && (
+                <form onSubmit={handleSaveNewAddress} className="modal-quick-addr-form">
+                  <div className="addr-form-top-row">
+                    <span className="addr-form-title">Add New Delivery Address</span>
+                    <button
+                      type="button"
+                      className="addr-gps-autofill-btn"
+                      onClick={handleAutoFillWithGPS}
+                      title="Auto-fill with GPS"
+                    >
+                      <Crosshair size={13} />
+                      <span>Auto-fill GPS</span>
+                    </button>
+                  </div>
+
+                  {addressSaveError && (
+                    <div className="addr-form-error">{addressSaveError}</div>
+                  )}
+
+                  {/* Label selector */}
+                  <div className="addr-label-selector">
+                    {['Home', 'Work', 'Other'].map((lbl) => (
+                      <button
+                        key={lbl}
+                        type="button"
+                        className={`addr-label-btn ${newAddrLabel === lbl ? 'active' : ''}`}
+                        onClick={() => setNewAddrLabel(lbl)}
+                      >
+                        {lbl}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="addr-input-row">
+                    <input
+                      type="text"
+                      placeholder="Flat / House / Building No."
+                      value={newAddrHouseNo}
+                      onChange={(e) => setNewAddrHouseNo(e.target.value)}
+                      className="addr-field-input"
+                    />
+                  </div>
+
+                  <div className="addr-input-row">
+                    <input
+                      type="text"
+                      placeholder="Area / Street / Sector *"
+                      value={newAddrArea}
+                      onChange={(e) => setNewAddrArea(e.target.value)}
+                      className="addr-field-input"
+                      required
+                    />
+                  </div>
+
+                  <div className="addr-input-row">
+                    <input
+                      type="text"
+                      placeholder="Nearby Landmark (Optional)"
+                      value={newAddrLandmark}
+                      onChange={(e) => setNewAddrLandmark(e.target.value)}
+                      className="addr-field-input"
+                    />
+                  </div>
+
+                  <div className="addr-input-grid-2">
+                    <input
+                      type="text"
+                      placeholder="City *"
+                      value={newAddrCity}
+                      onChange={(e) => setNewAddrCity(e.target.value)}
+                      className="addr-field-input"
+                      required
+                    />
+                    <input
+                      type="text"
+                      placeholder="Pincode"
+                      value={newAddrZipcode}
+                      onChange={(e) => setNewAddrZipcode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      className="addr-field-input"
+                    />
+                  </div>
+
+                  <div className="addr-form-actions">
+                    <button
+                      type="button"
+                      className="addr-cancel-btn"
+                      onClick={() => setShowAddAddressForm(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="addr-save-submit-btn"
+                      disabled={savingAddress}
+                    >
+                      {savingAddress ? 'Saving…' : 'Save & Deliver Here'}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* Saved Addresses List */}
+              {user && savedAddresses.filter((a) => !IS_INVALID_GATEWAY_ADDR(a.street)).length > 0 && (
                 <div className="modal-locations-group">
-                  <h4>My Saved Addresses</h4>
                   <div className="address-pills-list">
                     {savedAddresses
                       .filter((a) => !IS_INVALID_GATEWAY_ADDR(a.street))
@@ -835,7 +1110,7 @@ const Navbar = () => {
                         const full = addr.street?.includes(addr.city) || !addr.city ? addr.street : `${addr.street}, ${addr.city}`;
                         const isSelected = location === full;
                         return (
-                          <div 
+                          <div
                             key={addr.id}
                             className={`address-select-row ${isSelected ? 'active' : ''}`}
                             onClick={() => handleSelectLocation(full)}
@@ -860,13 +1135,19 @@ const Navbar = () => {
                 </div>
               )}
 
+              {user && savedAddresses.filter((a) => !IS_INVALID_GATEWAY_ADDR(a.street)).length === 0 && !showAddAddressForm && (
+                <div className="empty-saved-addr-hint">
+                  <p>No saved addresses yet. Click "+ Add New Address" above to save one!</p>
+                </div>
+              )}
+
               {token && (
                 <Link
                   to="/addresses"
                   className="manage-saved-addr-link"
                   onClick={() => setShowLocationModal(false)}
                 >
-                  + Add or Manage Saved Addresses
+                  Manage All Saved Addresses in Settings →
                 </Link>
               )}
             </div>

@@ -3,10 +3,12 @@ import { Link } from 'react-router-dom';
 import { Heart, Clock, Plus, Minus } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
+import { useAuth } from '../context/AuthContext';
 import LazyImage from './LazyImage';
 import '../styles/ProductCard.css';
 
 const ProductCard = ({ product, onRequireLogin }) => {
+  const { user, openAuthModal } = useAuth();
   const { addToCart, getProductQuantity, updateCartItem, removeFromCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
 
@@ -22,6 +24,16 @@ const ProductCard = ({ product, onRequireLogin }) => {
   const handleAdd = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!user) {
+      if (openAuthModal) {
+        openAuthModal({
+          title: 'Sign in to Shop',
+          subtitle: 'Log in to add items to your cart & get lightning 10-minute delivery.',
+          onSuccess: () => addToCart(product, 1),
+        });
+      }
+      return;
+    }
     if (onRequireLogin) {
       const allowed = onRequireLogin(id);
       if (!allowed) return;
@@ -32,6 +44,16 @@ const ProductCard = ({ product, onRequireLogin }) => {
   const handleIncrement = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!user) {
+      if (openAuthModal) {
+        openAuthModal({
+          title: 'Sign in to Shop',
+          subtitle: 'Log in to add items to your cart & get lightning 10-minute delivery.',
+          onSuccess: () => addToCart(product, 1),
+        });
+      }
+      return;
+    }
     addToCart(product, 1);
   };
 
@@ -48,6 +70,16 @@ const ProductCard = ({ product, onRequireLogin }) => {
   const handleWishlistToggle = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!user) {
+      if (openAuthModal) {
+        openAuthModal({
+          title: 'Sign in for Wishlist',
+          subtitle: 'Log in to save your favorite groceries to your wishlist.',
+          onSuccess: () => addToWishlist(product),
+        });
+      }
+      return;
+    }
     if (isWish) {
       removeFromWishlist(id);
     } else {
