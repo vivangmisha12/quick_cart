@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { AlertCircle, Eye, EyeOff, ShieldCheck, Truck, MapPin } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { AlertCircle, Eye, EyeOff, ShieldCheck, Truck, MapPin, ArrowLeft } from 'lucide-react';
 
 const AUTH_PERKS = [
   { icon: Truck, label: '10–15 min delivery' },
@@ -69,9 +69,22 @@ const AuthShell = ({
   children,
   footer,
 }) => {
+  const navigate = useNavigate();
+
   return (
     <div className="auth-page">
       <div className={`auth-card${wide ? ' auth-card--wide' : ''}`}>
+        <div className="auth-card-top-nav">
+          <button
+            type="button"
+            className="auth-back-nav-btn"
+            onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/'))}
+            aria-label="Go back"
+          >
+            <ArrowLeft size={16} />
+            <span>Back</span>
+          </button>
+        </div>
         <div className="auth-header">
           <Link to="/" className="auth-brand-link" aria-label="Go to Progicart home">
             <img src="/logo.png" alt="Progicart" className="auth-logo" />

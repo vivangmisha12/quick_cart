@@ -22,7 +22,8 @@ import {
   LogOut,
   ShieldAlert,
   Bike,
-  Plus
+  Plus,
+  ArrowLeft
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
@@ -70,6 +71,7 @@ const Navbar = () => {
       : false
   );
   const isCatalogMobileHeader = isCompactViewport && routeLocation.pathname === '/products';
+  const isHome = routeLocation.pathname === '/';
 
   const profileRef = useRef(null);
   const searchRef = useRef(null);
@@ -194,6 +196,18 @@ const Navbar = () => {
       clearTimeout(timer);
     };
   }, [locationQuery, showLocationModal, searchLocation]);
+
+  // Lock body scroll when location modal is open
+  useEffect(() => {
+    if (showLocationModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showLocationModal]);
 
   // Listen for real-time address updates
   useEffect(() => {
@@ -864,10 +878,18 @@ const Navbar = () => {
             </div>
           )}
 
-          {/* Fixed/Sticky Header: Search Bar + Categories Strip (Sticks cleanly at top: 0 forever!) */}
-          <header className={`site-header-sticky-nav ${isCatalogMobileHeader ? 'catalog-mobile-search-header' : ''}`}>
+          {/* Header: Search Bar + Categories Strip (Sticky ONLY on Home Page!) */}
+          <header className={`site-header-sticky-nav ${isHome ? 'is-sticky-header' : 'is-static-header'} ${isCatalogMobileHeader ? 'catalog-mobile-search-header' : ''}`}>
             {isCatalogMobileHeader ? (
               <div className="catalog-mobile-search-row">
+                <button
+                  type="button"
+                  className="catalog-mobile-back-btn"
+                  onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/'))}
+                  aria-label="Go back"
+                >
+                  <ArrowLeft size={20} strokeWidth={2.2} />
+                </button>
                 {renderSearchBar()}
                 <Link
                   to="/wishlist"

@@ -9,7 +9,8 @@ import {
   Check, 
   CheckCircle2,
   Navigation,
-  AlertCircle
+  AlertCircle,
+  ArrowLeft
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLocationContext } from '../context/LocationContext';
@@ -268,9 +269,19 @@ const Addresses = () => {
     <div className="addresses-container">
       {/* Header */}
       <div className="addresses-header">
-        <div>
-          <h1>Saved Delivery Addresses</h1>
-          <p>Manage your home, work, and GPS delivery locations</p>
+        <div className="addresses-title-with-back">
+          <button
+            type="button"
+            className="page-back-round-btn"
+            onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/'))}
+            aria-label="Go back"
+          >
+            <ArrowLeft size={18} />
+          </button>
+          <div>
+            <h1>Saved Delivery Addresses</h1>
+            <p>Manage your home, work, and GPS delivery locations</p>
+          </div>
         </div>
         <button 
           onClick={() => {

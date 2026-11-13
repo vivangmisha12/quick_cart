@@ -23,6 +23,7 @@ import {
   Save,
   Calendar,
   CreditCard,
+  ArrowLeft,
 } from 'lucide-react';
 import '../styles/Profile.css';
 
@@ -142,7 +143,7 @@ const Profile = () => {
         try {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed)) resolved = parsed;
-        } catch (e) {}
+        } catch (e) { }
       }
     }
 
@@ -300,7 +301,7 @@ const Profile = () => {
           return;
         }
       }
-    } catch (err) {}
+    } catch (err) { }
     saveAddresses(addresses.filter((addr) => String(addr.id) !== String(id)));
     setDeletingAddressId(null);
     showNotice('success', 'Address removed.');
@@ -336,6 +337,19 @@ const Profile = () => {
   return (
     <div className="account-page">
       <div className="profile-container">
+        {/* Top Back Navigation Bar */}
+        <div className="profile-top-back-bar">
+          <button
+            type="button"
+            className="page-back-round-btn"
+            onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/'))}
+            aria-label="Go back"
+          >
+            <ArrowLeft size={18} />
+          </button>
+          <span className="profile-top-bar-title">My Profile</span>
+        </div>
+
         {/* Top Hero Summary Card */}
         <section className="profile-hero">
           <div className="profile-hero-main">

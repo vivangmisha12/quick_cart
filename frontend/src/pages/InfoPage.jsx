@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
   ShieldCheck, 
   Clock, 
@@ -15,7 +15,8 @@ import {
   Sparkles,
   Zap,
   CheckCircle2,
-  Lock
+  Lock,
+  ArrowLeft
 } from 'lucide-react';
 import '../styles/InfoPage.css';
 
@@ -239,6 +240,7 @@ const InfoPage = () => {
   const { slug } = useParams();
   const currentSlug = slug || 'about-us';
   const pageData = INFO_PAGES_DATA[currentSlug] || INFO_PAGES_DATA['about-us'];
+  const navigate = useNavigate();
 
   const [openFaqIndex, setOpenFaqIndex] = useState(0);
 
@@ -254,6 +256,15 @@ const InfoPage = () => {
       <div className="info-hero-banner">
         <div className="info-hero-content">
           <nav className="info-breadcrumbs" aria-label="Breadcrumb">
+            <button
+              type="button"
+              className="info-back-btn"
+              onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/'))}
+              aria-label="Go back"
+            >
+              <ArrowLeft size={14} />
+              <span>Back</span>
+            </button>
             <Link to="/">Home</Link>
             <ChevronRight size={14} />
             <Link to="/info/about-us">Information</Link>

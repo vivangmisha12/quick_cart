@@ -792,9 +792,10 @@
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(2px);
-  z-index: 1000;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 99999 !important;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -807,8 +808,10 @@
   max-width: 480px;
   border-radius: 18px;
   overflow: hidden;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
   animation: modalScale 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  z-index: 100000 !important;
 }
 
 @keyframes modalScale {
@@ -2214,6 +2217,7 @@
   .modal-backdrop {
     padding: 0;
     align-items: flex-end;
+    z-index: 99999 !important;
   }
 
   .location-modal-card {
@@ -2223,6 +2227,8 @@
     border-radius: 22px 22px 0 0;
     max-height: 85vh;
     animation: slideUpSheet 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    z-index: 100000 !important;
   }
 
   .location-sheet-handle {
@@ -2608,11 +2614,19 @@ body .site-header-wrapper.catalog-mobile-search-header .wishlist-header-btn:acti
     flex-shrink: 0;
   }
 
-  /* Sticky Search + Categories Header - Smooth 120fps permanent lock at top: 0 */
+  /* Search + Categories Header - Sticky ONLY on Home Page */
   .site-header-sticky-nav {
     display: flex !important;
     flex-direction: column;
     width: 100%;
+    position: relative;
+    top: auto;
+    z-index: 10;
+    background: #ffffff !important;
+    box-sizing: border-box;
+  }
+
+  .site-header-sticky-nav.is-sticky-header {
     position: sticky !important;
     top: 0 !important;
     z-index: 9999 !important;
@@ -2622,7 +2636,14 @@ body .site-header-wrapper.catalog-mobile-search-header .wishlist-header-btn:acti
     -webkit-transform: translateZ(0);
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
-    box-sizing: border-box;
+  }
+
+  .site-header-sticky-nav.is-static-header {
+    position: relative !important;
+    top: auto !important;
+    box-shadow: none !important;
+    transform: none !important;
+    -webkit-transform: none !important;
   }
 
   .mobile-sticky-search-wrap {
@@ -2672,6 +2693,27 @@ body .site-header-wrapper.catalog-mobile-search-header .wishlist-header-btn:acti
     box-sizing: border-box;
   }
 
+  .catalog-mobile-back-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #F3F5F4;
+    border: 1px solid var(--border);
+    color: var(--text);
+    flex-shrink: 0;
+    cursor: pointer;
+    padding: 0;
+    transition: background-color 0.15s ease, transform 0.15s ease;
+  }
+
+  .catalog-mobile-back-btn:active {
+    background: #E2E8F0;
+    transform: scale(0.95);
+  }
+
   .catalog-mobile-search-row .search-bar-container {
     flex: 1;
     min-width: 0;
@@ -2703,4 +2745,16 @@ body.capacitor-native-app .mobile-header-top-scrollable {
 
 body.capacitor-native-app .site-header-sticky-nav {
   display: flex !important;
+}
+
+body.capacitor-native-app .site-header-sticky-nav.is-sticky-header {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 9999 !important;
+}
+
+body.capacitor-native-app .site-header-sticky-nav.is-static-header {
+  position: relative !important;
+  top: auto !important;
+  box-shadow: none !important;
 }

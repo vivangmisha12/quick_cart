@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
   Heart, 
   Clock, 
@@ -10,7 +10,8 @@ import {
   Plus, 
   Minus,
   Sparkles,
-  ShoppingBag
+  ShoppingBag,
+  ArrowLeft
 } from 'lucide-react';
 import { productsAPI } from '../api/api';
 import { useCart } from '../context/CartContext';
@@ -21,6 +22,7 @@ import '../styles/ProductDetails.css';
 
 const ProductDetails = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const { addToCart, getProductQuantity, updateCartItem, removeFromCart, openCartDrawer } = useCart();
@@ -147,8 +149,18 @@ const ProductDetails = () => {
 
   return (
     <div className="pd-page">
-      {/* Breadcrumb Navigation */}
+      {/* Breadcrumb Navigation with Back Button */}
       <nav className="pd-breadcrumb" aria-label="Breadcrumb">
+        <button
+          type="button"
+          className="pd-back-btn"
+          onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/products'))}
+          aria-label="Go back"
+        >
+          <ArrowLeft size={15} />
+          <span>Back</span>
+        </button>
+        <span className="pd-breadcrumb-divider" aria-hidden="true">/</span>
         <Link to="/">Home</Link>
         <ChevronRight size={14} className="breadcrumb-arrow" />
         <Link to="/products">Products</Link>

@@ -11,6 +11,7 @@ import {
   Eye,
   Check,
   Sparkles,
+  ArrowLeft,
 } from 'lucide-react';
 import '../styles/Wishlist.css';
 
@@ -33,6 +34,16 @@ const Wishlist = () => {
     return (
       <div className="wishlist-page">
         <div className="wishlist-container">
+          <div className="wishlist-top-nav-bar">
+            <button
+              type="button"
+              className="page-back-round-btn"
+              onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/'))}
+              aria-label="Go back"
+            >
+              <ArrowLeft size={18} />
+            </button>
+          </div>
           <div className="empty-wishlist">
             <div className="empty-icon-box">
               <Heart size={30} />
@@ -53,13 +64,23 @@ const Wishlist = () => {
     <div className="wishlist-page">
       <div className="wishlist-container">
         <div className="wishlist-header">
-          <div>
-            <div className="wishlist-pill-badge">
-              <Sparkles size={12} />
-              <span>{wishlist.length} {wishlist.length === 1 ? 'Saved Item' : 'Saved Items'}</span>
+          <div className="wishlist-title-with-back">
+            <button
+              type="button"
+              className="page-back-round-btn"
+              onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/'))}
+              aria-label="Go back"
+            >
+              <ArrowLeft size={18} />
+            </button>
+            <div>
+              <div className="wishlist-pill-badge">
+                <Sparkles size={12} />
+                <span>{wishlist.length} {wishlist.length === 1 ? 'Saved Item' : 'Saved Items'}</span>
+              </div>
+              <h1>My Wishlist</h1>
+              <p>Quickly add saved items to your basket or view details</p>
             </div>
-            <h1>My Wishlist</h1>
-            <p>Quickly add saved items to your basket or view details</p>
           </div>
 
           <div className="wishlist-header-actions">

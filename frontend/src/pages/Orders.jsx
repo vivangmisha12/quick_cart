@@ -21,6 +21,7 @@ import {
   UserCheck,
   Receipt,
   RotateCcw,
+  ArrowLeft,
 } from 'lucide-react';
 import '../styles/Orders.css';
 
@@ -240,9 +241,19 @@ const Orders = () => {
     <div className="orders-page">
       <div className="orders-container">
         <div className="orders-header">
-          <div>
-            <h1>My Orders</h1>
-            <p>View order receipts, delivery updates, and past purchases</p>
+          <div className="orders-title-with-back">
+            <button
+              type="button"
+              className="page-back-round-btn"
+              onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/'))}
+              aria-label="Go back"
+            >
+              <ArrowLeft size={18} />
+            </button>
+            <div>
+              <h1>My Orders</h1>
+              <p>View order receipts, delivery updates, and past purchases</p>
+            </div>
           </div>
           {orders.length > 0 && (
             <button

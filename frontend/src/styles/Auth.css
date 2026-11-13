@@ -27,6 +27,33 @@
   border-radius: 20px;
   padding: 32px 30px 26px;
   box-shadow: 0 10px 30px rgba(17, 24, 39, 0.05);
+  position: relative;
+}
+
+.auth-card-top-nav {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.auth-back-nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #f1f5f3;
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.auth-back-nav-btn:active {
+  background: #e5e7eb;
+  transform: scale(0.96);
 }
 
 .auth-page .auth-card--wide {

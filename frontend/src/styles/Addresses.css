@@ -19,6 +19,33 @@
   gap: 16px;
 }
 
+.addresses-title-with-back {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.page-back-round-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  color: #1f2937;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.page-back-round-btn:active {
+  background: #e5e7eb;
+  transform: scale(0.94);
+}
+
 .addresses-header h1 {
   font-size: 26px;
   font-weight: 900;

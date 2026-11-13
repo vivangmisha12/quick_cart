@@ -6,6 +6,7 @@ import {
   Plus, 
   Minus, 
   ArrowRight, 
+  ArrowLeft, 
   ShieldCheck, 
   Clock, 
   ChevronRight 
@@ -40,6 +41,16 @@ const Cart = () => {
   if (items.length === 0) {
     return (
       <div className="cart-page-wrapper">
+        <div className="cart-top-back-bar">
+          <button
+            type="button"
+            className="page-back-round-btn"
+            onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/'))}
+            aria-label="Go back"
+          >
+            <ArrowLeft size={18} />
+          </button>
+        </div>
         <div className="empty-cart-card">
           <div className="empty-icon-circle">
             <ShoppingBag size={56} color="#0c831f" strokeWidth={1.5} />
@@ -57,7 +68,17 @@ const Cart = () => {
   return (
     <div className="cart-page-wrapper">
       <div className="cart-page-header">
-        <h1>Shopping Cart ({totalItems} {totalItems === 1 ? 'item' : 'items'})</h1>
+        <div className="cart-title-with-back">
+          <button
+            type="button"
+            className="page-back-round-btn"
+            onClick={() => (window.history.length > 1 ? navigate(-1) : navigate('/'))}
+            aria-label="Go back"
+          >
+            <ArrowLeft size={18} />
+          </button>
+          <h1>Shopping Cart ({totalItems} {totalItems === 1 ? 'item' : 'items'})</h1>
+        </div>
         <div className="cart-delivery-eta-pill">
           <Clock size={15} />
           <span>Delivery in 10-15 mins</span>
