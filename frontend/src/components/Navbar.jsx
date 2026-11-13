@@ -800,7 +800,7 @@ const Navbar = () => {
           ========================================================================= */}
       {isCompactViewport && (
         <>
-          {/* Scrollable Top Row: Logo, Location, Cart/Profile & 15% Off Banner */}
+          {/* Scrollable Top Row: Logo, Location, Cart/Profile */}
           {!isCatalogMobileHeader && (
             <div className="mobile-header-top-scrollable">
               <div className="mobile-header-top-row">
@@ -861,21 +861,10 @@ const Navbar = () => {
                   )}
                 </div>
               </div>
-
-              {/* 15% OFF Offer Banner (Scrolls away naturally without hanging!) */}
-              <Link to="/products?sort=discount" className="mobile-offer-banner">
-                <div className="mobile-offer-left">
-                  <BadgePercent size={16} strokeWidth={2} className="mobile-offer-icon" aria-hidden="true" />
-                  <span>
-                    15% off first 3 orders with code <strong>WELCOME15</strong>
-                  </span>
-                </div>
-                <ChevronRight size={15} strokeWidth={2.4} className="mobile-offer-arrow" aria-hidden="true" />
-              </Link>
             </div>
           )}
 
-          {/* Sticky Header: Search Bar + Categories Strip (Sticks cleanly at top: 0) */}
+          {/* Fixed/Sticky Header: Search Bar + Categories Strip (Sticks cleanly at top: 0 forever!) */}
           <header className={`site-header-sticky-nav ${isCatalogMobileHeader ? 'catalog-mobile-search-header' : ''}`}>
             {isCatalogMobileHeader ? (
               <div className="catalog-mobile-search-row">
@@ -898,6 +887,19 @@ const Navbar = () => {
               </>
             )}
           </header>
+
+          {/* 15% OFF Full Width Strip (BELOW Categories, scrolls away with page!) */}
+          {!isCatalogMobileHeader && (
+            <Link to="/products?sort=discount" className="mobile-offer-banner-fullwidth">
+              <div className="mobile-offer-left">
+                <BadgePercent size={15} strokeWidth={2.2} className="mobile-offer-icon" aria-hidden="true" />
+                <span>
+                  15% off first 3 orders with code <strong>WELCOME15</strong>
+                </span>
+              </div>
+              <ChevronRight size={15} strokeWidth={2.4} className="mobile-offer-arrow" aria-hidden="true" />
+            </Link>
+          )}
         </>
       )}
 

@@ -48,8 +48,14 @@
   animation: shimmer 1.4s ease infinite;
 }
 
-html, body, #root {
-  height: 100%;
+html, body {
+  min-height: 100%;
+  width: 100%;
+}
+
+#root {
+  min-height: 100vh;
+  height: auto;
   width: 100%;
 }
 
