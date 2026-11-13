@@ -64,7 +64,6 @@ const Navbar = () => {
   const [newAddrZipcode, setNewAddrZipcode] = useState('');
   const [savingAddress, setSavingAddress] = useState(false);
   const [addressSaveError, setAddressSaveError] = useState('');
-  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
   const [isCompactViewport, setIsCompactViewport] = useState(() =>
     typeof window !== 'undefined'
       ? window.innerWidth <= 768 || document.body.classList.contains('capacitor-native-app')
@@ -88,41 +87,6 @@ const Navbar = () => {
     mq.addEventListener?.('change', syncViewport);
     return () => mq.removeEventListener?.('change', syncViewport);
   }, []);
-
-  // Collapse top logo/location row when scrolling down on mobile, leaving Search + Categories
-  useEffect(() => {
-    if (!isCompactViewport) {
-      setIsHeaderCollapsed(false);
-      return;
-    }
-
-    let rafId = null;
-    const updateScrollState = () => {
-      rafId = null;
-      if (showSearchSuggestions || showLocationModal || showProfileDropdown || showNotifications) {
-        return;
-      }
-      const scrollY = window.scrollY;
-      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
-      setIsHeaderCollapsed((prev) => {
-        if (!prev && scrollY > 110 && scrollable > 220) return true;
-        if (prev && scrollY < 24) return false;
-        return prev;
-      });
-    };
-
-    const handleScroll = () => {
-      if (rafId === null) {
-        rafId = window.requestAnimationFrame(updateScrollState);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      if (rafId !== null) window.cancelAnimationFrame(rafId);
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [isCompactViewport, showSearchSuggestions, showLocationModal, showProfileDropdown, showNotifications]);
 
   // Auto-open bottom-sheet location popup on mobile/APK launch when no delivery location is set
   useEffect(() => {
@@ -491,7 +455,7 @@ const Navbar = () => {
   };
 
   return (
-    <header className={`site-header-wrapper ${isCompactViewport && isHeaderCollapsed && !isCatalogMobileHeader ? 'header-scrolled-compact' : ''} ${isCatalogMobileHeader ? 'catalog-mobile-search-header' : ''}`}>
+    <header className={`site-header-wrapper ${isCatalogMobileHeader ? 'catalog-mobile-search-header' : ''}`}>
       {/* Top Green Textured Announcement Header */}
       {showPromo && (
         <div className="top-promo-banner">

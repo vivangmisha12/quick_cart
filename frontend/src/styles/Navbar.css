@@ -8,6 +8,10 @@
   background: #ffffff;
   padding: 0;
   margin: 0;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 /* Top Textured Emerald Header Strip */
@@ -1787,26 +1791,6 @@
     display: none;
   }
 
-  body.capacitor-native-app.header-scrolled-compact .progicart-brand-logo,
-  body.capacitor-native-app .site-header-wrapper.header-scrolled-compact .progicart-brand-logo,
-  body.capacitor-native-app .site-header-wrapper.header-scrolled-compact .nav-actions-group,
-  body.capacitor-native-app .site-header-wrapper.header-scrolled-compact .location-trigger-btn,
-  body.capacitor-native-app .site-header-wrapper.header-scrolled-compact .mobile-offer-banner {
-    display: none !important;
-  }
-
-  body.capacitor-native-app .site-header-wrapper.header-scrolled-compact .navbar {
-    padding: 4px 0 2px;
-    border-radius: 0 0 14px 14px;
-  }
-
-  body.capacitor-native-app .site-header-wrapper.header-scrolled-compact .navbar-container {
-    grid-template-columns: 1fr;
-    grid-template-areas: "search";
-    padding: 4px 12px 4px;
-    gap: 0;
-  }
-
   body.capacitor-native-app .search-bar-container {
     grid-area: search;
     width: 100% !important;
@@ -2009,25 +1993,6 @@
 
   .location-10min-badge {
     display: none;
-  }
-
-  .site-header-wrapper.header-scrolled-compact .progicart-brand-logo,
-  .site-header-wrapper.header-scrolled-compact .nav-actions-group,
-  .site-header-wrapper.header-scrolled-compact .location-trigger-btn,
-  .site-header-wrapper.header-scrolled-compact .mobile-offer-banner {
-    display: none !important;
-  }
-
-  .site-header-wrapper.header-scrolled-compact .navbar {
-    padding: 4px 0 2px;
-    border-radius: 0 0 14px 14px;
-  }
-
-  .site-header-wrapper.header-scrolled-compact .navbar-container {
-    grid-template-columns: 1fr;
-    grid-template-areas: "search";
-    padding: 4px 12px 4px;
-    gap: 0;
   }
 
   .nav-actions-group {
@@ -2240,6 +2205,7 @@
     from {
       transform: translateY(100%);
     }
+
     to {
       transform: translateY(0);
     }
@@ -2316,10 +2282,6 @@
 
   .location-10min-badge {
     display: none;
-  }
-
-  .site-header-wrapper.header-scrolled-compact .navbar-container {
-    padding: 4px 10px 4px;
   }
 
   .profile-popover {

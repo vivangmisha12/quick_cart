@@ -237,7 +237,7 @@ const emitBootstrapReady = (snapshot) => {
  */
 export const bootstrapHomeData = async ({ force = false, onProgress } = {}) => {
   if (!force && freshLoadedThisSession && cachedBootstrap) {
-    onProgress?.(95, '⚡ 10-Minute delivery ready in your area');
+    onProgress?.(100);
     return cachedBootstrap;
   }
 
@@ -246,7 +246,7 @@ export const bootstrapHomeData = async ({ force = false, onProgress } = {}) => {
   }
 
   const run = async () => {
-    onProgress?.(20, 'Loading store banners & offers...');
+    onProgress?.(25);
 
     const [catResult, banResult] = await Promise.allSettled([
       categoriesAPI.getAll(),
@@ -276,7 +276,7 @@ export const bootstrapHomeData = async ({ force = false, onProgress } = {}) => {
     ];
     const bannerUrls = collectUrls(bannerPriorityRaw);
 
-    onProgress?.(40, 'Preloading banners & sub-banners...');
+    onProgress?.(45);
 
     // Start preloading ALL banner & sub-banner images right away while product shelves load
     const bannerPreloadPromise = Promise.all(
@@ -325,7 +325,7 @@ export const bootstrapHomeData = async ({ force = false, onProgress } = {}) => {
 
     const [homeSections] = await Promise.all([sectionsPromise, bannerPreloadPromise]);
 
-    onProgress?.(78, '⚡ 10-Minute delivery ready in your area');
+    onProgress?.(80);
 
     const snapshot = {
       categories,
@@ -363,8 +363,8 @@ export const bootstrapHomeData = async ({ force = false, onProgress } = {}) => {
         tier2Urls.map((url) =>
           preloadImage(url, 2500).then(() => {
             settledCount += 1;
-            const pct = Math.min(95, 78 + Math.round((settledCount / tier2Urls.length) * 17));
-            onProgress?.(pct, 'Welcome to Progicart!');
+            const pct = Math.min(95, 80 + Math.round((settledCount / tier2Urls.length) * 15));
+            onProgress?.(pct);
           })
         )
       );
@@ -374,7 +374,7 @@ export const bootstrapHomeData = async ({ force = false, onProgress } = {}) => {
       ]);
     }
 
-    onProgress?.(95, 'Welcome to Progicart!');
+    onProgress?.(100);
     return snapshot;
   };
 

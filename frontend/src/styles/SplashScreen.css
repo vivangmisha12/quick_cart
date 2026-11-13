@@ -231,30 +231,6 @@
   box-shadow: 0 0 10px rgba(22, 138, 50, 0.45);
 }
 
-.splash-status-text {
-  font-size: 13px;
-  font-weight: 600;
-  color: #171A18;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 20px;
-}
-
-.splash-spinner-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #168A32;
-  animation: beaconPulse 1.2s infinite ease-in-out;
-}
-
-@keyframes beaconPulse {
-  0% { transform: scale(0.8); opacity: 0.5; box-shadow: 0 0 0 0 rgba(12, 131, 31, 0.4); }
-  70% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 0 6px rgba(12, 131, 31, 0); }
-  100% { transform: scale(0.8); opacity: 0.5; box-shadow: 0 0 0 0 rgba(12, 131, 31, 0); }
-}
-
 .splash-footer-badge {
   font-size: 11px;
   font-weight: 700;

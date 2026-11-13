@@ -8,9 +8,6 @@ const IS_RIDER_APP = import.meta.env.VITE_APP_MODE === 'rider';
 export default function SplashScreen({ onFinish, minDuration = 1800, maxTimeout = 4500 }) {
   const [progress, setProgress] = useState(15);
   const [exiting, setExiting] = useState(false);
-  const [statusMessage, setStatusMessage] = useState(
-    IS_RIDER_APP ? 'Connecting to Progicart Rider Hub...' : 'Connecting to Progicart Dark Store...'
-  );
 
   const hasFinishedRef = useRef(false);
 
@@ -22,9 +19,6 @@ export default function SplashScreen({ onFinish, minDuration = 1800, maxTimeout 
       if (hasFinishedRef.current) return;
       hasFinishedRef.current = true;
       setProgress(100);
-      setStatusMessage(
-        IS_RIDER_APP ? '⚡ Rider Fleet Console ready' : '⚡ 10-Minute delivery ready in your area'
-      );
 
       setTimeout(() => {
         if (!isMounted) return;
@@ -50,10 +44,9 @@ export default function SplashScreen({ onFinish, minDuration = 1800, maxTimeout 
 
       try {
         await bootstrapHomeData({
-          onProgress: (pct, msg) => {
+          onProgress: (pct) => {
             if (!isMounted) return;
             setProgress((prev) => Math.max(prev, pct));
-            if (msg) setStatusMessage(msg);
           },
         });
       } catch (err) {
@@ -147,13 +140,8 @@ export default function SplashScreen({ onFinish, minDuration = 1800, maxTimeout 
         </div>
       </div>
 
-      {/* Bottom Loading Radar & Clean Progress (No technical counts) */}
+      {/* Bottom Loading Radar & Clean Progress */}
       <div className="splash-bottom-bar">
-        <div className="splash-status-text">
-          <span className="splash-spinner-dot"></span>
-          <span>{statusMessage}</span>
-        </div>
-
         <div className="splash-progress-track">
           <div 
             className="splash-progress-bar"
