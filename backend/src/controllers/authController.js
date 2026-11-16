@@ -1,8 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { formatAddressEntry } = require('../utils/userAddress');
-
-const JWT_SECRET = process.env.JWT_SECRET || '9569881374';
+const { JWT_SECRET } = require('../middleware/auth');
 
 const formatUserResponse = (user) => {
   const isDelivery = Boolean(user.isDeliveryPartner || user.role === 'delivery_partner');

@@ -1,6 +1,7 @@
 const Order = require('../models/Order');
 const Cart = require('../models/Cart');
 const User = require('../models/User');
+const Product = require('../models/Product');
 const crypto = require('crypto');
 const {
   ASSIGNMENT_TIMEOUT_MS,
@@ -171,6 +172,51 @@ const createAndDispatchOrder = async ({
   const formattedItems = formatCartItemsForOrder(cart.items);
   const normalizedShipping = normalizeShippingAddress(shippingAddress, deliveryCoordinates);
   const resolvedCoords = resolveOrderCoordinates(normalizedShipping, deliveryCoordinates);
+
+  // ─── STOCK CHECK & ATOMIC DECREMENT ─────────────────────────────────────────
+  // Atomically reduce stock for each cart item. If ANY item is out of stock,
+  // the whole operation fails — no partial decrements remain (we rollback via loop).
+  const decremented = []; // track what we've successfully decremented for rollback
+  try {
+    for (const item of cart.items) {
+      const prod = item.productId || {};
+      const productId = prod._id || item.productId;
+      const qty = Math.max(1, Number(item.quantity) || 1);
+      const name = prod.name || 'Item';
+
+      const updated = await Product.findOneAndUpdate(
+        { _id: productId, stock: { $gte: qty } },
+        { $inc: { stock: -qty } },
+        { new: true }
+      );
+
+      if (!updated) {
+        // Check if product exists at all to give a better message
+        const exists = await Product.findById(productId).select('stock name');
+        const friendlyName = exists?.name || name;
+        const currentStock = exists?.stock ?? 0;
+        const msg = currentStock === 0
+          ? `"${friendlyName}" is currently out of stock. Please remove it from your cart.`
+          : `Only ${currentStock} left of "${friendlyName}" but you ordered ${qty}. Please update your cart.`;
+        const err = new Error(msg);
+        err.statusCode = 400;
+        err.isUserSafe = true;
+        throw err;
+      }
+      decremented.push({ productId, qty });
+    }
+  } catch (stockErr) {
+    // Rollback: restore stock for items already decremented before the failure
+    if (decremented.length > 0) {
+      await Promise.all(
+        decremented.map(({ productId, qty }) =>
+          Product.findByIdAndUpdate(productId, { $inc: { stock: qty } })
+        )
+      );
+    }
+    throw stockErr;
+  }
+  // ─────────────────────────────────────────────────────────────────────────────
 
   const order = new Order({
     userId,
@@ -595,6 +641,21 @@ exports.updateOrderStatus = async (req, res) => {
     }
 
     const now = new Date();
+
+    // ─── STOCK RESTORE ON CANCELLATION ───────────────────────────────────────
+    // Only restore if transitioning TO 'cancelled' from a non-delivered state
+    const cancellableStatuses = ['confirmed', 'processing', 'packing', 'out_for_delivery', 'pending'];
+    if (status === 'cancelled' && cancellableStatuses.includes(order.status)) {
+      // order.items stores { productId (ObjectId), quantity, ... }
+      await Promise.all(
+        order.items.map(item =>
+          Product.findByIdAndUpdate(item.productId, { $inc: { stock: item.quantity } })
+        )
+      );
+      console.log(`[Stock Restore] Order ${order._id} cancelled → stock restored for ${order.items.length} items`);
+    }
+    // ──────────────────────────────────────────────────────────────────────────
+
     order.status = status;
     order.updatedAt = now;
 
@@ -815,6 +876,21 @@ exports.deliveryUpdateOrderStatus = async (req, res) => {
     }
 
     const now = new Date();
+
+    // ─── STOCK RESTORE ON CANCELLATION ───────────────────────────────────────
+    // Only restore if transitioning TO 'cancelled' from a non-delivered state
+    const cancellableStatuses = ['confirmed', 'processing', 'packing', 'out_for_delivery', 'pending'];
+    if (status === 'cancelled' && cancellableStatuses.includes(order.status)) {
+      // order.items stores { productId (ObjectId), quantity, ... }
+      await Promise.all(
+        order.items.map(item =>
+          Product.findByIdAndUpdate(item.productId, { $inc: { stock: item.quantity } })
+        )
+      );
+      console.log(`[Stock Restore] Order ${order._id} cancelled → stock restored for ${order.items.length} items`);
+    }
+    // ──────────────────────────────────────────────────────────────────────────
+
     order.status = status;
     order.updatedAt = now;
     const codCollected = syncDeliveredCodPayment(order, now);

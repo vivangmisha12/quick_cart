@@ -1,7 +1,17 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
-const JWT_SECRET = process.env.JWT_SECRET || '9569881374';
+const getJwtSecret = () => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret || typeof secret !== 'string' || !secret.trim()) {
+    throw new Error(
+      'FATAL SECURITY ERROR: JWT_SECRET environment variable is missing or empty. Please configure a secure JWT_SECRET in your .env file.'
+    );
+  }
+  return secret.trim();
+};
+
+const JWT_SECRET = getJwtSecret();
 
 const authMiddleware = (req, res, next) => {
   try {

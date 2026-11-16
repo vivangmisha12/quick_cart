@@ -3,22 +3,16 @@ const mongoose = require('mongoose');
 const cloudinary = require('../utils/cloudinary');
 const fs = require('fs/promises');
 
-const uploadToCloudinary = async (file, folder = 'quick-cart/categories') => {
+const uploadToCloudinary = async (file, folder = 'progicart/categories') => {
   if (!file) return { url: '', publicId: '' };
-  let uploadedUrl = '';
-  let uploadedPublicId = '';
   try {
     const res = await cloudinary.uploader.upload(file.path, { folder });
-    uploadedUrl = res?.secure_url || '';
-    uploadedPublicId = res?.public_id || '';
-    return { url: uploadedUrl, publicId: uploadedPublicId };
+    return { url: res?.secure_url || '', publicId: res?.public_id || '' };
   } catch (err) {
-    console.error('Cloudinary upload failed, falling back to local upload:', err.message);
-    return file.filename
-      ? { url: `/uploads/${file.filename}`, publicId: '' }
-      : { url: '', publicId: '' };
+    console.error('Category Cloudinary upload failed:', err.message);
+    throw new Error('Cloudinary category upload failed: ' + err.message);
   } finally {
-    if (uploadedUrl && file?.path) {
+    if (file?.path) {
       await fs.unlink(file.path).catch(() => {});
     }
   }

@@ -115,4 +115,10 @@ const orderSchema = new mongoose.Schema({
   },
 });
 
+// Production compound indexes for instant query performance (zero collection scans)
+orderSchema.index({ userId: 1, createdAt: -1 });
+orderSchema.index({ status: 1, 'assignment.expiresAt': 1 });
+orderSchema.index({ 'deliveryPartner.id': 1, status: 1 });
+orderSchema.index({ createdAt: -1 });
+
 module.exports = mongoose.model('Order', orderSchema);

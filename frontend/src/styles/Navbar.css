@@ -603,6 +603,17 @@
   position: relative;
 }
 
+.profile-popover-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.15);
+  z-index: 20001;
+  -webkit-tap-highlight-color: transparent;
+}
+
 .profile-trigger {
   background: transparent;
   border: none;
@@ -619,7 +630,7 @@
   padding: 6px;
   box-shadow: 0 14px 36px -6px rgba(23, 26, 24, 0.14), 0 2px 6px rgba(23, 26, 24, 0.04);
   border: 1px solid var(--border);
-  z-index: 110;
+  z-index: 20002;
   animation: dropdownIn 0.16s ease;
 }
 
@@ -2292,7 +2303,9 @@
 
   .profile-popover {
     right: -4px;
-    width: 210px;
+    top: calc(100% + 6px);
+    width: 224px;
+    z-index: 20002 !important;
   }
 
   .mobile-offer-banner {
@@ -2417,6 +2430,10 @@ body .site-header-wrapper.catalog-mobile-search-header .wishlist-header-btn:acti
     position: relative;
     z-index: 10;
     box-sizing: border-box;
+  }
+
+  .mobile-header-top-scrollable.has-open-dropdown {
+    z-index: 20000 !important;
   }
 
   .mobile-header-top-row {
@@ -2741,6 +2758,10 @@ body.capacitor-native-app .desktop-header-wrapper {
 
 body.capacitor-native-app .mobile-header-top-scrollable {
   display: flex !important;
+}
+
+body.capacitor-native-app .mobile-header-top-scrollable.has-open-dropdown {
+  z-index: 20000 !important;
 }
 
 body.capacitor-native-app .site-header-sticky-nav {

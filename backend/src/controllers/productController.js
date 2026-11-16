@@ -2,14 +2,14 @@ const Product = require('../models/Product');
 const cloudinary = require('../utils/cloudinary');
 const fs = require('fs/promises');
 
-const uploadToCloudinary = async (file, folder = 'quick-cart/products') => {
+const uploadToCloudinary = async (file, folder = 'progicart/products') => {
   if (!file) return { url: '', publicId: '' };
   try {
     const res = await cloudinary.uploader.upload(file.path, { folder });
     return { url: res.secure_url, publicId: res.public_id };
   } catch (err) {
     console.error('Cloudinary upload failed:', err.message);
-    return { url: '', publicId: '' };
+    throw new Error('Cloudinary product upload failed: ' + err.message);
   } finally {
     if (file?.path) await fs.unlink(file.path).catch(() => {});
   }

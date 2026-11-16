@@ -4,18 +4,16 @@ const fs = require('fs/promises');
 
 const uploadBannerToCloudinary = async (file) => {
   if (!file) return '';
-  let uploadedUrl = '';
   try {
     const res = await cloudinary.uploader.upload(file.path, {
-      folder: 'quick-cart/banners',
+      folder: 'progicart/banners',
     });
-    uploadedUrl = res?.secure_url || '';
-    return uploadedUrl;
+    return res?.secure_url || '';
   } catch (err) {
-    console.error('Banner Cloudinary upload failed, falling back to local upload:', err.message);
-    return file.filename ? `/uploads/${file.filename}` : '';
+    console.error('Banner Cloudinary upload failed:', err.message);
+    throw new Error('Cloudinary upload failed: ' + err.message);
   } finally {
-    if (uploadedUrl && file?.path) {
+    if (file?.path) {
       await fs.unlink(file.path).catch(() => {});
     }
   }

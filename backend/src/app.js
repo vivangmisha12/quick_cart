@@ -10,9 +10,55 @@ const app = express();
 const trustProxyHops = Number.parseInt(process.env.TRUST_PROXY_HOPS, 10);
 app.set('trust proxy', Number.isFinite(trustProxyHops) && trustProxyHops >= 0 ? trustProxyHops : 1);
 
+// Whitelisted origins for Web, Mobile APK (Capacitor), and Admin portals
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'https://localhost',         // Capacitor Android (https scheme)
+  'capacitor://localhost',     // Capacitor iOS
+  'http://localhost',          // Capacitor fallback
+];
+
+// Append any configured production frontend origins from environment variables
+if (process.env.FRONTEND_URL) {
+  process.env.FRONTEND_URL.split(',').forEach((url) => {
+    const trimmed = url.trim().replace(/\/$/, '');
+    if (trimmed && !allowedOrigins.includes(trimmed)) {
+      allowedOrigins.push(trimmed);
+    }
+  });
+}
+if (process.env.ALLOWED_ORIGINS) {
+  process.env.ALLOWED_ORIGINS.split(',').forEach((url) => {
+    const trimmed = url.trim().replace(/\/$/, '');
+    if (trimmed && !allowedOrigins.includes(trimmed)) {
+      allowedOrigins.push(trimmed);
+    }
+  });
+}
+
 // Middleware
 app.use(cors({
-  origin: (origin, callback) => callback(null, true),
+  origin: (origin, callback) => {
+    // Allow non-browser requests (mobile apps, server-to-server webhooks, curl, postman)
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    const normalizedOrigin = origin.trim().replace(/\/$/, '');
+    const isAllowed = allowedOrigins.includes(normalizedOrigin) ||
+      /^https:\/\/.*\.onrender\.com$/.test(normalizedOrigin) ||
+      /^https:\/\/.*\.vercel\.app$/.test(normalizedOrigin);
+
+    if (isAllowed) {
+      return callback(null, true);
+    }
+
+    console.warn(`[CORS Blocked] Unauthorized origin attempted access: ${origin}`);
+    return callback(new Error(`CORS Error: Origin ${origin} not allowed by Access-Control-Allow-Origin`));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Razorpay-Signature'],

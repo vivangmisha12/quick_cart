@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { 
-  Heart, 
-  Clock, 
-  ShieldCheck, 
-  Truck, 
-  RotateCcw, 
-  ChevronRight, 
-  Plus, 
+import {
+  Heart,
+  Clock,
+  ShieldCheck,
+  Truck,
+  RotateCcw,
+  ChevronRight,
+  Plus,
   Minus,
   Sparkles,
   ShoppingBag,
@@ -143,8 +143,8 @@ const ProductDetails = () => {
     );
   }
 
-  const mrp = product.discount > 0 
-    ? Math.round(product.price / (1 - product.discount / 100)) 
+  const mrp = product.discount > 0
+    ? Math.round(product.price / (1 - product.discount / 100))
     : (product.originalPrice || null);
 
   return (

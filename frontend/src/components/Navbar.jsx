@@ -38,7 +38,7 @@ const IS_INVALID_GATEWAY_ADDR = (street) => {
   return s.includes('jalandhar') || s.includes('punjab') || s.includes('jandu singha');
 };
 
-const Navbar = () => {
+const Navbar = ({ splashFinished = true }) => {
   const { token, logout, user, openAuthModal } = useAuth();
   const { totalItems, openCartDrawer } = useCart();
   const { location, setLocation, detectLocation, searchLocation, locating, error: locationError } = useLocationContext();
@@ -89,9 +89,9 @@ const Navbar = () => {
     return () => mq.removeEventListener?.('change', syncViewport);
   }, []);
 
-  // Auto-open bottom-sheet location popup on mobile/APK launch when no delivery location is set
+  // Auto-open bottom-sheet location popup on mobile/APK launch ONLY on Home page, AFTER splash screen finishes
   useEffect(() => {
-    if (!isCompactViewport || location) {
+    if (!isCompactViewport || location || !isHome || !splashFinished) {
       return;
     }
     try {
@@ -99,13 +99,13 @@ const Navbar = () => {
         sessionStorage.setItem('progicart_loc_prompted', '1');
         const timer = setTimeout(() => {
           setShowLocationModal(true);
-        }, 350);
+        }, 700);
         return () => clearTimeout(timer);
       }
     } catch {
       // Ignore sessionStorage restriction
     }
-  }, [isCompactViewport, location]);
+  }, [isCompactViewport, location, isHome, splashFinished]);
 
   // Load user saved addresses from local cache + backend database
   useEffect(() => {
@@ -321,21 +321,8 @@ const Navbar = () => {
   };
 
   // Instant 1-Click GPS Geolocation Detection: detects, updates context, closes modal, and returns to Homepage!
+  // Works seamlessly for both guest users (browsing) and logged-in users (syncs to saved addresses).
   const handleDetectGPS = async () => {
-    if (!user) {
-      setShowLocationModal(false);
-      if (openAuthModal) {
-        openAuthModal({
-          title: 'Sign in for Delivery',
-          subtitle: 'Please sign in to detect and save your delivery address.',
-          onSuccess: () => {
-            setShowLocationModal(true);
-          },
-        });
-      }
-      return;
-    }
-
     try {
       const res = await detectLocation();
       const detectedAddress = res?.display || location || 'Husainabad, Lucknow';
@@ -367,22 +354,8 @@ const Navbar = () => {
     }
   };
 
-  // 1-Click Saved Address Selector
+  // 1-Click Saved / Searched Address Selector (works for guest customers too!)
   const handleSelectLocation = (loc) => {
-    if (!user) {
-      setShowLocationModal(false);
-      if (openAuthModal) {
-        openAuthModal({
-          title: 'Sign in for Delivery',
-          subtitle: 'Please sign in to set your delivery address & get 10-minute delivery.',
-          onSuccess: () => {
-            setLocation(loc);
-            navigate('/');
-          },
-        });
-      }
-      return;
-    }
     setLocation(loc);
     setShowLocationModal(false);
     navigate('/');
@@ -816,7 +789,14 @@ const Navbar = () => {
         <>
           {/* Scrollable Top Row: Logo, Location, Cart/Profile */}
           {!isCatalogMobileHeader && (
-            <div className="mobile-header-top-scrollable">
+            <div className={`mobile-header-top-scrollable ${showProfileDropdown ? 'has-open-dropdown' : ''}`}>
+              {showProfileDropdown && (
+                <div
+                  className="profile-popover-backdrop"
+                  onClick={() => setShowProfileDropdown(false)}
+                  aria-hidden="true"
+                />
+              )}
               <div className="mobile-header-top-row">
                 <Link to="/" className="progicart-brand-logo" aria-label="Progicart Home">
                   <img src="/logo.png" alt="Progicart" className="brand-logo-img" />

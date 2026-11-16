@@ -1,5 +1,6 @@
 import React from 'react';
 import { Capacitor } from '@capacitor/core';
+import { App as CapacitorApp } from '@capacitor/app';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
@@ -15,6 +16,7 @@ import SplashScreen from './components/SplashScreen';
 import RateLimitBanner from './components/RateLimitBanner';
 import PullToRefresh from './components/PullToRefresh';
 import AuthModal from './components/AuthModal';
+import useHardwareBackButton from './hooks/useHardwareBackButton';
 
 // Pages
 import Home from './pages/Home';
@@ -68,6 +70,7 @@ const RiderAppContent = () => {
   const { token, user, logout } = useAuth();
   const [showSplash, setShowSplash] = React.useState(true);
   const isDeliveryAuthenticated = Boolean(token && isRiderAccountUser(user));
+  const { showExitToast } = useHardwareBackButton({ isRiderMode: true });
 
   // Clear non-rider sessions if somehow present in standalone Rider App
   React.useEffect(() => {
@@ -81,6 +84,11 @@ const RiderAppContent = () => {
       <RateLimitBanner />
       <PullToRefresh />
       <AuthModal />
+      {showExitToast && (
+        <div className="app-exit-toast" role="status" aria-live="polite">
+          <span>Press back again to exit the app</span>
+        </div>
+      )}
       {showSplash && (
         <SplashScreen
           onFinish={() => setShowSplash(false)}
@@ -125,6 +133,7 @@ const AppContent = () => {
   const { token, user } = useAuth();
   const location = useLocation();
   const [showSplash, setShowSplash] = React.useState(true);
+  const { showExitToast } = useHardwareBackButton({ isRiderMode: false });
 
   const isStandalonePortal =
     location.pathname.startsWith('/admin') ||
@@ -151,6 +160,11 @@ const AppContent = () => {
       <RateLimitBanner />
       <PullToRefresh />
       <AuthModal />
+      {showExitToast && (
+        <div className="app-exit-toast" role="status" aria-live="polite">
+          <span>Press back again to exit the app</span>
+        </div>
+      )}
       {showSplash && (
         <SplashScreen 
           onFinish={() => setShowSplash(false)} 
@@ -158,7 +172,7 @@ const AppContent = () => {
           maxTimeout={IS_RIDER_APP ? 2500 : 8500}
         />
       )}
-      {!isStandalonePortal && <Navbar />}
+      {!isStandalonePortal && <Navbar splashFinished={!showSplash} />}
       {!isStandalonePortal && <CartDrawer />}
       <main className={isStandalonePortal ? "app-main-standalone" : isCheckoutPage ? "app-main-checkout" : "app-main"}>
         <Routes>
@@ -332,12 +346,55 @@ class ErrorBoundary extends React.Component {
 }
 
 function App() {
+  const [isRiderApp, setIsRiderApp] = React.useState(() => {
+    if (IS_RIDER_APP) return true;
+    try {
+      if (localStorage.getItem('progicart_app_flavor') === 'rider') return true;
+    } catch {}
+    return false;
+  });
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    // 1. Check native package ID via @capacitor/app on Android
+    if (Capacitor.isNativePlatform()) {
+      CapacitorApp.getInfo()
+        .then((info) => {
+          if (!cancelled && (info?.id === 'com.progicart.rider' || info?.name?.toLowerCase().includes('rider'))) {
+            setIsRiderApp(true);
+            try {
+              localStorage.setItem('progicart_app_flavor', 'rider');
+            } catch {}
+          }
+        })
+        .catch(() => {});
+    }
+
+    // 2. Also check flavor.json asset (merged per flavor during build)
+    fetch('/flavor.json')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled && data?.flavor === 'rider') {
+          setIsRiderApp(true);
+          try {
+            localStorage.setItem('progicart_app_flavor', 'rider');
+          } catch {}
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <ErrorBoundary>
       <Router>
         <AuthProvider>
-          {IS_RIDER_APP ? (
-            <AppContent />
+          {isRiderApp ? (
+            <RiderAppContent />
           ) : (
             <CartProvider>
               <WishlistProvider>
